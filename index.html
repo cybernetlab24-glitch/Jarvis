@@ -98,6 +98,13 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
 .topbtns{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .chip{white-space:nowrap}
 @media (max-width:420px){.chip{letter-spacing:.08em;padding:5px 7px}.sub{letter-spacing:.12em}}
+.diag{margin-top:8px;display:flex;flex-direction:column;gap:4px;align-items:center}
+.diag .bar{width:220px;max-width:70vw;height:4px;background:var(--line)}
+.diag .bar i{display:block;height:100%;width:0;background:var(--cyan);transition:width .2s}
+.diag .bar i.hit{background:var(--magenta)}
+.diag small{font-size:.62rem;color:var(--muted);letter-spacing:.06em;white-space:normal}
+.box .rng{display:flex;justify-content:space-between;font-size:.66rem;color:var(--muted)}
+.box input[type=range]{padding:0;accent-color:var(--magenta)}
 .chip.blink{animation:pul 1s infinite;border-color:var(--yellow);color:var(--yellow)}
 @media (max-width:620px){ .side{display:none} .logo{font-size:1.2rem} }
 @media (min-width:621px){ .mobile-read{display:none} }
@@ -112,7 +119,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   <div class="top">
     <div>
       <div class="logo" data-t="J.A.R.V.I.S">J.A.R.V.I.S</div>
-      <div class="sub" id="sub">NUCLEO NEURALE · v0.7</div>
+      <div class="sub" id="sub">NUCLEO NEURALE · v0.8</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
@@ -126,7 +133,8 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
       <div class="read w"><small>RICHIESTE 48H</small><b id="rX">–</b></div>
       <div class="read"><small>PROSSIMO</small><b id="rU">–</b></div>
     </div>
-    <div class="stato"><b id="statoT">IN ATTESA</b><span id="statoS">Pronto, signore.</span></div>
+    <div class="stato"><b id="statoT">IN ATTESA</b><span id="statoS">Pronto, signore.</span>
+      <div class="diag" id="diag" hidden><div class="bar"><i id="dLiv"></i></div><div class="bar"><i id="dSc"></i></div><small id="dTxt"></small></div></div>
     <div class="side">
       <div class="read"><small>LIVELLO VOCE</small><b id="rV">0%</b><div class="meter"><i id="mV"></i></div></div>
       <div class="read r"><small>IMPULSI / SEC</small><b id="rI">0</b></div>
@@ -165,6 +173,9 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
     <label for="cCod">CODICE DI ACCESSO</label>
     <input id="cCod" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
     <button type="submit" id="cOk">COLLEGA</button>
+    <label for="cSog">SENSIBILITÀ «HEY JARVIS»</label>
+    <input id="cSog" type="range" min="0.15" max="0.8" step="0.05">
+    <div class="rng"><span>più sensibile</span><span id="cSogV"></span><span>meno sensibile</span></div>
     <button type="button" class="x" id="cChiudi">CHIUDI</button>
     <div class="msg" id="cMsg" role="status"></div>
   </form>
@@ -392,12 +403,22 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   // Parola chiave «Hey Jarvis» riconosciuta direttamente sul telefono (openWakeWord, licenza Apache-2.0)
   var ORT_URL='https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/';
   var MODELLI_URL=['./models/','https://huggingface.co/Soulcreek2/speechkit-wakeword-models/resolve/main/'];
-  var SOGLIA=0.5;
+  var SOGLIA=0.45;try{var _s=parseFloat(localStorage.getItem('jarvis_soglia'));if(_s>0)SOGLIA=_s;}catch(e){}
   var staz=false,wakeLock=null,pollTimer=null,ultimoAvviso=null,annunci=[];
-  var WW={sess:null,ctx:null,stream:null,proc:null,attivo:false,hist:new Float32Array(0),pend:new Float32Array(0),mel:[],feat:[],coda:[],lavoro:false,pred:0,ultimo:0,score:0};
+  var WW={livello:0,picco:0,piccoT:0,sr:0,sess:null,ctx:null,stream:null,proc:null,attivo:false,hist:new Float32Array(0),pend:new Float32Array(0),mel:[],feat:[],coda:[],lavoro:false,pred:0,ultimo:0,score:0};
   try{ultimoAvviso=Number(localStorage.getItem('jarvis_ultimo_avviso'))||null;}catch(e){}
 
   function statoWW(t,cls){$('modWW').textContent=t;$('modWW').className=cls||'ok';$('mWW').textContent=t;}
+  function fmt2(v){return v.toFixed(2).replace('.',',');}
+  setInterval(function(){
+    var box=$('diag');
+    if(!staz||!WW.attivo){box.hidden=true;return;}
+    box.hidden=false;
+    $('dLiv').style.width=Math.round(WW.livello*100)+'%';
+    $('dSc').style.width=Math.min(100,Math.round(WW.picco/SOGLIA*100))+'%';
+    $('dSc').className=WW.picco>=SOGLIA?'hit':'';
+    $('dTxt').textContent='voce '+Math.round(WW.livello*100)+'% · somiglianza '+fmt2(WW.picco)+' / soglia '+fmt2(SOGLIA)+' · '+(WW.sr/1000)+' kHz';
+  },250);
   function caricaOrt(){return new Promise(function(ok,ko){if(window.ort)return ok();var s=document.createElement('script');s.src=ORT_URL+'ort.min.js';s.onload=function(){ok();};s.onerror=function(){ko(new Error('libreria AI non scaricata'));};document.head.appendChild(s);});}
   function creaSessione(nome){
     var i=0;
@@ -417,16 +438,21 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   function resetBuffer(){WW.hist=new Float32Array(0);WW.pend=new Float32Array(0);WW.mel=[];WW.feat=[];WW.coda=[];WW.pred=0;}
   function avviaMic(){
     if(WW.attivo)return Promise.resolve();
-    return navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}}).then(function(stream){
+    return navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:false,autoGainControl:true,channelCount:1}}).then(function(stream){
       WW.stream=stream;resetBuffer();
       var AC=window.AudioContext||window.webkitAudioContext,ctx;
       try{ctx=new AC({sampleRate:16000});}catch(e){ctx=new AC();}
-      WW.ctx=ctx;var rapporto=ctx.sampleRate/16000;
+      WW.ctx=ctx;WW.sr=ctx.sampleRate;var rapporto=ctx.sampleRate/16000;
       var src=ctx.createMediaStreamSource(stream),proc=ctx.createScriptProcessor(2048,1,1);
       proc.onaudioprocess=function(e){
         if(!WW.attivo)return;
-        var d=e.inputBuffer.getChannelData(0),n=Math.floor(d.length/rapporto),out=new Float32Array(n);
-        for(var k=0;k<n;k++){var x=d[Math.min(d.length-1,Math.floor(k*rapporto))];out[k]=Math.max(-1,Math.min(1,x))*32767;}
+        var d=e.inputBuffer.getChannelData(0),n=Math.floor(d.length/rapporto),out=new Float32Array(n),en=0;
+        for(var k=0;k<n;k++){
+          var a0=Math.floor(k*rapporto),a1=Math.max(a0+1,Math.floor((k+1)*rapporto)),sm=0;
+          for(var q=a0;q<a1&&q<d.length;q++)sm+=d[q];
+          var x=sm/(a1-a0);en+=x*x;out[k]=Math.max(-1,Math.min(1,x))*32767;
+        }
+        WW.livello=Math.min(1,Math.sqrt(en/Math.max(1,n))*8);
         WW.pend=concat(WW.pend,out);
         while(WW.pend.length>=1280){WW.coda.push(WW.pend.slice(0,1280));WW.pend=WW.pend.slice(1280);}
         if(WW.coda.length>6)WW.coda.splice(0,WW.coda.length-6);
@@ -477,6 +503,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
       if(!o)return;
       var sc=o[S.kw.outputNames[0]].data[0];WW.pred++;
       WW.score=WW.pred>5?sc:0;
+      if(WW.score>WW.picco||Date.now()-WW.piccoT>4000){WW.picco=WW.score;WW.piccoT=Date.now();}
       if(WW.score>=SOGLIA&&Date.now()-WW.ultimo>2500&&!speaking&&!occupato&&!ascolta){WW.ultimo=Date.now();svegliato();}
     });
   }
@@ -539,6 +566,8 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
     statoWW('SPENTA','wip');hint.textContent='Modalità sempre attiva spenta.';
   }
   $('stazBtn').addEventListener('click',function(){staz?spegniStaz():attivaStaz();});
+  $('cSog').value=SOGLIA;$('cSogV').textContent=fmt2(SOGLIA);
+  $('cSog').addEventListener('input',function(){SOGLIA=parseFloat(this.value);$('cSogV').textContent=fmt2(SOGLIA);try{localStorage.setItem('jarvis_soglia',String(SOGLIA));}catch(e){}});
   statoWW('SPENTA','wip');
   if((function(){try{return localStorage.getItem('jarvis_staz')==='on';}catch(e){return false;}})()&&CFG.url){
     $('stazBtn').classList.add('blink');hint.textContent='Tocca un punto qualsiasi per riattivare la modalità sempre attiva.';
