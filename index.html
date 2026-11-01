@@ -109,7 +109,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   <div class="top">
     <div>
       <div class="logo" data-t="J.A.R.V.I.S">J.A.R.V.I.S</div>
-      <div class="sub" id="sub">NUCLEO NEURALE · v0.4</div>
+      <div class="sub" id="sub">NUCLEO NEURALE · v0.5</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
@@ -227,7 +227,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
     voce=vs.filter(function(v){return /male|uomo|luca|diego|cosimo|itd/i.test(v.name);})[0]||vs[0]||null;}catch(e){}}
   if('speechSynthesis' in window){scegliVoce();speechSynthesis.onvoiceschanged=scegliVoce;}
   function stopVoce(){speaking=false;try{speechSynthesis.cancel();}catch(e){}}
-  function finito(){speaking=false;setStato('attesa');hint.textContent='Tocca il microfono o il nucleo e parla.';}
+  function finito(){speaking=false;setStato('attesa');}
   function animaSolo(testo){speaking=true;setStato('parla');setTimeout(finito,Math.max(1500,testo.split(/\s+/).length*330));}
   function parla(testo){
     stopVoce();
@@ -251,7 +251,13 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
     var fatto=function(risposta){occupato=false;riga('jv',risposta);$('modAI').textContent='ATTIVO';$('modAI').className='ok';parla(risposta);};
     var errore=function(err){occupato=false;$('modAI').textContent='ERRORE';$('modAI').className='wip';
       var msg=(err&&err.message&&err.message.indexOf('Failed to fetch')<0)?err.message:'Non riesco a raggiungere il server. Controlli la connessione e riprovi.';riga('jv',msg);parla(msg);console.log(err);};
-    api({azione:'chiedi',testo:testo,voce:!!aVoce}).then(function(j){mostraInfo(j.info);fatto(j.risposta);},errore);
+    var t0=Date.now();
+    api({azione:'chiedi',testo:testo,voce:!!aVoce}).then(function(j){
+      fatto(j.risposta);
+      var tm=j.tempi||{},sec=function(ms){return (ms/1000).toFixed(1).replace('.',',')+' s';};
+      hint.textContent='⏱ risposta in '+sec(Date.now()-t0)+' · AI '+sec(tm.ai||0)+(tm.gmail?' · Gmail '+sec(tm.gmail):'')+(tm.modello?' · '+tm.modello:'');
+      setTimeout(caricaInfo,1500);
+    },errore);
   }
   $('sayForm').addEventListener('submit',function(ev){ev.preventDefault();var t=$('frase').value;$('frase').value='';$('frase').blur();chiedi(t,false);});
 
@@ -264,12 +270,14 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
     stopVoce();finale='';
     rec=new SR();rec.lang='it-IT';rec.interimResults=true;rec.continuous=false;rec.maxAlternatives=1;
     var vivo=null;
-    rec.onstart=function(){ascolta=true;$('mic').classList.add('on');setStato('ascolto');hint.textContent='Parli pure. Mi fermo quando smette.';};
+    rec.onstart=function(){if(CFG.url)api({azione:'info'}).then(function(j){mostraInfo(j.info);},function(){});ascolta=true;$('mic').classList.add('on');setStato('ascolto');hint.textContent='Parli pure. Mi fermo quando smette.';};
     rec.onspeechstart=function(){userTalk=1;};
+    var inviato=false;
     rec.onresult=function(e){var tmp='';finale='';
       for(var k=0;k<e.results.length;k++){var t=e.results[k][0].transcript;if(e.results[k].isFinal)finale+=t;else tmp+=t;}
       kick=1;userTalk=1;var mostra=(finale+tmp).trim();
-      if(!vivo)vivo=riga('tu',mostra);else vivo.textContent=mostra;};
+      if(!vivo)vivo=riga('tu',mostra);else vivo.textContent=mostra;
+      if(finale.trim()&&!inviato){inviato=true;if(vivo&&vivo.parentNode)vivo.parentNode.removeChild(vivo);vivo=null;try{rec.stop();}catch(x){}chiedi(finale,true);}};
     rec.onerror=function(e){
       var m={'not-allowed':'Permesso microfono negato. Tocca l\'icona a sinistra dell\'indirizzo → Autorizzazioni → Microfono → Consenti, poi ricarica.',
         'no-speech':'Non ho sentito nulla. Riprovi.','network':'Il riconoscimento vocale richiede internet.','audio-capture':'Nessun microfono disponibile.'}[e.error];
@@ -277,7 +285,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
       if(e.error==='not-allowed'){$('modMic').textContent='BLOCCATO';$('modMic').className='wip';}};
     rec.onend=function(){ascolta=false;userTalk=0;$('mic').classList.remove('on');
       if(vivo&&vivo.parentNode)vivo.parentNode.removeChild(vivo);
-      if(finale.trim())chiedi(finale,true);else if(stato==='ascolto')setStato('attesa');};
+      if(finale.trim()&&!inviato){inviato=true;chiedi(finale,true);}else if(!inviato&&stato==='ascolto')setStato('attesa');};
     try{rec.start();}catch(e){hint.textContent='Il microfono non è partito, riprovi.';}
   }
   $('mic').addEventListener('click',avviaAscolto);
