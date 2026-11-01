@@ -109,7 +109,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   <div class="top">
     <div>
       <div class="logo" data-t="J.A.R.V.I.S">J.A.R.V.I.S</div>
-      <div class="sub" id="sub">NUCLEO NEURALE · v0.5</div>
+      <div class="sub" id="sub">NUCLEO NEURALE · v0.6</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
@@ -119,9 +119,9 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
 
   <div class="mid">
     <div class="side">
-      <div class="read"><small>PROPOSTE</small><b id="rP">–</b></div>
-      <div class="read w"><small>SOSPETTE</small><b id="rX">–</b></div>
-      <div class="read"><small>ULTIMA</small><b id="rU">–</b></div>
+      <div class="read"><small>INTERVENTI OGGI</small><b id="rP">–</b></div>
+      <div class="read w"><small>RICHIESTE 48H</small><b id="rX">–</b></div>
+      <div class="read"><small>PROSSIMO</small><b id="rU">–</b></div>
     </div>
     <div class="stato"><b id="statoT">IN ATTESA</b><span id="statoS">Pronto, signore.</span></div>
     <div class="side">
@@ -129,6 +129,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
       <div class="read r"><small>IMPULSI / SEC</small><b id="rI">0</b></div>
       <div class="read"><small>MODULI</small>
         <div class="mod"><span>Gmail</span><em class="ok">ATTIVO</em></div>
+        <div class="mod"><span>Calendario</span><em class="ok">ATTIVO</em></div>
         <div class="mod"><span>Gemini</span><em class="ok" id="modAI">ATTIVO</em></div>
         <div class="mod"><span>Microfono</span><em class="ok" id="modMic">PRONTO</em></div>
       </div>
@@ -136,7 +137,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   </div>
 
   <div class="bottom">
-    <div class="mobile-read">PROPOSTE <b id="mP">–</b> · SOSPETTE <b id="mX">–</b> · ULTIMA <b id="mU">–</b></div>
+    <div class="mobile-read">OGGI <b id="mP">–</b> · RICHIESTE <b id="mX">–</b> · PROSSIMO <b id="mU">–</b></div>
     <div class="subs" id="subs" aria-live="polite"></div>
     <div class="row">
       <button class="mic" id="mic" type="button" aria-label="Parla con Jarvis">
@@ -294,10 +295,9 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   /* ================= DATI REALI ================= */
   function mostraInfo(inf){
     if(!inf)return;
-    ['rP','mP'].forEach(function(id){$(id).textContent=inf.proposte;});
-    ['rX','mX'].forEach(function(id){$(id).textContent=inf.sospette;});
-    var ul=inf.ultima?inf.ultima+(inf.ultimaData?' · '+inf.ultimaData:''):'nessuna';
-    ['rU','mU'].forEach(function(id){$(id).textContent=ul;});
+    ['rP','mP'].forEach(function(id){$(id).textContent=inf.oggi;});
+    ['rX','mX'].forEach(function(id){$(id).textContent=inf.richieste;});
+    ['rU','mU'].forEach(function(id){$(id).textContent=inf.prossimo||'nessuno';});
     if(inf.nome){STATI.attesa.s='Pronto, '+inf.nome+'.';if(stato==='attesa')setStato('attesa');}
   }
   function caricaInfo(){if(!CFG.url)return;api({azione:'info'}).then(function(j){mostraInfo(j.info);$('modAI').textContent='ATTIVO';$('modAI').className='ok';},
