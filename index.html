@@ -95,7 +95,10 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
 .box button{margin-top:8px;font:700 .95rem var(--display);letter-spacing:.2em;padding:14px;background:var(--cyan);color:var(--bg);border:0;cursor:pointer}
 .box .msg{min-height:1.2em;color:var(--yellow)}
 .box .x{background:transparent;color:var(--muted);border:1px solid var(--line);margin-top:0;font-size:.75rem;padding:9px}
-.topbtns{display:flex;gap:6px}
+.topbtns{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.chip{white-space:nowrap}
+@media (max-width:420px){.chip{letter-spacing:.08em;padding:5px 7px}.sub{letter-spacing:.12em}}
+.chip.blink{animation:pul 1s infinite;border-color:var(--yellow);color:var(--yellow)}
 @media (max-width:620px){ .side{display:none} .logo{font-size:1.2rem} }
 @media (min-width:621px){ .mobile-read{display:none} }
 @media (prefers-reduced-motion:reduce){.logo::before,.logo::after,.mic.on{animation:none}}
@@ -109,11 +112,11 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   <div class="top">
     <div>
       <div class="logo" data-t="J.A.R.V.I.S">J.A.R.V.I.S</div>
-      <div class="sub" id="sub">NUCLEO NEURALE · v0.6</div>
+      <div class="sub" id="sub">NUCLEO NEURALE · v0.7</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
-      <div class="topbtns"><button class="chip" id="voceBtn" type="button" aria-pressed="true">VOCE ON</button><button class="chip" id="cfgBtn" type="button" aria-label="Impostazioni di collegamento">⚙</button></div>
+      <div class="topbtns"><button class="chip" id="stazBtn" type="button" aria-pressed="false">SEMPRE ATTIVO</button><button class="chip" id="voceBtn" type="button" aria-pressed="true">VOCE ON</button><button class="chip" id="cfgBtn" type="button" aria-label="Impostazioni di collegamento">⚙</button></div>
     </div>
   </div>
 
@@ -132,12 +135,13 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
         <div class="mod"><span>Calendario</span><em class="ok">ATTIVO</em></div>
         <div class="mod"><span>Gemini</span><em class="ok" id="modAI">ATTIVO</em></div>
         <div class="mod"><span>Microfono</span><em class="ok" id="modMic">PRONTO</em></div>
+        <div class="mod"><span>Hey Jarvis</span><em class="wip" id="modWW">SPENTA</em></div>
       </div>
     </div>
   </div>
 
   <div class="bottom">
-    <div class="mobile-read">OGGI <b id="mP">–</b> · RICHIESTE <b id="mX">–</b> · PROSSIMO <b id="mU">–</b></div>
+    <div class="mobile-read">OGGI <b id="mP">–</b> · RICHIESTE <b id="mX">–</b> · PROSSIMO <b id="mU">–</b> · HEY JARVIS <b id="mWW">–</b></div>
     <div class="subs" id="subs" aria-live="polite"></div>
     <div class="row">
       <button class="mic" id="mic" type="button" aria-label="Parla con Jarvis">
@@ -228,7 +232,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
     voce=vs.filter(function(v){return /male|uomo|luca|diego|cosimo|itd/i.test(v.name);})[0]||vs[0]||null;}catch(e){}}
   if('speechSynthesis' in window){scegliVoce();speechSynthesis.onvoiceschanged=scegliVoce;}
   function stopVoce(){speaking=false;try{speechSynthesis.cancel();}catch(e){}}
-  function finito(){speaking=false;setStato('attesa');}
+  function finito(){speaking=false;setStato('attesa');dopoInterazione();}
   function animaSolo(testo){speaking=true;setStato('parla');setTimeout(finito,Math.max(1500,testo.split(/\s+/).length*330));}
   function parla(testo){
     stopVoce();
@@ -286,11 +290,12 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
       if(e.error==='not-allowed'){$('modMic').textContent='BLOCCATO';$('modMic').className='wip';}};
     rec.onend=function(){ascolta=false;userTalk=0;$('mic').classList.remove('on');
       if(vivo&&vivo.parentNode)vivo.parentNode.removeChild(vivo);
-      if(finale.trim()&&!inviato){inviato=true;chiedi(finale,true);}else if(!inviato&&stato==='ascolto')setStato('attesa');};
-    try{rec.start();}catch(e){hint.textContent='Il microfono non è partito, riprovi.';}
+      if(finale.trim()&&!inviato){inviato=true;chiedi(finale,true);}else if(!inviato){if(stato==='ascolto')setStato('attesa');dopoInterazione();}};
+    try{rec.start();}catch(e){hint.textContent='Il microfono non è partito, riprovi.';dopoInterazione();}
   }
-  $('mic').addEventListener('click',avviaAscolto);
-  cv.addEventListener('click',avviaAscolto);
+  function premiMic(){if(staz&&WW.attivo&&!ascolta){fermaMic();setTimeout(avviaAscolto,300);}else avviaAscolto();}
+  $('mic').addEventListener('click',premiMic);
+  cv.addEventListener('click',premiMic);
 
   /* ================= DATI REALI ================= */
   function mostraInfo(inf){
@@ -380,6 +385,168 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
     ipsT+=dt;if(ipsT>=.5){$('rI').textContent=Math.round(arrivi/ipsT);arrivi=0;ipsT=0;}
     var lv=Math.round(level*100);$('rV').textContent=lv+'%';$('mV').style.width=lv+'%';
     requestAnimationFrame(frame);
+  }
+
+
+  /* ================= MODALITÀ SEMPRE ATTIVA ================= */
+  // Parola chiave «Hey Jarvis» riconosciuta direttamente sul telefono (openWakeWord, licenza Apache-2.0)
+  var ORT_URL='https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/';
+  var MODELLI_URL=['./models/','https://huggingface.co/Soulcreek2/speechkit-wakeword-models/resolve/main/'];
+  var SOGLIA=0.5;
+  var staz=false,wakeLock=null,pollTimer=null,ultimoAvviso=null,annunci=[];
+  var WW={sess:null,ctx:null,stream:null,proc:null,attivo:false,hist:new Float32Array(0),pend:new Float32Array(0),mel:[],feat:[],coda:[],lavoro:false,pred:0,ultimo:0,score:0};
+  try{ultimoAvviso=Number(localStorage.getItem('jarvis_ultimo_avviso'))||null;}catch(e){}
+
+  function statoWW(t,cls){$('modWW').textContent=t;$('modWW').className=cls||'ok';$('mWW').textContent=t;}
+  function caricaOrt(){return new Promise(function(ok,ko){if(window.ort)return ok();var s=document.createElement('script');s.src=ORT_URL+'ort.min.js';s.onload=function(){ok();};s.onerror=function(){ko(new Error('libreria AI non scaricata'));};document.head.appendChild(s);});}
+  function creaSessione(nome){
+    var i=0;
+    function prova(){if(i>=MODELLI_URL.length)return Promise.reject(new Error('modello '+nome+' non trovato'));
+      var url=MODELLI_URL[i++]+nome;
+      return ort.InferenceSession.create(url,{executionProviders:['wasm']}).catch(function(){return prova();});}
+    return prova();
+  }
+  function caricaModelli(){
+    if(WW.sess)return Promise.resolve();
+    return caricaOrt().then(function(){
+      if(ort.env&&ort.env.wasm){ort.env.wasm.wasmPaths=ORT_URL;ort.env.wasm.numThreads=1;}
+      return Promise.all([creaSessione('melspectrogram.onnx'),creaSessione('embedding_model.onnx'),creaSessione('hey_jarvis.onnx')]);
+    }).then(function(s){WW.sess={mel:s[0],emb:s[1],kw:s[2]};});
+  }
+  function concat(a,b){var c=new Float32Array(a.length+b.length);c.set(a,0);c.set(b,a.length);return c;}
+  function resetBuffer(){WW.hist=new Float32Array(0);WW.pend=new Float32Array(0);WW.mel=[];WW.feat=[];WW.coda=[];WW.pred=0;}
+  function avviaMic(){
+    if(WW.attivo)return Promise.resolve();
+    return navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}}).then(function(stream){
+      WW.stream=stream;resetBuffer();
+      var AC=window.AudioContext||window.webkitAudioContext,ctx;
+      try{ctx=new AC({sampleRate:16000});}catch(e){ctx=new AC();}
+      WW.ctx=ctx;var rapporto=ctx.sampleRate/16000;
+      var src=ctx.createMediaStreamSource(stream),proc=ctx.createScriptProcessor(2048,1,1);
+      proc.onaudioprocess=function(e){
+        if(!WW.attivo)return;
+        var d=e.inputBuffer.getChannelData(0),n=Math.floor(d.length/rapporto),out=new Float32Array(n);
+        for(var k=0;k<n;k++){var x=d[Math.min(d.length-1,Math.floor(k*rapporto))];out[k]=Math.max(-1,Math.min(1,x))*32767;}
+        WW.pend=concat(WW.pend,out);
+        while(WW.pend.length>=1280){WW.coda.push(WW.pend.slice(0,1280));WW.pend=WW.pend.slice(1280);}
+        if(WW.coda.length>6)WW.coda.splice(0,WW.coda.length-6);
+        elabora();
+      };
+      src.connect(proc);proc.connect(ctx.destination);WW.proc=proc;WW.attivo=true;
+      if(ctx.state==='suspended')ctx.resume();
+      statoWW('IN ASCOLTO');
+    });
+  }
+  function fermaMic(){
+    WW.attivo=false;
+    try{WW.proc&&WW.proc.disconnect();}catch(e){}
+    try{WW.stream&&WW.stream.getTracks().forEach(function(t){t.stop();});}catch(e){}
+    try{WW.ctx&&WW.ctx.close();}catch(e){}
+    WW.proc=WW.stream=WW.ctx=null;
+  }
+  function elabora(){
+    if(WW.lavoro||!WW.sess)return;WW.lavoro=true;
+    (function giro(){
+      if(!WW.coda.length||!WW.attivo){WW.lavoro=false;return;}
+      passo(WW.coda.shift()).then(giro,function(e){console.log(e);WW.lavoro=false;});
+    })();
+  }
+  function passo(chunk){
+    var S=WW.sess;
+    WW.hist=concat(WW.hist,chunk);if(WW.hist.length>1760)WW.hist=WW.hist.slice(WW.hist.length-1760);
+    var x=WW.hist.length<1760?concat(new Float32Array(1760-WW.hist.length),WW.hist):WW.hist;
+    var f={};f[S.mel.inputNames[0]]=new ort.Tensor('float32',x,[1,1760]);
+    return S.mel.run(f).then(function(o){
+      var t=o[S.mel.outputNames[0]],d=t.data,nf=t.dims[t.dims.length-2];
+      for(var i=0;i<nf;i++){var fr=new Float32Array(32);for(var j=0;j<32;j++)fr[j]=d[i*32+j]/10+2;WW.mel.push(fr);}
+      if(WW.mel.length>100)WW.mel.splice(0,WW.mel.length-100);
+      if(WW.mel.length<76)return null;
+      var w=new Float32Array(76*32),ini=WW.mel.length-76;
+      for(var r=0;r<76;r++)w.set(WW.mel[ini+r],r*32);
+      var g={};g[S.emb.inputNames[0]]=new ort.Tensor('float32',w,[1,76,32,1]);
+      return S.emb.run(g);
+    }).then(function(o){
+      if(!o)return null;
+      WW.feat.push(new Float32Array(o[S.emb.outputNames[0]].data).slice(0,96));
+      if(WW.feat.length>16)WW.feat.splice(0,WW.feat.length-16);
+      if(WW.feat.length<16)return null;
+      var v=new Float32Array(16*96);for(var r=0;r<16;r++)v.set(WW.feat[r],r*96);
+      var h={};h[S.kw.inputNames[0]]=new ort.Tensor('float32',v,[1,16,96]);
+      return S.kw.run(h);
+    }).then(function(o){
+      if(!o)return;
+      var sc=o[S.kw.outputNames[0]].data[0];WW.pred++;
+      WW.score=WW.pred>5?sc:0;
+      if(WW.score>=SOGLIA&&Date.now()-WW.ultimo>2500&&!speaking&&!occupato&&!ascolta){WW.ultimo=Date.now();svegliato();}
+    });
+  }
+  function svegliato(){
+    kick=1;hint.textContent='Sì, signore?';
+    fermaMic();
+    setTimeout(avviaAscolto,300);
+  }
+  function riprendiWW(){
+    if(!staz||!WW.sess||WW.attivo||ascolta||occupato||speaking)return;
+    avviaMic().catch(function(e){statoWW('ERRORE','wip');hint.textContent='Microfono non disponibile: '+e.message;});
+  }
+  function dopoInterazione(){
+    if(!staz)return;
+    setTimeout(function(){
+      if(ascolta||occupato||speaking)return;
+      if(annunci.length)return prossimoAnnuncio();
+      riprendiWW();
+    },400);
+  }
+  function prossimoAnnuncio(){
+    if(!annunci.length||ascolta||occupato||speaking)return;
+    var a=annunci.shift();riga('jv','📣 '+a);parla(a);
+  }
+  function controllaNovita(){
+    if(!CFG.url)return;
+    api({azione:'novita',dopo:ultimoAvviso===null?9e15:ultimoAvviso}).then(function(j){
+      mostraInfo(j.info);
+      if(ultimoAvviso===null){ultimoAvviso=j.adesso;}
+      (j.avvisi||[]).forEach(function(a){annunci.push(a.x);ultimoAvviso=Math.max(ultimoAvviso,a.t);});
+      try{localStorage.setItem('jarvis_ultimo_avviso',String(ultimoAvviso));}catch(e){}
+      prossimoAnnuncio();
+    },function(e){console.log(e);});
+  }
+  function chiediWakeLock(){
+    try{if(navigator.wakeLock)navigator.wakeLock.request('screen').then(function(l){wakeLock=l;},function(){});}catch(e){}
+  }
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='visible'&&staz){chiediWakeLock();if(WW.ctx&&WW.ctx.state==='suspended')WW.ctx.resume();controllaNovita();}
+  });
+  function attivaStaz(){
+    staz=true;$('stazBtn').setAttribute('aria-pressed','true');$('stazBtn').classList.remove('blink');
+    try{localStorage.setItem('jarvis_staz','on');}catch(e){}
+    chiediWakeLock();
+    try{speechSynthesis.speak(new SpeechSynthesisUtterance(''));}catch(e){}
+    controllaNovita();clearInterval(pollTimer);pollTimer=setInterval(controllaNovita,60000);
+    statoWW('CARICAMENTO','wip');hint.textContent='Preparo il riconoscimento di «Hey Jarvis»… (la prima volta scarica circa 3 MB)';
+    caricaModelli().then(function(){return avviaMic();}).then(function(){
+      hint.textContent='Sempre attivo. Dica «Hey Jarvis» e poi la domanda.';
+    }).catch(function(e){
+      statoWW('NON DISPONIBILE','wip');
+      hint.textContent='Parola chiave non disponibile ('+e.message+'). Gli avvisi vocali restano attivi: per parlare tocca il microfono.';
+    });
+  }
+  function spegniStaz(){
+    staz=false;$('stazBtn').setAttribute('aria-pressed','false');
+    try{localStorage.setItem('jarvis_staz','off');}catch(e){}
+    fermaMic();clearInterval(pollTimer);
+    try{wakeLock&&wakeLock.release();}catch(e){}wakeLock=null;
+    statoWW('SPENTA','wip');hint.textContent='Modalità sempre attiva spenta.';
+  }
+  $('stazBtn').addEventListener('click',function(){staz?spegniStaz():attivaStaz();});
+  statoWW('SPENTA','wip');
+  if((function(){try{return localStorage.getItem('jarvis_staz')==='on';}catch(e){return false;}})()&&CFG.url){
+    $('stazBtn').classList.add('blink');hint.textContent='Tocca un punto qualsiasi per riattivare la modalità sempre attiva.';
+    document.addEventListener('pointerdown',function primo(ev){
+      document.removeEventListener('pointerdown',primo,true);
+      if(ev.target&&ev.target.id==='stazBtn')return;
+      ev.stopPropagation();ev.preventDefault();attivaStaz();
+    },true);
   }
 
   var giorni=['DOM','LUN','MAR','MER','GIO','VEN','SAB'];
