@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta name="theme-color" content="#05040b">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>J.A.R.V.I.S</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Mondo unico cyberpunk: nero violaceo, neon ciano (calma) e magenta (voce), giallo per gli avvisi.
+   Layout: nucleo neurale a tutto schermo, HUD ai bordi, sottotitoli e microfono in basso. */
+:root{
+  --bg:#05040b; --panel:rgba(12,10,26,.74); --line:#2a2248; --ink:#e9f7ff; --muted:#8c86b3;
+  --cyan:#00f0ff; --magenta:#ff2bd6; --yellow:#f5e94a;
+  --display:"Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, "Roboto Mono", monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--mono);overflow:hidden}
+#core{position:fixed;inset:0;width:100%;height:100%;display:block}
+.grid{position:fixed;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(0,240,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(0,240,255,.045) 1px,transparent 1px);
+  background-size:44px 44px;
+  mask-image:radial-gradient(ellipse at center,transparent 18%,#000 75%);-webkit-mask-image:radial-gradient(ellipse at center,transparent 18%,#000 75%)}
+.scan{position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px)}
+.vign{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 45%,rgba(0,0,0,.75) 100%)}
+
+.hud{position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr auto;padding:14px 16px 14px;gap:8px;pointer-events:none}
+.hud > *{pointer-events:auto}
+.mid{pointer-events:none!important}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.logo{font:700 1.5rem/1 var(--display);letter-spacing:.32em;position:relative;text-shadow:0 0 12px rgba(0,240,255,.6)}
+.logo::before,.logo::after{content:attr(data-t);position:absolute;inset:0;opacity:.7}
+.logo::before{color:var(--magenta);clip-path:inset(0 0 55% 0);animation:gl 3.2s infinite steps(1)}
+.logo::after{color:var(--cyan);clip-path:inset(60% 0 0 0);animation:gl 2.7s infinite steps(1) reverse}
+@keyframes gl{0%,92%{transform:translate(0)}93%{transform:translate(3px,-1px)}96%{transform:translate(-3px,1px)}}
+.sub{font-size:.68rem;letter-spacing:.22em;color:var(--muted);margin-top:6px}
+.right{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.clock{text-align:right;font-variant-numeric:tabular-nums}
+.clock b{display:block;font:600 1.35rem/1 var(--display);color:var(--cyan);letter-spacing:.08em}
+.clock span{font-size:.68rem;color:var(--muted);letter-spacing:.15em}
+.chip{font:600 .66rem var(--display);letter-spacing:.16em;color:var(--muted);background:var(--panel);border:1px solid var(--line);padding:5px 9px;cursor:pointer}
+.chip[aria-pressed="true"]{color:var(--cyan);border-color:var(--cyan)}
+
+.mid{position:relative;display:flex;justify-content:space-between;align-items:center}
+.side{display:flex;flex-direction:column;gap:8px;width:172px}
+.read{background:var(--panel);border:1px solid var(--line);padding:8px 10px;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%)}
+.read small{display:block;font-size:.62rem;letter-spacing:.2em;color:var(--muted)}
+.read b{font:600 1.1rem var(--display);font-variant-numeric:tabular-nums;color:var(--ink);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.read.r b{color:var(--magenta)}
+.read.w b{color:var(--yellow)}
+.read .meter{height:3px;background:var(--line);margin-top:5px}
+.read .meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--magenta))}
+.mod{font-size:.7rem;display:flex;justify-content:space-between;gap:6px}
+.mod em{font-style:normal}
+.ok{color:var(--cyan)} .wip{color:var(--yellow)}
+
+.stato{position:absolute;left:50%;bottom:2%;transform:translateX(-50%);text-align:center;white-space:nowrap}
+.stato b{font:700 1rem var(--display);letter-spacing:.4em;padding-left:.4em}
+.stato span{display:block;font-size:.66rem;color:var(--muted);letter-spacing:.18em;margin-top:2px}
+
+.bottom{display:flex;flex-direction:column;gap:10px;max-width:660px;width:100%;margin:0 auto}
+.subs{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--magenta);padding:10px 12px;max-height:30vh;overflow-y:auto;display:flex;flex-direction:column;gap:6px;font-size:.84rem}
+.subs:empty{display:none}
+.subs p{margin:0}
+.subs .tu{color:var(--muted)}
+.subs .tu::before{content:"TU › ";color:var(--cyan);letter-spacing:.1em}
+.subs .jv::before{content:"JARVIS › ";color:var(--magenta);letter-spacing:.1em}
+.row{display:flex;gap:8px;align-items:center}
+.mic{flex:none;width:58px;height:58px;border-radius:50%;border:2px solid var(--cyan);background:rgba(0,240,255,.08);color:var(--cyan);display:grid;place-items:center;cursor:pointer;box-shadow:0 0 18px rgba(0,240,255,.25)}
+.mic svg{width:26px;height:26px}
+.mic.on{border-color:var(--magenta);color:var(--magenta);background:rgba(255,43,214,.12);box-shadow:0 0 26px rgba(255,43,214,.55);animation:pul 1s infinite}
+@keyframes pul{50%{transform:scale(1.07)}}
+.mic[disabled]{opacity:.35}
+form.say{flex:1;display:flex;gap:6px;min-width:0}
+.say input{flex:1;min-width:0;font:14px var(--mono);color:var(--ink);background:var(--panel);border:1px solid var(--line);padding:13px 12px;outline:none}
+.say input:focus{border-color:var(--magenta)}
+.say button{font:600 .8rem var(--display);letter-spacing:.14em;padding:0 16px;background:var(--magenta);border:0;color:#14000f;cursor:pointer;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
+.hint{font-size:.68rem;color:var(--muted);text-align:center;min-height:1.1em}
+.mobile-read{display:flex;justify-content:center;gap:12px;font-size:.66rem;color:var(--muted);letter-spacing:.1em;flex-wrap:wrap}
+.mobile-read b{color:var(--ink);font-variant-numeric:tabular-nums}
+.ov{position:fixed;inset:0;background:rgba(5,4,11,.86);display:grid;place-items:center;padding:16px;z-index:10;backdrop-filter:blur(6px)}
+.ov[hidden]{display:none}
+.box{width:100%;max-width:440px;background:#0c0a1a;border:1px solid var(--cyan);padding:22px 18px;display:flex;flex-direction:column;gap:10px;box-shadow:0 0 40px rgba(0,240,255,.18);clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px))}
+.box h2{margin:0 0 4px;font:700 1.2rem var(--display);letter-spacing:.3em;color:var(--cyan)}
+.box p{margin:0;font-size:.78rem;color:var(--muted)}
+.box label{font-size:.72rem;letter-spacing:.12em;color:var(--ink);margin-top:6px}
+.box input{font:14px var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line);padding:12px;width:100%;outline:none}
+.box input:focus{border-color:var(--magenta)}
+.box button{margin-top:8px;font:700 .95rem var(--display);letter-spacing:.2em;padding:14px;background:var(--cyan);color:var(--bg);border:0;cursor:pointer}
+.box .msg{min-height:1.2em;color:var(--yellow)}
+.box .x{background:transparent;color:var(--muted);border:1px solid var(--line);margin-top:0;font-size:.75rem;padding:9px}
+.topbtns{display:flex;gap:6px}
+@media (max-width:620px){ .side{display:none} .logo{font-size:1.2rem} }
+@media (min-width:621px){ .mobile-read{display:none} }
+@media (prefers-reduced-motion:reduce){.logo::before,.logo::after,.mic.on{animation:none}}
+</style>
+</head>
+<body>
+<canvas id="core" aria-label="Nucleo neurale di Jarvis"></canvas>
+<div class="grid"></div><div class="vign"></div><div class="scan"></div>
+
+<div class="hud">
+  <div class="top">
+    <div>
+      <div class="logo" data-t="J.A.R.V.I.S">J.A.R.V.I.S</div>
+      <div class="sub" id="sub">NUCLEO NEURALE · v0.4</div>
+    </div>
+    <div class="right">
+      <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
+      <div class="topbtns"><button class="chip" id="voceBtn" type="button" aria-pressed="true">VOCE ON</button><button class="chip" id="cfgBtn" type="button" aria-label="Impostazioni di collegamento">⚙</button></div>
+    </div>
+  </div>
+
+  <div class="mid">
+    <div class="side">
+      <div class="read"><small>PROPOSTE</small><b id="rP">–</b></div>
+      <div class="read w"><small>SOSPETTE</small><b id="rX">–</b></div>
+      <div class="read"><small>ULTIMA</small><b id="rU">–</b></div>
+    </div>
+    <div class="stato"><b id="statoT">IN ATTESA</b><span id="statoS">Pronto, signore.</span></div>
+    <div class="side">
+      <div class="read"><small>LIVELLO VOCE</small><b id="rV">0%</b><div class="meter"><i id="mV"></i></div></div>
+      <div class="read r"><small>IMPULSI / SEC</small><b id="rI">0</b></div>
+      <div class="read"><small>MODULI</small>
+        <div class="mod"><span>Gmail</span><em class="ok">ATTIVO</em></div>
+        <div class="mod"><span>Gemini</span><em class="ok" id="modAI">ATTIVO</em></div>
+        <div class="mod"><span>Microfono</span><em class="ok" id="modMic">PRONTO</em></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom">
+    <div class="mobile-read">PROPOSTE <b id="mP">–</b> · SOSPETTE <b id="mX">–</b> · ULTIMA <b id="mU">–</b></div>
+    <div class="subs" id="subs" aria-live="polite"></div>
+    <div class="row">
+      <button class="mic" id="mic" type="button" aria-label="Parla con Jarvis">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+      </button>
+      <form class="say" id="sayForm">
+        <input id="frase" placeholder="Scrivi a Jarvis…" aria-label="Scrivi a Jarvis" autocomplete="off">
+        <button type="submit">INVIA</button>
+      </form>
+    </div>
+    <div class="hint" id="hint">Tocca il microfono o il nucleo e parla.</div>
+  </div>
+</div>
+
+<div class="ov" id="ov" hidden>
+  <form class="box" id="cfgForm">
+    <h2>COLLEGA JARVIS</h2>
+    <p>Lo fai una volta sola: il telefono se lo ricorda.</p>
+    <label for="cUrl">INDIRIZZO APP WEB (finisce con /exec)</label>
+    <input id="cUrl" type="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://script.google.com/macros/s/.../exec">
+    <label for="cCod">CODICE DI ACCESSO</label>
+    <input id="cCod" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <button type="submit" id="cOk">COLLEGA</button>
+    <button type="button" class="x" id="cChiudi">CHIUDI</button>
+    <div class="msg" id="cMsg" role="status"></div>
+  </form>
+</div>
+
+<script>
+(function(){
+  var cv=document.getElementById('core'), ctx=cv.getContext('2d');
+  var W=0,H=0,DPR=1;
+  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var $=function(id){return document.getElementById(id);};
+  var CFG={url:'',codice:''};
+  try{CFG=JSON.parse(localStorage.getItem('jarvis_cfg'))||CFG;}catch(e){}
+  function api(dati,cfg){
+    cfg=cfg||CFG;
+    if(!cfg.url)return Promise.reject(new Error('Jarvis non è collegato: tocca ⚙ in alto.'));
+    dati.codice=cfg.codice;
+    return fetch(cfg.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(dati),redirect:'follow'})
+      .then(function(r){return r.text();})
+      .then(function(t){var j;try{j=JSON.parse(t);}catch(e){throw new Error('Il server non risponde come previsto. In Apps Script controlla che "Chi ha accesso" sia "Chiunque" e di aver pubblicato una nuova versione.');}
+        if(!j.ok)throw new Error(j.errore||'Errore sconosciuto.');return j;});
+  }
+
+  function resize(){DPR=Math.min(window.devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);}
+  addEventListener('resize',resize);resize();
+
+  /* ================= RETE NEURALE ================= */
+  var nodes=[],edges=[],adj=[],NO=170,NI=40,golden=Math.PI*(3-Math.sqrt(5)),i;
+  for(i=0;i<NO;i++){var y=1-(i/(NO-1))*2,r=Math.sqrt(1-y*y),th=golden*i,rr=.82+Math.random()*.22;
+    nodes.push({x:Math.cos(th)*r*rr,y:y*rr,z:Math.sin(th)*r*rr,act:0,ph:Math.random()*6.28,inner:false});}
+  for(i=0;i<NI;i++){var u=Math.random()*2-1,a=Math.random()*6.28,s=Math.sqrt(1-u*u),R=.18+Math.random()*.45;
+    nodes.push({x:Math.cos(a)*s*R,y:u*R,z:Math.sin(a)*s*R,act:0,ph:Math.random()*6.28,inner:true});}
+  nodes.forEach(function(){adj.push([]);});
+  var seen={};
+  nodes.forEach(function(n,i){
+    var d=nodes.map(function(m,j){return {j:j,d:(n.x-m.x)*(n.x-m.x)+(n.y-m.y)*(n.y-m.y)+(n.z-m.z)*(n.z-m.z)};})
+      .filter(function(o){return o.j!==i;}).sort(function(a,b){return a.d-b.d;});
+    for(var q=0;q<(n.inner?4:3);q++){var j=d[q].j,key=i<j?i+'-'+j:j+'-'+i;if(seen[key])continue;seen[key]=1;
+      adj[i].push(edges.length);adj[j].push(edges.length);edges.push({a:i,b:j,bend:(Math.random()-.5)*.25,act:0});}
+  });
+  var pulses=[];
+
+  /* ================= STATI ================= */
+  var STATI={
+    attesa:{rot:.12,fire:2,scale:1,tint:0,t:'IN ATTESA',s:'Pronto, signore.'},
+    ascolto:{rot:.06,fire:5,scale:.9,tint:0,t:'IN ASCOLTO',s:'La ascolto.'},
+    pensa:{rot:.55,fire:34,scale:.96,tint:.55,t:'ELABORAZIONE',s:'Un momento.'},
+    parla:{rot:.2,fire:6,scale:1,tint:.25,t:'PARLA',s:'Trasmissione vocale.'}
+  };
+  var stato='attesa',cur={rot:.12,fire:2,scale:1,tint:0},level=0,levelT=0,speaking=false,userTalk=0,kick=0;
+  function setStato(s,sub){stato=s;$('statoT').textContent=STATI[s].t;$('statoS').textContent=sub||STATI[s].s;}
+
+  /* ================= SOTTOTITOLI ================= */
+  function riga(cls,testo){var p=document.createElement('p');p.className=cls;p.textContent=testo;$('subs').appendChild(p);
+    while($('subs').children.length>6)$('subs').removeChild($('subs').firstChild);$('subs').scrollTop=1e6;return p;}
+  var hint=$('hint');
+
+  /* ================= VOCE DI JARVIS ================= */
+  var voceOn=true,voce=null;
+  try{if(localStorage.getItem('jarvis_voce')==='off')voceOn=false;}catch(e){}
+  function aggiornaVoceBtn(){$('voceBtn').setAttribute('aria-pressed',voceOn);$('voceBtn').textContent=voceOn?'VOCE ON':'VOCE OFF';}
+  aggiornaVoceBtn();
+  $('voceBtn').onclick=function(){voceOn=!voceOn;aggiornaVoceBtn();try{localStorage.setItem('jarvis_voce',voceOn?'on':'off');}catch(e){}if(!voceOn)stopVoce();};
+  function scegliVoce(){try{var vs=speechSynthesis.getVoices().filter(function(v){return /^it/i.test(v.lang);});
+    voce=vs.filter(function(v){return /male|uomo|luca|diego|cosimo|itd/i.test(v.name);})[0]||vs[0]||null;}catch(e){}}
+  if('speechSynthesis' in window){scegliVoce();speechSynthesis.onvoiceschanged=scegliVoce;}
+  function stopVoce(){speaking=false;try{speechSynthesis.cancel();}catch(e){}}
+  function finito(){speaking=false;setStato('attesa');hint.textContent='Tocca il microfono o il nucleo e parla.';}
+  function animaSolo(testo){speaking=true;setStato('parla');setTimeout(finito,Math.max(1500,testo.split(/\s+/).length*330));}
+  function parla(testo){
+    stopVoce();
+    if(!voceOn||!('speechSynthesis' in window)){animaSolo(testo);return;}
+    try{
+      var u=new SpeechSynthesisUtterance(testo.replace(/https?:\S+/g,''));u.lang='it-IT';u.rate=1.02;u.pitch=.9;if(voce)u.voice=voce;
+      var partito=false;
+      u.onstart=function(){partito=true;speaking=true;setStato('parla');};
+      u.onboundary=function(){kick=1;};
+      u.onend=u.onerror=finito;
+      speechSynthesis.speak(u);
+      setTimeout(function(){if(!partito&&!speaking){animaSolo(testo);}},2000);
+    }catch(e){animaSolo(testo);}
+  }
+
+  /* ================= DOMANDE A JARVIS ================= */
+  var occupato=false;
+  function chiedi(testo,aVoce){
+    testo=testo.trim();if(!testo||occupato)return;
+    occupato=true;riga('tu',testo);setStato('pensa');hint.textContent='';
+    var fatto=function(risposta){occupato=false;riga('jv',risposta);$('modAI').textContent='ATTIVO';$('modAI').className='ok';parla(risposta);};
+    var errore=function(err){occupato=false;$('modAI').textContent='ERRORE';$('modAI').className='wip';
+      var msg=(err&&err.message&&err.message.indexOf('Failed to fetch')<0)?err.message:'Non riesco a raggiungere il server. Controlli la connessione e riprovi.';riga('jv',msg);parla(msg);console.log(err);};
+    api({azione:'chiedi',testo:testo,voce:!!aVoce}).then(function(j){mostraInfo(j.info);fatto(j.risposta);},errore);
+  }
+  $('sayForm').addEventListener('submit',function(ev){ev.preventDefault();var t=$('frase').value;$('frase').value='';$('frase').blur();chiedi(t,false);});
+
+  /* ================= MICROFONO ================= */
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition,rec=null,ascolta=false,finale='';
+  if(!SR){$('modMic').textContent='ASSENTE';$('modMic').className='wip';$('mic').disabled=true;hint.textContent='Questo browser non riconosce la voce: usa Chrome, oppure scrivi.';}
+  function avviaAscolto(){
+    if(!SR||occupato)return;
+    if(ascolta){try{rec.stop();}catch(e){}return;}
+    stopVoce();finale='';
+    rec=new SR();rec.lang='it-IT';rec.interimResults=true;rec.continuous=false;rec.maxAlternatives=1;
+    var vivo=null;
+    rec.onstart=function(){ascolta=true;$('mic').classList.add('on');setStato('ascolto');hint.textContent='Parli pure. Mi fermo quando smette.';};
+    rec.onspeechstart=function(){userTalk=1;};
+    rec.onresult=function(e){var tmp='';finale='';
+      for(var k=0;k<e.results.length;k++){var t=e.results[k][0].transcript;if(e.results[k].isFinal)finale+=t;else tmp+=t;}
+      kick=1;userTalk=1;var mostra=(finale+tmp).trim();
+      if(!vivo)vivo=riga('tu',mostra);else vivo.textContent=mostra;};
+    rec.onerror=function(e){
+      var m={'not-allowed':'Permesso microfono negato. Tocca l\'icona a sinistra dell\'indirizzo → Autorizzazioni → Microfono → Consenti, poi ricarica.',
+        'no-speech':'Non ho sentito nulla. Riprovi.','network':'Il riconoscimento vocale richiede internet.','audio-capture':'Nessun microfono disponibile.'}[e.error];
+      hint.textContent=m||('Errore microfono: '+e.error);
+      if(e.error==='not-allowed'){$('modMic').textContent='BLOCCATO';$('modMic').className='wip';}};
+    rec.onend=function(){ascolta=false;userTalk=0;$('mic').classList.remove('on');
+      if(vivo&&vivo.parentNode)vivo.parentNode.removeChild(vivo);
+      if(finale.trim())chiedi(finale,true);else if(stato==='ascolto')setStato('attesa');};
+    try{rec.start();}catch(e){hint.textContent='Il microfono non è partito, riprovi.';}
+  }
+  $('mic').addEventListener('click',avviaAscolto);
+  cv.addEventListener('click',avviaAscolto);
+
+  /* ================= DATI REALI ================= */
+  function mostraInfo(inf){
+    if(!inf)return;
+    ['rP','mP'].forEach(function(id){$(id).textContent=inf.proposte;});
+    ['rX','mX'].forEach(function(id){$(id).textContent=inf.sospette;});
+    var ul=inf.ultima?inf.ultima+(inf.ultimaData?' · '+inf.ultimaData:''):'nessuna';
+    ['rU','mU'].forEach(function(id){$(id).textContent=ul;});
+    if(inf.nome){STATI.attesa.s='Pronto, '+inf.nome+'.';if(stato==='attesa')setStato('attesa');}
+  }
+  function caricaInfo(){if(!CFG.url)return;api({azione:'info'}).then(function(j){mostraInfo(j.info);$('modAI').textContent='ATTIVO';$('modAI').className='ok';},
+    function(e){$('modAI').textContent='OFFLINE';$('modAI').className='wip';hint.textContent=e.message;});}
+  caricaInfo();setInterval(caricaInfo,5*60*1000);
+
+  /* ================= COLLEGAMENTO ================= */
+  function apriCfg(){$('cUrl').value=CFG.url||'';$('cCod').value=CFG.codice||'';$('cMsg').textContent='';$('ov').hidden=false;}
+  $('cfgBtn').onclick=apriCfg;
+  $('cChiudi').onclick=function(){$('ov').hidden=true;};
+  $('cfgForm').addEventListener('submit',function(ev){
+    ev.preventDefault();
+    var nuovo={url:$('cUrl').value.trim(),codice:$('cCod').value.trim()};
+    if(!/^https:\/\/script\.google\.com\/.+\/exec$/.test(nuovo.url)){$('cMsg').textContent='L\'indirizzo deve iniziare con https://script.google.com/ e finire con /exec';return;}
+    if(!nuovo.codice){$('cMsg').textContent='Scrivi il codice di accesso.';return;}
+    $('cMsg').textContent='Collegamento in corso…';$('cOk').disabled=true;
+    api({azione:'info'},nuovo).then(function(j){
+      CFG=nuovo;try{localStorage.setItem('jarvis_cfg',JSON.stringify(CFG));}catch(e){}
+      $('cOk').disabled=false;$('ov').hidden=true;mostraInfo(j.info);$('modAI').textContent='ATTIVO';$('modAI').className='ok';
+      hint.textContent='Collegato. Tocca il microfono o il nucleo e parla.';
+    },function(e){$('cOk').disabled=false;$('cMsg').textContent=e.message.indexOf('Failed to fetch')>-1?'Indirizzo non raggiungibile: ricontrollalo.':e.message;});
+  });
+  if(!CFG.url)apriCfg();
+
+  /* ================= ANIMAZIONE ================= */
+  var t0=performance.now(),last=t0,rotY=0,arrivi=0,ipsT=0,spawnAcc=0,C1=[0,240,255],C2=[255,43,214];
+  function mixA(a,b,k,al){return 'rgba('+Math.round(a[0]+(b[0]-a[0])*k)+','+Math.round(a[1]+(b[1]-a[1])*k)+','+Math.round(a[2]+(b[2]-a[2])*k)+','+al+')';}
+  function sprite(c){var s=document.createElement('canvas');s.width=s.height=64;var g=s.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);
+    gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.18,'rgba('+c+',.9)');gr.addColorStop(.45,'rgba('+c+',.25)');gr.addColorStop(1,'rgba('+c+',0)');
+    g.fillStyle=gr;g.fillRect(0,0,64,64);return s;}
+  var spC=sprite('0,240,255'),spM=sprite('255,43,214');
+  function spawn(from,depth){var es=adj[from];if(!es.length)return;var e=edges[es[(Math.random()*es.length)|0]];
+    pulses.push({e:e,dir:e.a===from?1:-1,p:0,v:1.1+Math.random()*1.2+cur.fire*.02,depth:depth});}
+
+  function frame(now){
+    var dt=Math.min(.05,(now-last)/1000);last=now;var t=(now-t0)/1000,S=STATI[stato],p,e,A,B,n,mx,my,a;
+    if(speaking){var syl=Math.abs(Math.sin(t*Math.PI*4.4))*(.55+.45*Math.sin(t*1.7+Math.sin(t*5.3)));levelT=Math.max(levelT*.9,.25+.5*syl,kick);}
+    else if(stato==='ascolto'){levelT=userTalk>.05?Math.max(.15+.35*Math.abs(Math.sin(t*9)*Math.sin(t*3.1)),kick*.7):.08+.05*Math.abs(Math.sin(t*2.1));}
+    else levelT*=.9;
+    userTalk*=Math.pow(.3,dt);kick*=Math.pow(.02,dt);
+    level+=(levelT-level)*Math.min(1,dt*14);
+    var k=Math.min(1,dt*3);
+    cur.rot+=(S.rot-cur.rot)*k;cur.scale+=(S.scale+level*.22-cur.scale)*k*2;
+    cur.tint+=(Math.min(1,S.tint+(stato==='parla'?level*.8:0))-cur.tint)*k*2;
+    cur.fire+=(S.fire+level*55-cur.fire)*k;
+    var fire=reduce?cur.fire*.3:cur.fire;rotY+=cur.rot*dt*(reduce?.4:1);
+    spawnAcc+=fire*dt;while(spawnAcc>1){spawnAcc--;spawn((Math.random()*nodes.length)|0,0);}
+    if(kick>.9){for(var z=0;z<6;z++)spawn(NO+((Math.random()*NI)|0),0);kick=.89;}
+    for(i=pulses.length-1;i>=0;i--){p=pulses[i];p.p+=p.v*dt;p.e.act=Math.max(p.e.act,.8);
+      if(p.p>=1){var to=p.dir>0?p.e.b:p.e.a;nodes[to].act=1;arrivi++;if(p.depth<3&&Math.random()<.35+level*.4)spawn(to,p.depth+1);pulses.splice(i,1);}}
+    if(pulses.length>500)pulses.splice(0,pulses.length-500);
+
+    var cx=W/2,cy=H*(W<620?.42:.45),base=Math.min(W,H)*(W<620?.27:.21)*cur.scale;
+    var cY=Math.cos(rotY),sY=Math.sin(rotY),tilt=.35+Math.sin(t*.23)*.12,cX=Math.cos(tilt),sX=Math.sin(tilt);
+    for(i=0;i<nodes.length;i++){n=nodes[i];var wob=1+.025*Math.sin(t*1.3+n.ph)+level*.16*Math.sin(n.ph*3+t*9);
+      var x=n.x*wob,y=n.y*wob,zz=n.z*wob,x1=x*cY-zz*sY,z1=x*sY+zz*cY,y1=y*cX-z1*sX,z2=y*sX+z1*cX,f=2.6/(2.6+z2);
+      n.sx=cx+x1*base*f;n.sy=cy+y1*base*f;n.d=(1-z2)/2;n.f=f;n.act*=Math.pow(.08,dt);}
+
+    ctx.clearRect(0,0,W,H);
+    var halo=ctx.createRadialGradient(cx,cy,0,cx,cy,base*1.6);
+    halo.addColorStop(0,mixA(C1,C2,cur.tint,.10+level*.12));halo.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=halo;ctx.fillRect(0,0,W,H);
+    ctx.globalCompositeOperation='lighter';
+    ctx.beginPath();var RR=base*1.32;
+    for(a=0;a<=128;a++){var ang=a/128*Math.PI*2,amp=level*base*.13*(Math.sin(ang*6+t*7)*.5+Math.sin(ang*13-t*11)*.35+Math.sin(ang*3+t*3)*.3);
+      var px=cx+Math.cos(ang)*(RR+amp),py=cy+Math.sin(ang)*(RR+amp);a?ctx.lineTo(px,py):ctx.moveTo(px,py);}
+    ctx.strokeStyle=mixA(C1,C2,cur.tint,.25+level*.6);ctx.lineWidth=1.2+level*1.5;ctx.stroke();
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(-t*.08);ctx.strokeStyle='rgba(0,240,255,.22)';ctx.lineWidth=1;
+    for(a=0;a<72;a++){var L=a%6===0?10:4,a2=a/72*Math.PI*2,r0=base*1.48;ctx.beginPath();ctx.moveTo(Math.cos(a2)*r0,Math.sin(a2)*r0);ctx.lineTo(Math.cos(a2)*(r0+L),Math.sin(a2)*(r0+L));ctx.stroke();}
+    ctx.rotate(t*.2);ctx.strokeStyle='rgba(255,43,214,.28)';ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(0,0,base*1.58,0,Math.PI*.35);ctx.stroke();ctx.beginPath();ctx.arc(0,0,base*1.58,Math.PI,Math.PI*1.18);ctx.stroke();ctx.restore();
+    for(i=0;i<edges.length;i++){e=edges[i];A=nodes[e.a];B=nodes[e.b];var al=.05+(A.d+B.d)/2*.12+e.act*.5+level*.08;e.act*=Math.pow(.05,dt);
+      mx=(A.sx+B.sx)/2+(B.sy-A.sy)*e.bend;my=(A.sy+B.sy)/2-(B.sx-A.sx)*e.bend;
+      ctx.beginPath();ctx.moveTo(A.sx,A.sy);ctx.quadraticCurveTo(mx,my,B.sx,B.sy);ctx.strokeStyle=mixA(C1,C2,Math.min(1,cur.tint+e.act*.3),al);ctx.lineWidth=.6+e.act*1.1;ctx.stroke();}
+    for(i=0;i<pulses.length;i++){p=pulses[i];e=p.e;A=nodes[e.a];B=nodes[e.b];var tt=p.dir>0?p.p:1-p.p;
+      mx=(A.sx+B.sx)/2+(B.sy-A.sy)*e.bend;my=(A.sy+B.sy)/2-(B.sx-A.sx)*e.bend;var u1=1-tt,qx=u1*u1*A.sx+2*u1*tt*mx+tt*tt*B.sx,qy=u1*u1*A.sy+2*u1*tt*my+tt*tt*B.sy,sz=7+level*6;
+      ctx.globalAlpha=.9;ctx.drawImage(Math.random()<cur.tint?spM:spC,qx-sz/2,qy-sz/2,sz,sz);}
+    for(i=0;i<nodes.length;i++){n=nodes[i];var sz2=(n.inner?5:4)*n.f*(1+n.act*2.2+level*.6)+2,aa=.25+n.d*.55+n.act*.4,m=Math.min(1,cur.tint+n.act*.25);
+      ctx.globalAlpha=aa*(1-m);ctx.drawImage(spC,n.sx-sz2*2,n.sy-sz2*2,sz2*4,sz2*4);ctx.globalAlpha=aa*m;ctx.drawImage(spM,n.sx-sz2*2,n.sy-sz2*2,sz2*4,sz2*4);}
+    ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
+    ipsT+=dt;if(ipsT>=.5){$('rI').textContent=Math.round(arrivi/ipsT);arrivi=0;ipsT=0;}
+    var lv=Math.round(level*100);$('rV').textContent=lv+'%';$('mV').style.width=lv+'%';
+    requestAnimationFrame(frame);
+  }
+
+  var giorni=['DOM','LUN','MAR','MER','GIO','VEN','SAB'];
+  function orologio(){var d=new Date();$('ora').textContent=d.toLocaleTimeString('it-IT',{hour12:false});$('data').textContent=giorni[d.getDay()]+' '+d.toLocaleDateString('it-IT');}
+  setInterval(orologio,1000);orologio();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
