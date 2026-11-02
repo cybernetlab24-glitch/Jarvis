@@ -4,7 +4,7 @@
 <meta name="theme-color" content="#05040b">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>J.A.R.V.I.S</title>
+<title>A.R.G.U.S.</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -71,7 +71,7 @@ body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--mono);overflow:hi
 .subs img.grande{position:fixed;inset:0;margin:auto;max-height:92vh;max-width:96vw;z-index:20;box-shadow:0 0 0 100vmax rgba(0,0,0,.85);cursor:zoom-out}
 .subs .tu{color:var(--muted)}
 .subs .tu::before{content:"TU › ";color:var(--cyan);letter-spacing:.1em}
-.subs .jv::before{content:"JARVIS › ";color:var(--magenta);letter-spacing:.1em}
+.subs .jv::before{content:"ARGUS › ";color:var(--magenta);letter-spacing:.1em}
 .row{display:flex;gap:8px;align-items:center}
 .mic{flex:none;width:58px;height:58px;border-radius:50%;border:2px solid var(--cyan);background:rgba(0,240,255,.08);color:var(--cyan);display:grid;place-items:center;cursor:pointer;box-shadow:0 0 18px rgba(0,240,255,.25)}
 .mic svg{width:26px;height:26px}
@@ -118,14 +118,14 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
 </style>
 </head>
 <body>
-<canvas id="core" aria-label="Nucleo neurale di Jarvis"></canvas>
+<canvas id="core" aria-label="Nucleo neurale di ARGUS"></canvas>
 <div class="grid"></div><div class="vign"></div><div class="scan"></div>
 
 <div class="hud">
   <div class="top">
     <div>
-      <div class="logo" data-t="J.A.R.V.I.S">J.A.R.V.I.S</div>
-      <div class="sub" id="sub">NUCLEO NEURALE · v1.0</div>
+      <div class="logo" data-t="A.R.G.U.S.">A.R.G.U.S.</div>
+      <div class="sub" id="sub">NUCLEO NEURALE · v1.1</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
@@ -158,7 +158,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
     <div class="mobile-read">OGGI <b id="mP">–</b> · RICHIESTE <b id="mX">–</b> · PROSSIMO <b id="mU">–</b> · HEY JARVIS <b id="mWW">–</b></div>
     <div class="subs" id="subs" aria-live="polite"></div>
     <div class="row">
-      <button class="mic" id="mic" type="button" aria-label="Parla con Jarvis">
+      <button class="mic" id="mic" type="button" aria-label="Parla con ARGUS">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
       </button>
       <button class="clip" id="clip" type="button" aria-label="Carica un'immagine">
@@ -166,7 +166,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
       </button>
       <input type="file" id="fileIn" accept="image/*" hidden>
       <form class="say" id="sayForm">
-        <input id="frase" placeholder="Scrivi a Jarvis…" aria-label="Scrivi a Jarvis" autocomplete="off">
+        <input id="frase" placeholder="Scrivi ad ARGUS…" aria-label="Scrivi ad ARGUS" autocomplete="off">
         <button type="submit">INVIA</button>
       </form>
     </div>
@@ -176,7 +176,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
 
 <div class="ov" id="ov" hidden>
   <form class="box" id="cfgForm">
-    <h2>COLLEGA JARVIS</h2>
+    <h2>COLLEGA ARGUS</h2>
     <p>Lo fai una volta sola: il telefono se lo ricorda.</p>
     <label for="cUrl">INDIRIZZO APP WEB (finisce con /exec)</label>
     <input id="cUrl" type="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://script.google.com/macros/s/.../exec">
@@ -201,7 +201,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   try{CFG=JSON.parse(localStorage.getItem('jarvis_cfg'))||CFG;}catch(e){}
   function api(dati,cfg){
     cfg=cfg||CFG;
-    if(!cfg.url)return Promise.reject(new Error('Jarvis non è collegato: tocca ⚙ in alto.'));
+    if(!cfg.url)return Promise.reject(new Error('ARGUS non è collegato: tocca ⚙ in alto.'));
     dati.codice=cfg.codice;
     return fetch(cfg.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(dati),redirect:'follow'})
       .then(function(r){return r.text();})
@@ -280,7 +280,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
     var t0=Date.now();
     api({azione:'chiedi',testo:testo,voce:!!aVoce}).then(function(j){
       fatto(j.risposta);
-      if(j.immagine){var im=document.createElement('img');im.src=j.immagine;im.alt='Immagine creata da Jarvis';
+      if(j.immagine){var im=document.createElement('img');im.src=j.immagine;im.alt='Immagine creata da ARGUS';
         im.onclick=function(){im.classList.toggle('grande');};$('subs').appendChild(im);$('subs').scrollTop=1e6;}
       var tm=j.tempi||{},sec=function(ms){return (ms/1000).toFixed(1).replace('.',',')+' s';};
       hint.textContent='⏱ risposta in '+sec(Date.now()-t0)+' · AI '+sec(tm.ai||0)+(tm.gmail?' · Gmail '+sec(tm.gmail):'')+(tm.modello?' · '+tm.modello:'');
