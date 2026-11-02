@@ -112,6 +112,24 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
 .box .rng{display:flex;justify-content:space-between;font-size:.66rem;color:var(--muted)}
 .box input[type=range]{padding:0;accent-color:var(--magenta)}
 .chip.blink{animation:pul 1s infinite;border-color:var(--yellow);color:var(--yellow)}
+.wdg{position:fixed;inset:0;z-index:9;background:rgba(5,4,11,.92);backdrop-filter:blur(6px);overflow-y:auto;padding:16px 14px 28px}
+.wdg[hidden]{display:none}
+.wtop{display:flex;justify-content:space-between;align-items:center;gap:10px;max-width:980px;margin:0 auto 12px}
+.wtop h2{margin:0;font:700 1.05rem var(--display);letter-spacing:.3em;color:var(--cyan)}
+.wtop span{font-size:.66rem;color:var(--muted);letter-spacing:.12em}
+.wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;max-width:980px;margin:0 auto}
+.card{background:var(--panel);border:1px solid var(--line);border-top:2px solid var(--cyan);padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0;clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,0 100%)}
+.card.w{border-top-color:var(--yellow)} .card.r{border-top-color:var(--magenta)}
+.card small{font-size:.62rem;letter-spacing:.2em;color:var(--muted)}
+.card .big{font:600 1.45rem/1.15 var(--display);color:var(--ink);overflow-wrap:anywhere}
+.card.w .big{color:var(--yellow)} .card.r .big{color:var(--magenta)}
+.card p{margin:0;font-size:.8rem;color:var(--muted);overflow-wrap:anywhere}
+.card ul{margin:0;padding-left:16px;font-size:.8rem;color:var(--ink)}
+.card li.via{color:var(--muted);text-decoration:line-through}
+.card .az{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:4px}
+.card .az a,.card .az button{font:600 .68rem var(--display);letter-spacing:.14em;color:var(--cyan);background:transparent;border:1px solid var(--line);padding:8px 10px;text-decoration:none;cursor:pointer;min-height:36px}
+.card .az a:active,.card .az button:active{border-color:var(--cyan)}
+.chip .n{display:inline-block;min-width:1.4em;margin-left:4px;padding:0 4px;background:var(--yellow);color:var(--bg);border-radius:8px;font-size:.6rem;text-align:center}
 @media (max-width:620px){ .side{display:none} .logo{font-size:1.2rem} }
 @media (min-width:621px){ .mobile-read{display:none} }
 @media (prefers-reduced-motion:reduce){.logo::before,.logo::after,.mic.on{animation:none}}
@@ -125,11 +143,11 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   <div class="top">
     <div>
       <div class="logo" data-t="A.R.G.U.S.">A.R.G.U.S.</div>
-      <div class="sub" id="sub">NUCLEO NEURALE · v1.1</div>
+      <div class="sub" id="sub">NUCLEO NEURALE · v1.2</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
-      <div class="topbtns"><button class="chip" id="stazBtn" type="button" aria-pressed="false">SEMPRE ATTIVO</button><button class="chip" id="voceBtn" type="button" aria-pressed="true">VOCE ON</button><button class="chip" id="cfgBtn" type="button" aria-label="Impostazioni di collegamento">⚙</button></div>
+      <div class="topbtns"><button class="chip" id="stazBtn" type="button" aria-pressed="false">SEMPRE ATTIVO</button><button class="chip" id="voceBtn" type="button" aria-pressed="true">VOCE ON</button><button class="chip" id="wdgBtn" type="button" aria-label="Apri i widget">WIDGET<span class="n" id="wdgN" hidden></span></button><button class="chip" id="cfgBtn" type="button" aria-label="Impostazioni di collegamento">⚙</button></div>
     </div>
   </div>
 
@@ -172,6 +190,11 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
     </div>
     <div class="hint" id="hint">Tocca il microfono o il nucleo e parla.</div>
   </div>
+</div>
+
+<div class="wdg" id="wdg" hidden role="dialog" aria-label="Widget di ARGUS">
+  <div class="wtop"><div><h2>WIDGET</h2><span id="wdgAgg">–</span></div><div class="topbtns"><button class="chip" id="wdgRic" type="button">AGGIORNA</button><button class="chip" id="wdgX" type="button">CHIUDI</button></div></div>
+  <div class="wgrid" id="wgrid"><div class="card"><p>Carico i dati…</p></div></div>
 </div>
 
 <div class="ov" id="ov" hidden>
@@ -350,6 +373,47 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   function caricaInfo(){if(!CFG.url)return;api({azione:'info'}).then(function(j){mostraInfo(j.info);$('modAI').textContent='ATTIVO';$('modAI').className='ok';},
     function(e){$('modAI').textContent='OFFLINE';$('modAI').className='wip';hint.textContent=e.message;});}
   caricaInfo();setInterval(caricaInfo,5*60*1000);
+  /* ================= WIDGET ================= */
+  function escH(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function euro(n){return Math.round(Number(n)||0).toLocaleString('it-IT')+' €';}
+  function carta(cls,titolo,big,corpo,azioni){
+    return '<div class="card '+cls+'"><small>'+escH(titolo)+'</small><div class="big">'+big+'</div>'+(corpo||'')+
+      '<div class="az">'+(azioni||[]).map(function(a){return a.href?'<a href="'+escH(a.href)+'" target="_blank" rel="noopener">'+escH(a.t)+'</a>':'<button type="button" data-q="'+escH(a.q)+'">'+escH(a.t)+'</button>';}).join('')+'</div></div>';
+  }
+  function disegnaWidget(c){
+    var i=c.interventi||{},s=c.soldi||{},y=c.sistemi||{},ap=c.appuntamenti||[],h='';
+    var p=i.prossimo;
+    h+=carta('', 'PROSSIMO INTERVENTO', p?escH(p.quando+' · '+p.comune):'Nessuno',
+      p?'<p>'+escH([p.cliente,p.tipo,p.telefono].filter(Boolean).join(' · '))+'</p>':'<p>Niente in programma nei prossimi 30 giorni.</p>',
+      p?[{t:'MAPS',href:p.maps}].concat(p.telefono?[{t:'CHIAMA',href:'tel:'+String(p.telefono).replace(/[^\d+]/g,'')}]:[]).concat([{t:'DETTAGLI',q:'Dimmi tutto sul prossimo intervento'}]):[]);
+    h+=carta('', 'OGGI', (i.oggi||0)+' interventi · '+ap.length+' app.',
+      ap.length?'<ul>'+ap.map(function(a){return '<li'+(a.passato?' class="via"':'')+'>'+escH(a.ora+' '+a.titolo)+'</li>';}).join('')+'</ul>':'<p>Nessun appuntamento oggi.</p>',
+      [{t:'PROGRAMMA',q:'Qual è il programma di oggi?'},{t:'DOMANI',q:'Cosa ho domani?'}]);
+    h+=carta(s.n_scaduti?'w':'', 'DA INCASSARE', euro(s.da_incassare),
+      '<p>'+(s.n_aperti||0)+' incassi aperti'+(s.da_fatturare?' · '+s.da_fatturare+' da fatturare':'')+'</p>'+(s.n_scaduti?'<p>⚠️ Scaduti: '+euro(s.scaduti)+' · '+escH((s.scaduti_chi||[]).join(', '))+'</p>':''),
+      [{t:'CHI DEVE PAGARE',q:'Chi mi deve ancora pagare?'}]);
+    h+=carta('', 'PREVENTIVI IN ATTESA', String(s.preventivi_attesa||0), s.preventivi_valore?'<p>Valore '+euro(s.preventivi_valore)+'</p>':'<p>Nessun preventivo in attesa di risposta.</p>',
+      [{t:'ELENCO',q:'Quali preventivi sono in attesa di risposta?'}]);
+    var giu=y.siti_giu||[];
+    h+=carta(giu.length?'r':'', 'SITI DEI CLIENTI', giu.length?giu.length+' giù':(y.siti?'Tutti online':'—'),
+      giu.length?'<ul>'+giu.map(function(x){return '<li>🔴 '+escH(x)+'</li>';}).join('')+'</ul>':'<p>'+(y.siti||0)+' siti sotto controllo.</p>',
+      [{t:'STATO',q:'Com\'è lo stato dei siti dei clienti?'}]);
+    h+=carta(y.n_scadenze?'w':'', 'SCADENZE 30 GIORNI', String(y.n_scadenze||0),
+      (y.scadenze||[]).length?'<ul>'+y.scadenze.map(function(x){return '<li>'+escH(x)+'</li>';}).join('')+'</ul>':'<p>Niente in scadenza.</p>',
+      [{t:'ELENCO',q:'Quali scadenze dei clienti ho nei prossimi 30 giorni?'}]);
+    h+=carta(y.bozze?'w':'', 'DA FARE PER ARGUS', (y.bozze||0)+' email · '+(y.lavori||0)+' lavori',
+      '<p>'+(y.bozze?'Bozze in attesa del tuo ✅ Invia su Telegram. ':'')+(y.lavoro_in_corso?'In corso: '+escH(y.lavoro_in_corso):(y.lavori?'In coda.':'Nessun lavoro in coda.'))+'</p>',[]);
+    $('wgrid').innerHTML=h;$('wdgAgg').textContent='AGGIORNATO ALLE '+(c.aggiornato||'');
+    var n=(s.n_scaduti||0)+giu.length+(y.bozze||0);$('wdgN').hidden=!n;$('wdgN').textContent=n;
+  }
+  function caricaWidget(){if(!CFG.url)return;api({azione:'cruscotto'}).then(function(j){if(j.cruscotto)disegnaWidget(j.cruscotto);},function(e){if(!$('wdg').hidden)$('wgrid').innerHTML='<div class="card r"><p>'+escH(e.message||'Errore')+'</p></div>';});}
+  $('wdgBtn').onclick=function(){$('wdg').hidden=false;caricaWidget();};
+  $('wdgX').onclick=function(){$('wdg').hidden=true;};
+  $('wdgRic').onclick=caricaWidget;
+  $('wgrid').addEventListener('click',function(ev){var b=ev.target.closest('button[data-q]');if(!b)return;$('wdg').hidden=true;chiedi(b.getAttribute('data-q'));});
+  document.addEventListener('keydown',function(ev){if(ev.key==='Escape')$('wdg').hidden=true;});
+  caricaWidget();setInterval(caricaWidget,5*60*1000);
+
 
   /* ================= COLLEGAMENTO ================= */
   function apriCfg(){$('cUrl').value=CFG.url||'';$('cCod').value=CFG.codice||'';$('cMsg').textContent='';$('ov').hidden=false;}
