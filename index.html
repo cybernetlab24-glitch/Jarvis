@@ -29,7 +29,7 @@ body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--mono);overflow:hi
 .scan{position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px)}
 .vign{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 45%,rgba(0,0,0,.75) 100%)}
 
-.hud{position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr auto;padding:14px 16px 14px;gap:8px;pointer-events:none}
+.hud{position:fixed;inset:0;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr auto;padding:14px 16px 14px;gap:8px;pointer-events:none}
 .hud > *{pointer-events:auto}
 .mid{pointer-events:none!important}
 .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
@@ -64,10 +64,10 @@ body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--mono);overflow:hi
 .stato span{display:block;font-size:.66rem;color:var(--muted);letter-spacing:.18em;margin-top:2px}
 
 .bottom{display:flex;flex-direction:column;gap:10px;max-width:660px;width:100%;margin:0 auto}
-.subs{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--magenta);padding:10px 12px;max-height:30vh;overflow-y:auto;display:flex;flex-direction:column;gap:6px;font-size:.84rem}
+.subs{min-width:0;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--magenta);padding:10px 12px;max-height:30vh;overflow-y:auto;display:flex;flex-direction:column;gap:6px;font-size:.84rem}
 .subs:empty{display:none}
 .subs p{margin:0}
-.subs img{display:block;max-width:100%;max-height:24vh;border:1px solid var(--line);cursor:zoom-in}
+.subs img{display:block;max-width:100%;min-width:0;object-fit:contain;max-height:24vh;border:1px solid var(--line);cursor:zoom-in}
 .subs img.grande{position:fixed;inset:0;margin:auto;max-height:92vh;max-width:96vw;z-index:20;box-shadow:0 0 0 100vmax rgba(0,0,0,.85);cursor:zoom-out}
 .subs .tu{color:var(--muted)}
 .subs .tu::before{content:"TU › ";color:var(--cyan);letter-spacing:.1em}
@@ -78,6 +78,9 @@ body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--mono);overflow:hi
 .mic.on{border-color:var(--magenta);color:var(--magenta);background:rgba(255,43,214,.12);box-shadow:0 0 26px rgba(255,43,214,.55);animation:pul 1s infinite}
 @keyframes pul{50%{transform:scale(1.07)}}
 .mic[disabled]{opacity:.35}
+.clip{flex:none;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--muted);display:grid;place-items:center;cursor:pointer}
+.clip svg{width:22px;height:22px}
+.clip:active{color:var(--cyan);border-color:var(--cyan)}
 form.say{flex:1;display:flex;gap:6px;min-width:0}
 .say input{flex:1;min-width:0;font:14px var(--mono);color:var(--ink);background:var(--panel);border:1px solid var(--line);padding:13px 12px;outline:none}
 .say input:focus{border-color:var(--magenta)}
@@ -122,7 +125,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   <div class="top">
     <div>
       <div class="logo" data-t="J.A.R.V.I.S">J.A.R.V.I.S</div>
-      <div class="sub" id="sub">NUCLEO NEURALE · v0.9</div>
+      <div class="sub" id="sub">NUCLEO NEURALE · v1.0</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
@@ -158,6 +161,10 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
       <button class="mic" id="mic" type="button" aria-label="Parla con Jarvis">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
       </button>
+      <button class="clip" id="clip" type="button" aria-label="Carica un'immagine">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.5l-8.5 8.5a6 6 0 0 1-8.5-8.5l9-9a4 4 0 0 1 5.7 5.7l-9 9a2 2 0 0 1-2.8-2.8l8.3-8.3"/></svg>
+      </button>
+      <input type="file" id="fileIn" accept="image/*" hidden>
       <form class="say" id="sayForm">
         <input id="frase" placeholder="Scrivi a Jarvis…" aria-label="Scrivi a Jarvis" autocomplete="off">
         <button type="submit">INVIA</button>
@@ -280,6 +287,25 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
       setTimeout(caricaInfo,1500);
     },errore);
   }
+  /* ================= CARICA IMMAGINE ================= */
+  function leggiImmagine(f){return new Promise(function(ok,ko){var u=URL.createObjectURL(f),im=new Image();
+    im.onload=function(){ok(im);};im.onerror=function(){ko(new Error('formato non supportato'));};im.src=u;});}
+  function ridimensiona(im,max,q){var s=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight));
+    var c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.naturalWidth*s));c.height=Math.max(1,Math.round(im.naturalHeight*s));
+    var x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);return c.toDataURL('image/jpeg',q);}
+  $('clip').addEventListener('click',function(){if(!occupato)$('fileIn').click();});
+  $('fileIn').addEventListener('change',function(){
+    var f=this.files[0];this.value='';if(!f)return;
+    occupato=true;setStato('pensa','Ricevo l\'immagine…');hint.textContent='';
+    leggiImmagine(f).then(function(im){
+      var piccola=ridimensiona(im,500,0.9),grande=ridimensiona(im,1600,0.85);
+      riga('tu','📎 Immagine caricata');var t=document.createElement('img');t.src=piccola;t.alt='Immagine caricata';
+      t.onclick=function(){t.classList.toggle('grande');};$('subs').appendChild(t);$('subs').scrollTop=1e6;
+      return api({azione:'carica',piccola:piccola,grande:grande});
+    }).then(function(j){occupato=false;riga('jv',j.risposta);parla(j.risposta);},
+      function(e){occupato=false;setStato('attesa');hint.textContent='Caricamento non riuscito: '+e.message;});
+  });
+
   $('sayForm').addEventListener('submit',function(ev){ev.preventDefault();var t=$('frase').value;$('frase').value='';$('frase').blur();chiedi(t,false);});
 
   /* ================= MICROFONO ================= */
