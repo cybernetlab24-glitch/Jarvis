@@ -168,7 +168,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   <div class="top">
     <div>
       <div class="logo" data-t="A.R.G.U.S.">A.R.G.U.S.</div>
-      <div class="sub" id="sub">NUCLEO NEURALE · v1.5</div>
+      <div class="sub" id="sub">NUCLEO NEURALE · v1.5.1</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
@@ -515,33 +515,46 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   var MP_URL='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
   var MP_MODELLO='https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task';
   function etichetta(t){$('gcurT').textContent=t||'';$('gprevT').textContent=t?('GESTI · '+t):'GESTI';}
+  function entro(ms,pr,cosa){return Promise.race([pr,new Promise(function(ok,ko){setTimeout(function(){ko(new Error(cosa+': nessuna risposta dopo '+Math.round(ms/1000)+' secondi'));},ms);})]);}
+  function passoG(t){etichetta(t);hint.textContent='Gesti: '+t.toLowerCase()+'…';}
   function caricaGesti(){
     if(G.rec)return Promise.resolve();
-    return import(MP_URL+'/vision_bundle.mjs').then(function(v){
-      return v.FilesetResolver.forVisionTasks(MP_URL+'/wasm').then(function(fs){
+    passoG('SCARICO LA LIBRERIA');
+    return entro(30000,import(MP_URL+'/vision_bundle.mjs'),'libreria MediaPipe').then(function(v){
+      passoG('PREPARO IL MOTORE');
+      return entro(30000,v.FilesetResolver.forVisionTasks(MP_URL+'/wasm'),'motore MediaPipe').then(function(fs){
         var opz=function(d){return {baseOptions:{modelAssetPath:MP_MODELLO,delegate:d},runningMode:'VIDEO',numHands:1,minHandDetectionConfidence:0.6,minTrackingConfidence:0.5};};
-        return v.GestureRecognizer.createFromOptions(fs,opz('GPU')).catch(function(){return v.GestureRecognizer.createFromOptions(fs,opz('CPU'));});
+        passoG('SCARICO IL MODELLO DELLA MANO');
+        // la scheda grafica a volte non risponde sui telefoni: dopo 15 secondi riprovo con il processore
+        return entro(15000,v.GestureRecognizer.createFromOptions(fs,opz('GPU')),'GPU').catch(function(e){
+          console.log('Gesti GPU: '+e.message);passoG('RIPROVO SENZA GPU');
+          return entro(45000,v.GestureRecognizer.createFromOptions(fs,opz('CPU')),'modello della mano');
+        });
       });
     }).then(function(r){G.rec=r;});
   }
   function attivaGesti(){
-    etichetta('CARICAMENTO…');$('gestiBtn').setAttribute('aria-pressed','true');hint.textContent='Preparo i gesti… (la prima volta scarica circa 8 MB)';
+    if(G.avvio)return;G.avvio=true;
+    $('gestiBtn').setAttribute('aria-pressed','true');$('gprev').hidden=false;
     caricaGesti().then(function(){
+      passoG('ACCENDO LA FOTOCAMERA');
+      if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw new Error('questo browser non dà accesso alla fotocamera');
       return navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}},audio:false});
     }).then(function(s){
       G.stream=s;G.video=$('gvid');G.video.srcObject=s;return G.video.play();
     }).then(function(){
-      G.on=true;$('gcur').hidden=false;$('gprev').hidden=!G.mostraPrev;etichetta('');
+      G.on=true;G.avvio=false;$('gcur').hidden=false;$('gprev').hidden=!G.mostraPrev;etichetta('');G.visto=0;
+      setTimeout(function(){if(G.on&&!G.visto)riga('jv','Gesti attivi ma non vedo la mano: mettila davanti alla fotocamera frontale, a 50-80 cm, con il palmo verso lo schermo e più luce.');},8000);
       hint.textContent='Gesti attivi: indice = cursore · pizzica = clic/afferra · palmo = ascolta · pugno = zitto · 👍 = conferma · ✌️ = oggi · scorri = widget';
       requestAnimationFrame(cicloGesti);
-    }).catch(function(e){spegniGesti();hint.textContent='Gesti non disponibili: '+(e&&e.message||e);});
+    }).catch(function(e){G.avvio=false;spegniGesti();var m='Gesti non disponibili: '+(e&&e.message||e);hint.textContent=m;riga('jv',m);console.log(e);});
   }
   function spegniGesti(){
     G.on=false;$('gestiBtn').setAttribute('aria-pressed','false');$('gcur').hidden=true;$('gprev').hidden=true;
     try{G.stream&&G.stream.getTracks().forEach(function(t){t.stop();});}catch(e){}G.stream=null;
     if(G.drag){G.drag.el.classList.remove('drag');G.drag=null;}if(G.hov){G.hov.classList.remove('ghov');G.hov=null;}
   }
-  $('gestiBtn').onclick=function(){G.on||G.stream?spegniGesti():attivaGesti();};
+  $('gestiBtn').onclick=function(){if(G.avvio)return;G.on||G.stream?spegniGesti():attivaGesti();};
   $('gprev').onclick=function(){G.mostraPrev=false;this.hidden=true;try{localStorage.setItem('argus_gesti_prev','off');}catch(e){}};
   function bersaglio(x,y){
     $('gcur').style.visibility='hidden';var el=document.elementFromPoint(x,y);$('gcur').style.visibility='';
@@ -571,6 +584,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
     var l=res&&res.landmarks&&res.landmarks[0];
     if(G.mostraPrev)disegnaPrev(l);
     if(!l){if(G.pz)rilascio();G.gesto='';G.polso=[];return;}
+    G.visto=1;
     // cursore: punta dell'indice (specchiata), zona centrale dell'inquadratura = tutto lo schermo
     var tx=(1-l[8].x-0.15)/0.7*innerWidth,ty=(l[8].y-0.12)/0.6*innerHeight;
     tx=Math.max(0,Math.min(innerWidth,tx));ty=Math.max(0,Math.min(innerHeight,ty));
