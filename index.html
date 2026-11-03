@@ -121,7 +121,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
 .ghov{outline:2px solid var(--cyan)!important;outline-offset:2px}
 .gprev{position:fixed;left:10px;bottom:118px;width:128px;aspect-ratio:4/3;z-index:6;border:1px solid var(--line);background:#000;opacity:.8;cursor:pointer}
 .gprev[hidden]{display:none}
-.gprev video,.gprev canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.gprev canvas{position:absolute;inset:0;width:100%;height:100%;transform:scaleX(-1)}
 .gprev span{position:absolute;left:4px;bottom:2px;font:600 .55rem var(--display);letter-spacing:.12em;color:var(--cyan);text-shadow:0 0 4px #000}
 .fin{position:fixed;inset:0;z-index:12;display:grid;place-items:center;padding:16px;background:rgba(5,4,11,.82);backdrop-filter:blur(6px)}
 .fin[hidden]{display:none}
@@ -168,7 +168,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   <div class="top">
     <div>
       <div class="logo" data-t="A.R.G.U.S.">A.R.G.U.S.</div>
-      <div class="sub" id="sub">NUCLEO NEURALE · v1.6</div>
+      <div class="sub" id="sub">NUCLEO NEURALE · v1.6.1</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
@@ -218,7 +218,8 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
 </div>
 
 <div class="gcur" id="gcur" hidden aria-hidden="true"><i></i><b id="gcurT"></b></div>
-<div class="gprev" id="gprev" hidden title="Tocca per nascondere l'anteprima"><video id="gvid" playsinline muted></video><canvas id="gcan"></canvas><span id="gprevT">GESTI</span></div>
+<video id="gvid" playsinline muted autoplay style="position:fixed;left:0;top:0;width:160px;height:120px;opacity:0.01;pointer-events:none;z-index:-1"></video>
+<div class="gprev" id="gprev" hidden title="Tocca per nascondere l'anteprima"><canvas id="gcan"></canvas><span id="gprevT">GESTI</span></div>
 <div class="fin" id="fin" hidden role="dialog" aria-label="Finestra del widget"></div>
 
 <div class="ov" id="ov" hidden>
@@ -526,27 +527,28 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   /* ================= GESTI (MediaPipe, tutto sul dispositivo) ================= */
   var G={on:false,rec:null,video:null,stream:null,last:0,x:innerWidth/2,y:innerHeight/2,pz:false,pzT:0,pzX:0,pzY:0,drag:null,hov:null,
     gesto:'',gestoT:0,gestoFatto:'',polso:[],swipeT:0,prev:true,mostraPrev:true};
-  try{G.mostraPrev=localStorage.getItem('argus_gesti_prev')!=='off';}catch(e){}
   var MP_URL='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
   var MP_MODELLO='https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task';
   function etichetta(t){$('gcurT').textContent=t||'';$('gprevT').textContent=t?('GESTI · '+t):'GESTI';}
   function entro(ms,pr,cosa){return Promise.race([pr,new Promise(function(ok,ko){setTimeout(function(){ko(new Error(cosa+': nessuna risposta dopo '+Math.round(ms/1000)+' secondi'));},ms);})]);}
   function passoG(t){etichetta(t);hint.textContent='Gesti: '+t.toLowerCase()+'…';}
+  function creaRiconoscitore(delegato){
+    passoG(delegato==='GPU'?'SCARICO IL MODELLO DELLA MANO':'PASSO AL PROCESSORE');
+    var opz={baseOptions:{modelAssetPath:MP_MODELLO,delegate:delegato},runningMode:'VIDEO',numHands:1,minHandDetectionConfidence:0.5,minHandPresenceConfidence:0.5,minTrackingConfidence:0.5};
+    return entro(delegato==='GPU'?15000:45000,G.vision.GestureRecognizer.createFromOptions(G.fs,opz),delegato==='GPU'?'GPU':'modello della mano').then(function(r){
+      try{G.rec&&G.rec.close();}catch(e){}G.rec=r;G.delegato=delegato;G.frames=0;G.inizioRic=performance.now();});
+  }
   function caricaGesti(){
     if(G.rec)return Promise.resolve();
     passoG('SCARICO LA LIBRERIA');
     return entro(30000,import(MP_URL+'/vision_bundle.mjs'),'libreria MediaPipe').then(function(v){
-      passoG('PREPARO IL MOTORE');
-      return entro(30000,v.FilesetResolver.forVisionTasks(MP_URL+'/wasm'),'motore MediaPipe').then(function(fs){
-        var opz=function(d){return {baseOptions:{modelAssetPath:MP_MODELLO,delegate:d},runningMode:'VIDEO',numHands:1,minHandDetectionConfidence:0.6,minTrackingConfidence:0.5};};
-        passoG('SCARICO IL MODELLO DELLA MANO');
-        // la scheda grafica a volte non risponde sui telefoni: dopo 15 secondi riprovo con il processore
-        return entro(15000,v.GestureRecognizer.createFromOptions(fs,opz('GPU')),'GPU').catch(function(e){
-          console.log('Gesti GPU: '+e.message);passoG('RIPROVO SENZA GPU');
-          return entro(45000,v.GestureRecognizer.createFromOptions(fs,opz('CPU')),'modello della mano');
-        });
-      });
-    }).then(function(r){G.rec=r;});
+      G.vision=v;passoG('PREPARO IL MOTORE');
+      return entro(30000,v.FilesetResolver.forVisionTasks(MP_URL+'/wasm'),'motore MediaPipe');
+    }).then(function(fs){
+      G.fs=fs;
+      // la scheda grafica a volte non risponde sui telefoni: allora uso il processore
+      return creaRiconoscitore('GPU').catch(function(e){console.log('Gesti GPU: '+e.message);return creaRiconoscitore('CPU');});
+    });
   }
   function attivaGesti(){
     if(G.avvio)return;G.avvio=true;
@@ -558,8 +560,9 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
     }).then(function(s){
       G.stream=s;G.video=$('gvid');G.video.srcObject=s;return G.video.play();
     }).then(function(){
-      G.on=true;G.avvio=false;$('gcur').hidden=false;$('gprev').hidden=!G.mostraPrev;etichetta('');G.visto=0;
-      setTimeout(function(){if(G.on&&!G.visto)riga('jv','Gesti attivi ma non vedo la mano: mettila davanti alla fotocamera frontale, a 50-80 cm, con il palmo verso lo schermo e più luce.');},8000);
+      if(G.delegato)G.inizioRic=performance.now();
+      G.on=true;G.avvio=false;G.mostraPrev=true;$('gcur').hidden=false;$('gprev').hidden=false;etichetta('');G.visto=0;
+      setTimeout(function(){if(G.on&&!G.visto)riga('jv',G.frames<10?'Gesti: la fotocamera non manda immagini ('+G.frames+' fotogrammi). Chiudi le altre app che usano la fotocamera e riprova.':'Gesti attivi ma non vedo la mano ('+G.delegato+', '+G.frames+' fotogrammi): mettila davanti alla fotocamera frontale, a 40-70 cm, palmo verso lo schermo, con più luce davanti a te.');},14000);
       hint.textContent='Gesti attivi: indice = cursore · pizzica = clic/afferra · palmo = ascolta · pugno = zitto · 👍 = conferma · ✌️ = oggi · scorri = widget';
       requestAnimationFrame(cicloGesti);
     }).catch(function(e){G.avvio=false;spegniGesti();var m='Gesti non disponibili: '+(e&&e.message||e);hint.textContent=m;riga('jv',m);console.log(e);});
@@ -570,7 +573,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
     if(G.drag){G.drag.el.classList.remove('drag');G.drag=null;}if(G.hov){G.hov.classList.remove('ghov');G.hov=null;}
   }
   $('gestiBtn').onclick=function(){if(G.avvio)return;G.on||G.stream?spegniGesti():attivaGesti();};
-  $('gprev').onclick=function(){G.mostraPrev=false;this.hidden=true;try{localStorage.setItem('argus_gesti_prev','off');}catch(e){}};
+  $('gprev').onclick=function(){G.mostraPrev=false;this.hidden=true;};
   function bersaglio(x,y){
     $('gcur').style.visibility='hidden';var el=document.elementFromPoint(x,y);$('gcur').style.visibility='';
     return el;
@@ -582,7 +585,11 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
     var w=el.closest('.wlayer .mw');if(w)apriFinestra(w.id.replace('w_',''));
   }
   function disegnaPrev(l){
-    var cv=$('gcan'),c=cv.getContext('2d');cv.width=160;cv.height=120;c.clearRect(0,0,160,120);if(!l)return;
+    var cv=$('gcan'),c=cv.getContext('2d');cv.width=160;cv.height=120;
+    try{c.drawImage(G.video,0,0,160,120);}catch(e){c.clearRect(0,0,160,120);}
+    c.fillStyle='rgba(5,4,11,.35)';c.fillRect(0,0,160,120);
+    $('gprevT').textContent=(l?'✋ MANO':'… cerco la mano')+' · '+(G.delegato||'')+' · '+G.frames;
+    if(!l)return;
     c.fillStyle='#00f0ff';l.forEach(function(p,i){c.globalAlpha=i===8||i===4?1:.6;c.beginPath();c.arc(p.x*160,p.y*120,i===8||i===4?3:2,0,7);c.fill();});c.globalAlpha=1;
   }
   function eseguiGesto(n){
@@ -594,10 +601,14 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   function cicloGesti(){
     if(!G.on)return;
     requestAnimationFrame(cicloGesti);
-    var ora=performance.now();if(ora-G.last<66||!G.video||G.video.readyState<2)return;G.last=ora;
-    var res;try{res=G.rec.recognizeForVideo(G.video,ora);}catch(e){return;}
+    var ora=performance.now();if(ora-G.last<66||!G.video||G.video.readyState<2||G.cambio)return;G.last=ora;
+    var res;try{res=G.rec.recognizeForVideo(G.video,ora);}catch(e){console.log('Gesti: '+e.message);return;}
+    G.frames++;
     var l=res&&res.landmarks&&res.landmarks[0];
     if(G.mostraPrev)disegnaPrev(l);
+    // con la GPU alcuni telefoni non trovano mai la mano: dopo 6 secondi senza risultati passo al processore
+    if(!G.visto&&G.delegato==='GPU'&&ora-G.inizioRic>6000&&G.frames>40){
+      G.cambio=true;creaRiconoscitore('CPU').then(function(){G.cambio=false;etichetta('');},function(e){G.cambio=false;riga('jv','Gesti: '+e.message);});return;}
     if(!l){if(G.pz)rilascio();G.gesto='';G.polso=[];return;}
     G.visto=1;
     // cursore: punta dell'indice (specchiata), zona centrale dell'inquadratura = tutto lo schermo
