@@ -168,7 +168,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   <div class="top">
     <div>
       <div class="logo" data-t="A.R.G.U.S.">A.R.G.U.S.</div>
-      <div class="sub" id="sub">NUCLEO NEURALE · v1.5.1</div>
+      <div class="sub" id="sub">NUCLEO NEURALE · v1.6</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
@@ -230,6 +230,12 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
     <label for="cCod">CODICE DI ACCESSO</label>
     <input id="cCod" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
     <button type="submit" id="cOk">COLLEGA</button>
+    <label for="cVoce">VOCE DI ARGUS</label>
+    <select id="cVoce" style="font:14px var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line);padding:12px;width:100%"></select>
+    <label for="cTono">TONO DELLA VOCE</label>
+    <input id="cTono" type="range" min="0.5" max="1.3" step="0.05">
+    <div class="rng"><span>più grave</span><span id="cTonoV"></span><span>più acuto</span></div>
+    <button type="button" class="x" id="cProvaVoce">🔊 PROVA LA VOCE</button>
     <label for="cParola">PAROLA DI ATTIVAZIONE</label>
     <select id="cParola" style="font:14px var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line);padding:12px;width:100%">
       <option value="jarvis">«Hey Jarvis»</option><option value="argus">«Hey Argus» (modello addestrato da te)</option><option value="entrambe">Tutte e due</option>
@@ -301,8 +307,17 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   function aggiornaVoceBtn(){$('voceBtn').setAttribute('aria-pressed',voceOn);$('voceBtn').textContent=voceOn?'VOCE ON':'VOCE OFF';}
   aggiornaVoceBtn();
   $('voceBtn').onclick=function(){voceOn=!voceOn;aggiornaVoceBtn();try{localStorage.setItem('jarvis_voce',voceOn?'on':'off');}catch(e){}if(!voceOn)stopVoce();};
-  function scegliVoce(){try{var vs=speechSynthesis.getVoices().filter(function(v){return /^it/i.test(v.lang);});
-    voce=vs.filter(function(v){return /male|uomo|luca|diego|cosimo|itd/i.test(v.name);})[0]||vs[0]||null;}catch(e){}}
+  var VOCE_NOME='',TONO=0.85;
+  try{VOCE_NOME=localStorage.getItem('argus_voce_nome')||'';var _t=parseFloat(localStorage.getItem('argus_tono'));if(_t>0)TONO=_t;}catch(e){}
+  function vociItaliane(){try{return speechSynthesis.getVoices().filter(function(v){return /^it/i.test(v.lang);});}catch(e){return [];}}
+  function scegliVoce(){
+    var vs=vociItaliane();
+    voce=vs.filter(function(v){return v.name===VOCE_NOME;})[0]||
+      vs.filter(function(v){return /\b(male|man|uomo|maschile)\b|luca|diego|cosimo|giuseppe|benigno|it-it-x-itd|it-it-x-itc/i.test(v.name+' '+v.voiceURI)&&!/female|donna|femminile/i.test(v.name);})[0]||vs[0]||null;
+    var sel=$('cVoce');if(!sel)return;
+    sel.innerHTML=vs.length?vs.map(function(v){return '<option value="'+v.name.replace(/"/g,'&quot;')+'">'+v.name.replace(/</g,'&lt;')+(v.localService?'':' (online)')+'</option>';}).join(''):'<option value="">Nessuna voce italiana trovata</option>';
+    if(voce)sel.value=voce.name;
+  }
   if('speechSynthesis' in window){scegliVoce();speechSynthesis.onvoiceschanged=scegliVoce;}
   function stopVoce(){speaking=false;try{speechSynthesis.cancel();}catch(e){}}
   function finito(){speaking=false;setStato('attesa');dopoInterazione();}
@@ -311,7 +326,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
     stopVoce();
     if(!voceOn||!('speechSynthesis' in window)){animaSolo(testo);return;}
     try{
-      var u=new SpeechSynthesisUtterance(testo.replace(/https?:\S+/g,''));u.lang='it-IT';u.rate=1.02;u.pitch=.9;if(voce)u.voice=voce;
+      var u=new SpeechSynthesisUtterance(testo.replace(/https?:\S+/g,''));u.lang='it-IT';u.rate=1.02;u.pitch=TONO;if(voce)u.voice=voce;
       var partito=false;
       u.onstart=function(){partito=true;speaking=true;setStato('parla');};
       u.onboundary=function(){kick=1;};
@@ -887,6 +902,11 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
     statoWW('SPENTA','wip');hint.textContent='Modalità sempre attiva spenta.';
   }
   $('stazBtn').addEventListener('click',function(){staz?spegniStaz():attivaStaz();});
+  $('cTono').value=TONO;$('cTonoV').textContent=fmt2(TONO);
+  $('cTono').addEventListener('input',function(){TONO=parseFloat(this.value);$('cTonoV').textContent=fmt2(TONO);try{localStorage.setItem('argus_tono',String(TONO));}catch(e){}});
+  $('cVoce').addEventListener('change',function(){VOCE_NOME=this.value;try{localStorage.setItem('argus_voce_nome',VOCE_NOME);}catch(e){}scegliVoce();});
+  $('cProvaVoce').onclick=function(){var v=voceOn;voceOn=true;parla('Buongiorno, signore. Sono ARGUS, al suo servizio.');voceOn=v;};
+  scegliVoce();
   $('cParola').value=PAROLA;mostraParola();
   $('cParola').addEventListener('change',function(){PAROLA=this.value;try{localStorage.setItem('argus_parola',PAROLA);}catch(e){}
     WW.sess=null;if(staz){fermaMic();statoWW('CARICAMENTO','wip');caricaModelli().then(function(){return avviaMic();}).then(function(){hint.textContent='Sempre attivo. Dica «'+nomeParola()+'» e poi la domanda.';},function(e){statoWW('ERRORE','wip');hint.textContent=e.message;});}
