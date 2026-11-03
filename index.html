@@ -112,6 +112,23 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
 .box .rng{display:flex;justify-content:space-between;font-size:.66rem;color:var(--muted)}
 .box input[type=range]{padding:0;accent-color:var(--magenta)}
 .chip.blink{animation:pul 1s infinite;border-color:var(--yellow);color:var(--yellow)}
+.gcur{position:fixed;left:0;top:0;width:34px;height:34px;margin:-17px 0 0 -17px;border:2px solid var(--cyan);border-radius:50%;z-index:30;pointer-events:none;
+  box-shadow:0 0 18px rgba(0,240,255,.7),inset 0 0 10px rgba(0,240,255,.4);transition:width .12s,height .12s,margin .12s,background .12s}
+.gcur[hidden]{display:none}
+.gcur.pz{width:22px;height:22px;margin:-11px 0 0 -11px;background:rgba(255,43,214,.55);border-color:var(--magenta);box-shadow:0 0 24px rgba(255,43,214,.9)}
+.gcur i{position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px;background:var(--cyan);border-radius:50%}
+.gcur b{position:absolute;left:42px;top:4px;white-space:nowrap;font:600 .62rem var(--display);letter-spacing:.14em;color:var(--cyan);text-shadow:0 0 6px #000}
+.ghov{outline:2px solid var(--cyan)!important;outline-offset:2px}
+.gprev{position:fixed;left:10px;bottom:118px;width:128px;aspect-ratio:4/3;z-index:6;border:1px solid var(--line);background:#000;opacity:.8;cursor:pointer}
+.gprev[hidden]{display:none}
+.gprev video,.gprev canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.gprev span{position:absolute;left:4px;bottom:2px;font:600 .55rem var(--display);letter-spacing:.12em;color:var(--cyan);text-shadow:0 0 4px #000}
+.fin{position:fixed;inset:0;z-index:12;display:grid;place-items:center;padding:16px;background:rgba(5,4,11,.82);backdrop-filter:blur(6px)}
+.fin[hidden]{display:none}
+.fin .mw{position:relative;width:min(560px,94vw);--ww:auto}
+.fin .mw .big{font-size:1.9rem}
+.fin .mw p,.fin .mw ul{font-size:.92rem}
+.fin .mw .az a,.fin .mw .az button{font-size:.75rem;padding:10px 12px;min-height:44px}
 .wlayer{position:fixed;inset:0;z-index:5;pointer-events:none}
 .wlayer[hidden]{display:none}
 .mw{position:absolute;width:var(--ww,210px);pointer-events:auto;background:rgba(12,10,26,.82);border:1px solid var(--line);border-top:2px solid var(--cyan);
@@ -151,11 +168,11 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   <div class="top">
     <div>
       <div class="logo" data-t="A.R.G.U.S.">A.R.G.U.S.</div>
-      <div class="sub" id="sub">NUCLEO NEURALE · v1.3</div>
+      <div class="sub" id="sub">NUCLEO NEURALE · v1.5</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
-      <div class="topbtns"><button class="chip" id="stazBtn" type="button" aria-pressed="false">SEMPRE ATTIVO</button><button class="chip" id="voceBtn" type="button" aria-pressed="true">VOCE ON</button><button class="chip" id="wdgBtn" type="button" aria-label="Mostra o nascondi i widget" aria-pressed="true">WIDGET<span class="n" id="wdgN" hidden></span></button><button class="chip" id="cfgBtn" type="button" aria-label="Impostazioni di collegamento">⚙</button></div>
+      <div class="topbtns"><button class="chip" id="stazBtn" type="button" aria-pressed="false">SEMPRE ATTIVO</button><button class="chip" id="voceBtn" type="button" aria-pressed="true">VOCE ON</button><button class="chip" id="gestiBtn" type="button" aria-pressed="false" aria-label="Comandi con i gesti">GESTI</button><button class="chip" id="wdgBtn" type="button" aria-label="Mostra o nascondi i widget" aria-pressed="true">WIDGET<span class="n" id="wdgN" hidden></span></button><button class="chip" id="cfgBtn" type="button" aria-label="Impostazioni di collegamento">⚙</button></div>
     </div>
   </div>
 
@@ -175,13 +192,13 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
         <div class="mod"><span>Calendario</span><em class="ok">ATTIVO</em></div>
         <div class="mod"><span>Gemini</span><em class="ok" id="modAI">ATTIVO</em></div>
         <div class="mod"><span>Microfono</span><em class="ok" id="modMic">PRONTO</em></div>
-        <div class="mod"><span>Hey Jarvis</span><em class="wip" id="modWW">SPENTA</em></div>
+        <div class="mod"><span id="modWWn">Hey Jarvis</span><em class="wip" id="modWW">SPENTA</em></div>
       </div>
     </div>
   </div>
 
   <div class="bottom">
-    <div class="mobile-read">OGGI <b id="mP">–</b> · RICHIESTE <b id="mX">–</b> · PROSSIMO <b id="mU">–</b> · HEY JARVIS <b id="mWW">–</b></div>
+    <div class="mobile-read">OGGI <b id="mP">–</b> · RICHIESTE <b id="mX">–</b> · PROSSIMO <b id="mU">–</b> · <span id="mWWn">HEY JARVIS</span> <b id="mWW">–</b></div>
     <div class="subs" id="subs" aria-live="polite"></div>
     <div class="row">
       <button class="mic" id="mic" type="button" aria-label="Parla con ARGUS">
@@ -200,6 +217,10 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   </div>
 </div>
 
+<div class="gcur" id="gcur" hidden aria-hidden="true"><i></i><b id="gcurT"></b></div>
+<div class="gprev" id="gprev" hidden title="Tocca per nascondere l'anteprima"><video id="gvid" playsinline muted></video><canvas id="gcan"></canvas><span id="gprevT">GESTI</span></div>
+<div class="fin" id="fin" hidden role="dialog" aria-label="Finestra del widget"></div>
+
 <div class="ov" id="ov" hidden>
   <form class="box" id="cfgForm">
     <h2>COLLEGA ARGUS</h2>
@@ -209,7 +230,11 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
     <label for="cCod">CODICE DI ACCESSO</label>
     <input id="cCod" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
     <button type="submit" id="cOk">COLLEGA</button>
-    <label for="cSog">SENSIBILITÀ «HEY JARVIS»</label>
+    <label for="cParola">PAROLA DI ATTIVAZIONE</label>
+    <select id="cParola" style="font:14px var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line);padding:12px;width:100%">
+      <option value="jarvis">«Hey Jarvis»</option><option value="argus">«Hey Argus» (modello addestrato da te)</option><option value="entrambe">Tutte e due</option>
+    </select>
+    <label for="cSog">SENSIBILITÀ DELLA PAROLA</label>
     <input id="cSog" type="range" min="0.15" max="0.8" step="0.05">
     <div class="rng"><span>più sensibile</span><span id="cSogV"></span><span>meno sensibile</span></div>
     <button type="button" class="x" id="cWdgReset">RIPRISTINA I WIDGET</button>
@@ -430,19 +455,32 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
       el.style.left=Math.max(0,Math.min(innerWidth-w,x))+'px';el.style.top=Math.max(0,Math.min(innerHeight-40,y))+'px';
     });
   }
+  function salvaPos(id,el){var f=formato();WST.pos[f]=WST.pos[f]||{};WST.pos[f][id]={x:el.offsetLeft/innerWidth,y:el.offsetTop/innerHeight};salvaW();}
+  function htmlAz(x){return (x.az||[]).length?'<div class="az">'+x.az.map(function(a){return a.href?'<a href="'+escH(a.href)+'" target="_blank" rel="noopener">'+escH(a.t)+'</a>':'<button type="button" data-q="'+escH(a.q)+'">'+escH(a.t)+'</button>';}).join('')+'</div>':'';}
+  function apriFinestra(id){
+    if(!ULTIMO)return;var x=contenuti(ULTIMO)[id];if(!x)return;var F=$('fin');
+    F.innerHTML='<section class="mw'+(x.cls?' '+x.cls:'')+'"><div class="th"><span class="grip" aria-hidden="true">◆</span><small>'+escH(x.t)+'</small><button type="button" class="chiudiF" aria-label="Chiudi">×</button></div>'+
+      '<div class="bd"><div class="big">'+x.big+'</div>'+(x.d||'')+htmlAz(x)+'</div></section>';
+    F.hidden=false;
+  }
+  function chiudiFinestra(){$('fin').hidden=true;$('fin').innerHTML='';}
+  $('fin').addEventListener('click',function(ev){
+    if(ev.target===this||ev.target.closest('.chiudiF'))return chiudiFinestra();
+    var b=ev.target.closest('button[data-q]');if(b){chiudiFinestra();chiedi(b.getAttribute('data-q'));}
+  });
   function creaWidget(id){
     var el=document.createElement('section');el.className='mw';el.id='w_'+id;el.setAttribute('aria-label',id);
     el.innerHTML='<div class="th" title="Trascina per spostare"><span class="grip" aria-hidden="true">⠿</span><small></small>'+
-      '<button type="button" class="tg" aria-label="Riduci o espandi">–</button><button type="button" class="cl" aria-label="Nascondi questo widget">×</button></div><div class="bd"></div>';
+      '<button type="button" class="ap" aria-label="Apri in una finestra">⤢</button><button type="button" class="tg" aria-label="Riduci o espandi">–</button><button type="button" class="cl" aria-label="Nascondi questo widget">×</button></div><div class="bd"></div>';
     var th=el.querySelector('.th');
     var dx=0,dy=0,mosso=false,att=false;
     th.addEventListener('pointerdown',function(ev){if(ev.target.closest('button'))return;att=true;mosso=false;dx=ev.clientX-el.offsetLeft;dy=ev.clientY-el.offsetTop;th.setPointerCapture(ev.pointerId);el.classList.add('drag');el.parentNode.appendChild(el);});
     th.addEventListener('pointermove',function(ev){if(!att)return;mosso=true;
       var x=Math.max(0,Math.min(innerWidth-el.offsetWidth,ev.clientX-dx)),y=Math.max(0,Math.min(innerHeight-40,ev.clientY-dy));el.style.left=x+'px';el.style.top=y+'px';});
-    var fine=function(){if(!att)return;att=false;el.classList.remove('drag');if(!mosso)return;
-      var f=formato();WST.pos[f]=WST.pos[f]||{};WST.pos[f][id]={x:el.offsetLeft/innerWidth,y:el.offsetTop/innerHeight};salvaW();};
+    var fine=function(){if(!att)return;att=false;el.classList.remove('drag');if(!mosso)return;salvaPos(id,el);};
     th.addEventListener('pointerup',fine);th.addEventListener('pointercancel',fine);
     el.querySelector('.tg').onclick=function(){var k=formato()+':'+id;WST.compatti[k]=!el.classList.contains('compatto');salvaW();el.classList.toggle('compatto');this.textContent=el.classList.contains('compatto')?'+':'–';disponi();};
+    el.querySelector('.ap').onclick=function(){apriFinestra(id);};
     el.querySelector('.cl').onclick=function(){WST.nascosti[id]=true;salvaW();el.remove();disponi();};
     el.addEventListener('click',function(ev){var b=ev.target.closest('button[data-q]');if(b)chiedi(b.getAttribute('data-q'));});
     return el;
@@ -469,6 +507,110 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   $('cWdgReset').onclick=function(){WST={visibili:true,pos:{},compatti:{},nascosti:{}};salvaW();$('wlayer').innerHTML='';mostraLayer();if(ULTIMO)disegnaWidget(ULTIMO);else caricaWidget();};
   var rsz;addEventListener('resize',function(){clearTimeout(rsz);rsz=setTimeout(function(){$('wlayer').innerHTML='';if(ULTIMO)disegnaWidget(ULTIMO);},250);});
   mostraLayer();caricaWidget();setInterval(caricaWidget,5*60*1000);
+
+  /* ================= GESTI (MediaPipe, tutto sul dispositivo) ================= */
+  var G={on:false,rec:null,video:null,stream:null,last:0,x:innerWidth/2,y:innerHeight/2,pz:false,pzT:0,pzX:0,pzY:0,drag:null,hov:null,
+    gesto:'',gestoT:0,gestoFatto:'',polso:[],swipeT:0,prev:true,mostraPrev:true};
+  try{G.mostraPrev=localStorage.getItem('argus_gesti_prev')!=='off';}catch(e){}
+  var MP_URL='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+  var MP_MODELLO='https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task';
+  function etichetta(t){$('gcurT').textContent=t||'';$('gprevT').textContent=t?('GESTI · '+t):'GESTI';}
+  function caricaGesti(){
+    if(G.rec)return Promise.resolve();
+    return import(MP_URL+'/vision_bundle.mjs').then(function(v){
+      return v.FilesetResolver.forVisionTasks(MP_URL+'/wasm').then(function(fs){
+        var opz=function(d){return {baseOptions:{modelAssetPath:MP_MODELLO,delegate:d},runningMode:'VIDEO',numHands:1,minHandDetectionConfidence:0.6,minTrackingConfidence:0.5};};
+        return v.GestureRecognizer.createFromOptions(fs,opz('GPU')).catch(function(){return v.GestureRecognizer.createFromOptions(fs,opz('CPU'));});
+      });
+    }).then(function(r){G.rec=r;});
+  }
+  function attivaGesti(){
+    etichetta('CARICAMENTO…');$('gestiBtn').setAttribute('aria-pressed','true');hint.textContent='Preparo i gesti… (la prima volta scarica circa 8 MB)';
+    caricaGesti().then(function(){
+      return navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}},audio:false});
+    }).then(function(s){
+      G.stream=s;G.video=$('gvid');G.video.srcObject=s;return G.video.play();
+    }).then(function(){
+      G.on=true;$('gcur').hidden=false;$('gprev').hidden=!G.mostraPrev;etichetta('');
+      hint.textContent='Gesti attivi: indice = cursore · pizzica = clic/afferra · palmo = ascolta · pugno = zitto · 👍 = conferma · ✌️ = oggi · scorri = widget';
+      requestAnimationFrame(cicloGesti);
+    }).catch(function(e){spegniGesti();hint.textContent='Gesti non disponibili: '+(e&&e.message||e);});
+  }
+  function spegniGesti(){
+    G.on=false;$('gestiBtn').setAttribute('aria-pressed','false');$('gcur').hidden=true;$('gprev').hidden=true;
+    try{G.stream&&G.stream.getTracks().forEach(function(t){t.stop();});}catch(e){}G.stream=null;
+    if(G.drag){G.drag.el.classList.remove('drag');G.drag=null;}if(G.hov){G.hov.classList.remove('ghov');G.hov=null;}
+  }
+  $('gestiBtn').onclick=function(){G.on||G.stream?spegniGesti():attivaGesti();};
+  $('gprev').onclick=function(){G.mostraPrev=false;this.hidden=true;try{localStorage.setItem('argus_gesti_prev','off');}catch(e){}};
+  function bersaglio(x,y){
+    $('gcur').style.visibility='hidden';var el=document.elementFromPoint(x,y);$('gcur').style.visibility='';
+    return el;
+  }
+  function cliccabile(el){return el&&el.closest('button,a,input,select,label,.th,.mw');}
+  function clicca(el){
+    if(!el)return;var c=el.closest('button,a,select,input');
+    if(c){if(c.tagName==='INPUT'||c.tagName==='SELECT'){c.focus();}else c.click();return;}
+    var w=el.closest('.wlayer .mw');if(w)apriFinestra(w.id.replace('w_',''));
+  }
+  function disegnaPrev(l){
+    var cv=$('gcan'),c=cv.getContext('2d');cv.width=160;cv.height=120;c.clearRect(0,0,160,120);if(!l)return;
+    c.fillStyle='#00f0ff';l.forEach(function(p,i){c.globalAlpha=i===8||i===4?1:.6;c.beginPath();c.arc(p.x*160,p.y*120,i===8||i===4?3:2,0,7);c.fill();});c.globalAlpha=1;
+  }
+  function eseguiGesto(n){
+    if(n==='Open_Palm'){if(!$('fin').hidden)return;if(!ascolta&&!occupato){stopVoce();etichetta('ASCOLTO');avviaAscolto();}}
+    else if(n==='Closed_Fist'){if(!$('fin').hidden)chiudiFinestra();else{stopVoce();etichetta('ZITTO');}}
+    else if(n==='Thumb_Up'){clicca(bersaglio(G.x,G.y));etichetta('OK');}
+    else if(n==='Victory'){if(!occupato)chiedi('Qual è il programma di oggi?');etichetta('OGGI');}
+  }
+  function cicloGesti(){
+    if(!G.on)return;
+    requestAnimationFrame(cicloGesti);
+    var ora=performance.now();if(ora-G.last<66||!G.video||G.video.readyState<2)return;G.last=ora;
+    var res;try{res=G.rec.recognizeForVideo(G.video,ora);}catch(e){return;}
+    var l=res&&res.landmarks&&res.landmarks[0];
+    if(G.mostraPrev)disegnaPrev(l);
+    if(!l){if(G.pz)rilascio();G.gesto='';G.polso=[];return;}
+    // cursore: punta dell'indice (specchiata), zona centrale dell'inquadratura = tutto lo schermo
+    var tx=(1-l[8].x-0.15)/0.7*innerWidth,ty=(l[8].y-0.12)/0.6*innerHeight;
+    tx=Math.max(0,Math.min(innerWidth,tx));ty=Math.max(0,Math.min(innerHeight,ty));
+    G.x+= (tx-G.x)*0.45;G.y+=(ty-G.y)*0.45;
+    $('gcur').style.transform='translate('+Math.round(G.x)+'px,'+Math.round(G.y)+'px)';
+    // pizzico: pollice e indice vicini rispetto alla grandezza della mano
+    var mano=Math.hypot(l[0].x-l[9].x,l[0].y-l[9].y)||0.1,dist=Math.hypot(l[4].x-l[8].x,l[4].y-l[8].y)/mano;
+    if(!G.pz&&dist<0.32)premi();else if(G.pz&&dist>0.5)rilascio();
+    if(G.pz)trascina();
+    else{var t=cliccabile(bersaglio(G.x,G.y));if(t!==G.hov){if(G.hov)G.hov.classList.remove('ghov');G.hov=t;if(t)t.classList.add('ghov');}}
+    // swipe: il polso attraversa veloce l'inquadratura
+    var wx=1-l[0].x;G.polso.push({x:wx,t:ora});while(G.polso.length&&ora-G.polso[0].t>350)G.polso.shift();
+    if(!G.pz&&G.polso.length>3&&ora-G.swipeT>1200){var dx=wx-G.polso[0].x;
+      if(Math.abs(dx)>0.35){G.swipeT=ora;G.polso=[];G.gestoFatto='swipe';
+        if(dx>0){WST.visibili=true;salvaW();mostraLayer();caricaWidget();etichetta('WIDGET ▶');}else{WST.visibili=false;salvaW();mostraLayer();etichetta('◀ NASCOSTI');}return;}}
+    // gesti fermi: tenuti per mezzo secondo
+    var g=(res.gestures&&res.gestures[0]&&res.gestures[0][0])||{},n=g.score>0.65?g.categoryName:'';
+    if(G.pz||n==='None')n='';
+    if(n!==G.gesto){G.gesto=n;G.gestoT=ora;if(!n)G.gestoFatto='';}
+    else if(n&&G.gestoFatto!==n&&ora-G.gestoT>(n==='Open_Palm'?700:500)&&ora-G.swipeT>800){G.gestoFatto=n;eseguiGesto(n);}
+  }
+  function premi(){
+    G.pz=true;G.pzT=performance.now();G.pzX=G.x;G.pzY=G.y;$('gcur').classList.add('pz');
+    var el=bersaglio(G.x,G.y),w=el&&el.closest('.wlayer .mw');
+    G.target=el;G.drag=null;
+    if(w&&!(el.closest('button,a'))){G.drag={el:w,id:w.id.replace('w_',''),dx:G.x-w.offsetLeft,dy:G.y-w.offsetTop,mosso:false};w.classList.add('drag');w.parentNode.appendChild(w);}
+  }
+  function trascina(){
+    var d=G.drag;
+    if(d){var x=Math.max(0,Math.min(innerWidth-d.el.offsetWidth,G.x-d.dx)),y=Math.max(0,Math.min(innerHeight-40,G.y-d.dy));
+      if(Math.abs(G.x-G.pzX)+Math.abs(G.y-G.pzY)>12)d.mosso=true;d.el.style.left=x+'px';d.el.style.top=y+'px';etichetta(d.mosso?'SPOSTO':'');}
+    else if(performance.now()-G.pzT>900&&G.target){var w=G.target.closest('.wlayer .mw');if(w){var id=w.id.replace('w_','');G.target=null;apriFinestra(id);etichetta('FINESTRA');}}
+  }
+  function rilascio(){
+    $('gcur').classList.remove('pz');var d=G.drag,t=G.target;G.pz=false;G.drag=null;G.target=null;
+    if(d){d.el.classList.remove('drag');if(d.mosso){salvaPos(d.id,d.el);etichetta('');return;}
+      if(performance.now()-G.pzT>900){apriFinestra(d.id);etichetta('FINESTRA');return;}}
+    if(t&&Math.abs(G.x-G.pzX)+Math.abs(G.y-G.pzY)<40&&performance.now()-G.pzT<900)clicca(t);
+  }
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState!=='visible'&&G.on)spegniGesti();});
 
 
   /* ================= COLLEGAMENTO ================= */
@@ -553,7 +695,11 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   /* ================= MODALITÀ SEMPRE ATTIVA ================= */
   // Parola chiave «Hey Jarvis» riconosciuta direttamente sul telefono (openWakeWord, licenza Apache-2.0)
   var ORT_URL='https://cdn.jsdelivr.net/npm/onnxruntime-web@1.20.1/dist/';
-  var MODELLI_URL=['./models/','https://huggingface.co/Soulcreek2/speechkit-wakeword-models/resolve/main/'];
+  var MODELLI_URL=['./models/','./','https://huggingface.co/Soulcreek2/speechkit-wakeword-models/resolve/main/'];
+  var PAROLA='jarvis';try{PAROLA=localStorage.getItem('argus_parola')||'jarvis';}catch(e){}
+  var PAROLA_IN_USO=PAROLA;
+  function nomeParola(){return PAROLA_IN_USO==='argus'?'Hey Argus':PAROLA_IN_USO==='entrambe'?'Hey Argus o Hey Jarvis':'Hey Jarvis';}
+  function mostraParola(){$('modWWn').textContent=nomeParola();$('mWWn').textContent=nomeParola().toUpperCase();}
   var SOGLIA=0.45;try{var _s=parseFloat(localStorage.getItem('jarvis_soglia'));if(_s>0)SOGLIA=_s;}catch(e){}
   var staz=false,wakeLock=null,pollTimer=null,ultimoAvviso=null,annunci=[];
   var WW={livello:0,picco:0,piccoT:0,sr:0,sess:null,ctx:null,stream:null,proc:null,attivo:false,hist:new Float32Array(0),pend:new Float32Array(0),mel:[],feat:[],coda:[],lavoro:false,pred:0,ultimo:0,score:0};
@@ -582,8 +728,19 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
     if(WW.sess)return Promise.resolve();
     return caricaOrt().then(function(){
       if(ort.env&&ort.env.wasm){ort.env.wasm.wasmPaths=ORT_URL;ort.env.wasm.numThreads=1;}
-      return Promise.all([creaSessione('melspectrogram.onnx'),creaSessione('embedding_model.onnx'),creaSessione('hey_jarvis.onnx')]);
-    }).then(function(s){WW.sess={mel:s[0],emb:s[1],kw:s[2]};});
+      var parole=PAROLA==='entrambe'?['hey_argus.onnx','hey_jarvis.onnx']:[PAROLA==='argus'?'hey_argus.onnx':'hey_jarvis.onnx'];
+      return Promise.all([creaSessione('melspectrogram.onnx'),creaSessione('embedding_model.onnx')].concat(parole.map(function(p){
+        return creaSessione(p).catch(function(e){if(p==='hey_argus.onnx')return null;throw e;});
+      })));
+    }).then(function(s){
+      var kw=s.slice(2).filter(Boolean);
+      PAROLA_IN_USO=PAROLA;
+      if(!s[2]&&PAROLA!=='jarvis'){   // modello «Hey Argus» non ancora caricato su GitHub: ripiego su «Hey Jarvis»
+        PAROLA_IN_USO='jarvis';
+        if(!kw.length)return creaSessione('hey_jarvis.onnx').then(function(j){WW.sess={mel:s[0],emb:s[1],kw:[j]};mostraParola();riga('jv','Non trovo il modello «Hey Argus» (models/hey_argus.onnx su GitHub): per ora uso «Hey Jarvis».');});
+      }
+      WW.sess={mel:s[0],emb:s[1],kw:kw};mostraParola();
+    });
   }
   function concat(a,b){var c=new Float32Array(a.length+b.length);c.set(a,0);c.set(b,a.length);return c;}
   function resetBuffer(){WW.hist=new Float32Array(0);WW.pend=new Float32Array(0);WW.mel=[];WW.feat=[];WW.coda=[];WW.pred=0;}
@@ -648,11 +805,10 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
       if(WW.feat.length>16)WW.feat.splice(0,WW.feat.length-16);
       if(WW.feat.length<16)return null;
       var v=new Float32Array(16*96);for(var r=0;r<16;r++)v.set(WW.feat[r],r*96);
-      var h={};h[S.kw.inputNames[0]]=new ort.Tensor('float32',v,[1,16,96]);
-      return S.kw.run(h);
+      return Promise.all(S.kw.map(function(k){var h={};h[k.inputNames[0]]=new ort.Tensor('float32',v,[1,16,96]);return k.run(h).then(function(o){return o[k.outputNames[0]].data[0];});}));
     }).then(function(o){
       if(!o)return;
-      var sc=o[S.kw.outputNames[0]].data[0];WW.pred++;
+      var sc=Math.max.apply(null,o);WW.pred++;
       WW.score=WW.pred>5?sc:0;
       if(WW.score>WW.picco||Date.now()-WW.piccoT>4000){WW.picco=WW.score;WW.piccoT=Date.now();}
       if(WW.score>=SOGLIA&&Date.now()-WW.ultimo>2500&&!speaking&&!occupato&&!ascolta){WW.ultimo=Date.now();svegliato();}
@@ -701,9 +857,9 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
     chiediWakeLock();
     try{speechSynthesis.speak(new SpeechSynthesisUtterance(''));}catch(e){}
     controllaNovita();clearInterval(pollTimer);pollTimer=setInterval(controllaNovita,60000);
-    statoWW('CARICAMENTO','wip');hint.textContent='Preparo il riconoscimento di «Hey Jarvis»… (la prima volta scarica circa 3 MB)';
+    statoWW('CARICAMENTO','wip');hint.textContent='Preparo il riconoscimento della parola di attivazione… (la prima volta scarica circa 3 MB)';
     caricaModelli().then(function(){return avviaMic();}).then(function(){
-      hint.textContent='Sempre attivo. Dica «Hey Jarvis» e poi la domanda.';
+      hint.textContent='Sempre attivo. Dica «'+nomeParola()+'» e poi la domanda.';
     }).catch(function(e){
       statoWW('NON DISPONIBILE','wip');
       hint.textContent='Parola chiave non disponibile ('+e.message+'). Gli avvisi vocali restano attivi: per parlare tocca il microfono.';
@@ -717,6 +873,10 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
     statoWW('SPENTA','wip');hint.textContent='Modalità sempre attiva spenta.';
   }
   $('stazBtn').addEventListener('click',function(){staz?spegniStaz():attivaStaz();});
+  $('cParola').value=PAROLA;mostraParola();
+  $('cParola').addEventListener('change',function(){PAROLA=this.value;try{localStorage.setItem('argus_parola',PAROLA);}catch(e){}
+    WW.sess=null;if(staz){fermaMic();statoWW('CARICAMENTO','wip');caricaModelli().then(function(){return avviaMic();}).then(function(){hint.textContent='Sempre attivo. Dica «'+nomeParola()+'» e poi la domanda.';},function(e){statoWW('ERRORE','wip');hint.textContent=e.message;});}
+    else{PAROLA_IN_USO=PAROLA;mostraParola();}});
   $('cSog').value=SOGLIA;$('cSogV').textContent=fmt2(SOGLIA);
   $('cSog').addEventListener('input',function(){SOGLIA=parseFloat(this.value);$('cSogV').textContent=fmt2(SOGLIA);try{localStorage.setItem('jarvis_soglia',String(SOGLIA));}catch(e){}});
   statoWW('SPENTA','wip');
