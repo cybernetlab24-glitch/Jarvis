@@ -196,7 +196,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   <div class="top">
     <div>
       <div class="logo" data-t="A.R.G.U.S.">A.R.G.U.S.</div>
-      <div class="sub" id="sub">VOLTO · v1.8.0</div>
+      <div class="sub" id="sub">VOLTO · v1.9.0</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
@@ -260,6 +260,13 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
     <input id="cCod" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
     <button type="submit" id="cOk">COLLEGA</button>
     <label for="cVoce">VOCE DI ARGUS</label>
+    <select id="cVoceAI" style="font:14px var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line);padding:12px;width:100%">
+      <option value="">Voce del browser (immediata)</option>
+      <option value="Charon">Gemini · Charon (uomo, profonda e calma)</option><option value="Orus">Gemini · Orus (uomo, deciso)</option>
+      <option value="Fenrir">Gemini · Fenrir (uomo, energico)</option><option value="Iapetus">Gemini · Iapetus (uomo, chiaro)</option>
+      <option value="Algieba">Gemini · Algieba (uomo, morbida)</option><option value="Puck">Gemini · Puck (uomo, vivace)</option>
+      <option value="Kore">Gemini · Kore (donna, sicura)</option><option value="Aoede">Gemini · Aoede (donna, leggera)</option><option value="Leda">Gemini · Leda (donna, giovane)</option>
+    </select>
     <select id="cVoce" style="font:14px var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line);padding:12px;width:100%"></select>
     <label for="cTono">TONO DELLA VOCE</label>
     <input id="cTono" type="range" min="0.5" max="1.3" step="0.05">
@@ -352,12 +359,40 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
     if(voce)sel.value=voce.name;
   }
   if('speechSynthesis' in window){scegliVoce();speechSynthesis.onvoiceschanged=scegliVoce;}
-  function stopVoce(){speaking=false;try{speechSynthesis.cancel();}catch(e){}}
+  /* --- voce naturale di Gemini: audio dal server, bocca sincronizzata con il volume reale --- */
+  var VOCE_AI='';try{VOCE_AI=localStorage.getItem('argus_voce_ai')||'';}catch(e){}
+  var AUD=null,AC=null,AN=null,ABUF=null;
+  function mostraVoceAI(){var s=$('cVoceAI');if(s)s.value=VOCE_AI;var b=$('cVoce');if(b)b.hidden=!!VOCE_AI;var t=$('cTono');if(t){t.disabled=!!VOCE_AI;}}
+  function suonaAudio(src,testo){
+    try{
+      var el=new Audio();el.src=src;AUD=el;
+      try{if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)();}if(AC.state==='suspended')AC.resume();
+        var sorg=AC.createMediaElementSource(el);AN=AC.createAnalyser();AN.fftSize=512;ABUF=new Uint8Array(AN.fftSize);sorg.connect(AN);AN.connect(AC.destination);}catch(e){AN=null;}
+      el.onplay=function(){speaking=true;setStato('parla');};
+      el.onended=function(){if(AUD===el){AUD=null;AN=null;}finito();};
+      el.onerror=function(){if(AUD===el){AUD=null;AN=null;}parlaBrowser(testo);};
+      var p=el.play();if(p&&p.catch)p.catch(function(){if(AUD===el){AUD=null;AN=null;}parlaBrowser(testo);});
+    }catch(e){parlaBrowser(testo);}
+  }
+  function livelloAudio(){if(!AN||!ABUF)return -1;AN.getByteTimeDomainData(ABUF);var s=0;for(var i=0;i<ABUF.length;i++){var v=(ABUF[i]-128)/128;s+=v*v;}return Math.min(1,Math.sqrt(s/ABUF.length)*5.5);}
+  function stopVoce(){speaking=false;try{speechSynthesis.cancel();}catch(e){}if(AUD){try{AUD.pause();}catch(e){}AUD=null;AN=null;}}
   function finito(){speaking=false;setStato('attesa');dopoInterazione();}
   function animaSolo(testo){speaking=true;setStato('parla');setTimeout(finito,Math.max(1500,testo.split(/\s+/).length*330));}
-  function parla(testo){
+  function parla(testo,audio){
     stopVoce();
-    if(!voceOn||!('speechSynthesis' in window)){animaSolo(testo);return;}
+    if(!voceOn){animaSolo(testo);return;}
+    if(audio){suonaAudio(audio,testo);return;}
+    if(VOCE_AI&&CFG.url){
+      setStato('pensa','Preparo la voce…');
+      api({azione:'voce',testo:String(testo).slice(0,900),voceAI:VOCE_AI}).then(function(j){suonaAudio(j.audio,testo);},function(e){
+        if(typeof logReg==='function')logReg('Voce Gemini non disponibile: uso quella del browser');parlaBrowser(testo);});
+      return;
+    }
+    parlaBrowser(testo);
+  }
+  function parlaBrowser(testo){
+    stopVoce();
+    if(!('speechSynthesis' in window)){animaSolo(testo);return;}
     try{
       var u=new SpeechSynthesisUtterance(testo.replace(/https?:\S+/g,''));u.lang='it-IT';u.rate=1.02;u.pitch=TONO;if(voce)u.voice=voce;
       var partito=false;
@@ -374,16 +409,17 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   function chiedi(testo,aVoce){
     testo=testo.trim();if(!testo||occupato)return;
     occupato=true;riga('tu',testo);setStato('pensa');hint.textContent='';
-    var fatto=function(risposta){occupato=false;riga('jv',risposta);$('modAI').textContent='ATTIVO';$('modAI').className='ok';parla(risposta);};
+    var fatto=function(risposta,audio){occupato=false;riga('jv',risposta);$('modAI').textContent='ATTIVO';$('modAI').className='ok';parla(risposta,audio);};
     var errore=function(err){occupato=false;$('modAI').textContent='ERRORE';$('modAI').className='wip';
       var msg=(err&&err.message&&err.message.indexOf('Failed to fetch')<0)?err.message:'Non riesco a raggiungere il server. Controlli la connessione e riprovi.';riga('jv',msg);parla(msg);console.log(err);};
     var t0=Date.now();
-    api({azione:'chiedi',testo:testo,voce:!!aVoce}).then(function(j){
-      fatto(j.risposta);
+    api({azione:'chiedi',testo:testo,voce:!!aVoce,voceAI:voceOn?VOCE_AI:''}).then(function(j){
+      fatto(j.risposta,j.audio);
+      if(voceOn&&VOCE_AI&&!j.audio&&typeof logReg==='function')logReg('Voce Gemini non disponibile: uso quella del browser');
       if(j.immagine){var im=document.createElement('img');im.src=j.immagine;im.alt='Immagine creata da ARGUS';
         im.onclick=function(){im.classList.toggle('grande');};$('subs').appendChild(im);$('subs').scrollTop=1e6;}
       var tm=j.tempi||{},sec=function(ms){return (ms/1000).toFixed(1).replace('.',',')+' s';};
-      hint.textContent='⏱ risposta in '+sec(Date.now()-t0)+' · AI '+sec(tm.ai||0)+(tm.gmail?' · Gmail '+sec(tm.gmail):'')+(tm.modello?' · '+tm.modello:'');
+      hint.textContent='⏱ risposta in '+sec(Date.now()-t0)+' · AI '+sec(tm.ai||0)+(tm.gmail?' · Gmail '+sec(tm.gmail):'')+(tm.modello?' · '+tm.modello:'')+(tm.voce?' · voce '+sec(tm.voce):'');
       setTimeout(caricaInfo,1500);
     },errore);
   }
@@ -853,7 +889,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   (function(){var im=new Image();im.onload=function(){var n=im.naturalWidth,c=document.createElement('canvas');c.width=c.height=n;var g=c.getContext('2d');
     g.drawImage(im,0,0,n,n);g.globalCompositeOperation='destination-in';var gr=g.createRadialGradient(n/2,n/2,n*.30,n/2,n/2,n*.5);
     gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.75,'rgba(0,0,0,.85)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,n,n);faccia=c;};im.src=VOLTO_SRC;})();
-  function mostraVolto(){$('sub').textContent=(VOLTO==='robot'?'VOLTO':'NUCLEO NEURALE')+' · v1.8.0';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
+  function mostraVolto(){$('sub').textContent=(VOLTO==='robot'?'VOLTO':'NUCLEO NEURALE')+' · v1.9.0';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
 
   /* ================= ANIMAZIONE ================= */
   var t0=performance.now(),last=t0,rotY=0,arrivi=0,ipsT=0,spawnAcc=0,C1=[0,240,255],C2=[255,43,214];
@@ -928,7 +964,9 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   }
   function frame(now){
     var dt=Math.min(.05,(now-last)/1000);last=now;var t=(now-t0)/1000,S=STATI[stato],p,e,A,B,n,mx,my,a;
-    if(speaking){var syl=Math.abs(Math.sin(t*Math.PI*4.4))*(.55+.45*Math.sin(t*1.7+Math.sin(t*5.3)));levelT=Math.max(levelT*.9,.25+.5*syl,kick);}
+    var la=speaking?livelloAudio():-1;
+    if(la>=0){levelT=Math.max(levelT*.82,Math.min(1,la*1.1),kick*.5);}
+    else if(speaking){var syl=Math.abs(Math.sin(t*Math.PI*4.4))*(.55+.45*Math.sin(t*1.7+Math.sin(t*5.3)));levelT=Math.max(levelT*.9,.25+.5*syl,kick);}
     else if(stato==='ascolto'){levelT=userTalk>.05?Math.max(.15+.35*Math.abs(Math.sin(t*9)*Math.sin(t*3.1)),kick*.7):.08+.05*Math.abs(Math.sin(t*2.1));}
     else levelT*=.9;
     userTalk*=Math.pow(.3,dt);kick*=Math.pow(.02,dt);
@@ -1168,6 +1206,8 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   $('cVoce').addEventListener('change',function(){VOCE_NOME=this.value;try{localStorage.setItem('argus_voce_nome',VOCE_NOME);}catch(e){}scegliVoce();});
   $('cProvaVoce').onclick=function(){var v=voceOn;voceOn=true;parla('Buongiorno, signore. Sono ARGUS, al suo servizio.');voceOn=v;};
   scegliVoce();
+  mostraVoceAI();
+  $('cVoceAI').addEventListener('change',function(){VOCE_AI=this.value;try{localStorage.setItem('argus_voce_ai',VOCE_AI);}catch(e){}mostraVoceAI();});
   $('cVolto').value=VOLTO;mostraVolto();
   $('cVolto').addEventListener('change',function(){VOLTO=this.value;try{localStorage.setItem('argus_volto',VOLTO);}catch(e){}mostraVolto();});
   $('cParola').value=PAROLA;mostraParola();
