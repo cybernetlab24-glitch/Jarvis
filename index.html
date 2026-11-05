@@ -196,7 +196,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   <div class="top">
     <div>
       <div class="logo" data-t="A.R.G.U.S.">A.R.G.U.S.</div>
-      <div class="sub" id="sub">VOLTO · v1.9.0</div>
+      <div class="sub" id="sub">VOLTO · v2.0.0</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
@@ -592,6 +592,9 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
         rg(v.sveglia?'':'o','Bot Sveglia',v.sveglia?'ok':'—')+
         rg(v.tavily?'':'o','Ricerca web',v.tavily?'ok':'—')+
         rg(y.lavori?'w':'','Coda lavori',y.lavori?y.lavori+' in coda':'vuota')+
+        (function(){var di=v.dispositivi||{};return rg(!di.pc?'o':di.pc_online?'':'w','PC',!di.pc?'—':di.pc_online?(di.pc_nome||'online'):'non risponde')+
+          rg(di.telefono?'':'o','Telefono',di.telefono?(di.tel_batteria?di.tel_batteria+'%':'collegato'):'—');})()+
+        rg((v.social_collegati||[]).length?'':'o','Social',(v.social_collegati||[]).length?(v.social_collegati||[]).map(function(x){return {instagram:'IG',facebook:'FB',tiktok:'TT',linkedin:'IN'}[x];}).join(' · '):'—')+
         rg(staz?'':'o','Sempre attivo',staz?'in ascolto':'spento')+
         rg(gOn?'':'o','Gesti',gOn?'attivi':'spenti')+'</div>',az:[]};}
   function wRegistro(){return {t:'REGISTRO ATTIVITÀ',big:'',d:'<div class="reg">'+(REG.length?REG.slice(0,9).map(function(x){return '<div class="'+x.c+'"><b>'+x.o+'</b>'+escH(x.s)+'</div>';}).join(''):'<div>In attesa di attività…</div>')+'</div>',az:[]};}
@@ -889,7 +892,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   (function(){var im=new Image();im.onload=function(){var n=im.naturalWidth,c=document.createElement('canvas');c.width=c.height=n;var g=c.getContext('2d');
     g.drawImage(im,0,0,n,n);g.globalCompositeOperation='destination-in';var gr=g.createRadialGradient(n/2,n/2,n*.30,n/2,n/2,n*.5);
     gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.75,'rgba(0,0,0,.85)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,n,n);faccia=c;};im.src=VOLTO_SRC;})();
-  function mostraVolto(){$('sub').textContent=(VOLTO==='robot'?'VOLTO':'NUCLEO NEURALE')+' · v1.9.0';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
+  function mostraVolto(){$('sub').textContent=(VOLTO==='robot'?'VOLTO':'NUCLEO NEURALE')+' · v2.0.0';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
 
   /* ================= ANIMAZIONE ================= */
   var t0=performance.now(),last=t0,rotY=0,arrivi=0,ipsT=0,spawnAcc=0,C1=[0,240,255],C2=[255,43,214];
