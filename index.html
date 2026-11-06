@@ -183,6 +183,15 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
 .leaflet-tooltip.tip::before{display:none}
 .mw .leaflet-control-attribution{background:rgba(5,4,11,.75)!important;color:#7d7aa0!important;font:9px var(--mono)}.mw .leaflet-control-attribution a{color:#5fd4ff!important}
 @media (min-width:621px){ .mobile-read{display:none} }
+/* ARGUS desktop: «solo volto» = finestrella con la sola faccia del robot */
+body.solo-volto .top,body.solo-volto .side,body.solo-volto .row,body.solo-volto .mobile-read,body.solo-volto .hint,body.solo-volto #wlayer,body.solo-volto .gprev,body.solo-volto .fin,body.solo-volto .gcur{display:none!important}
+body.solo-volto .hud{padding:8px 10px;grid-template-rows:1fr auto}
+body.solo-volto .stato{bottom:3%}
+body.solo-volto .stato b{font-size:.95rem;letter-spacing:.3em}
+body.solo-volto .stato span{font-size:.72rem}
+body.solo-volto .subs{max-height:23vh;font-size:.72rem;padding:6px 9px;background:rgba(4,9,18,.6)}
+body.solo-volto .subs>*:not(:nth-last-child(-n+2)){display:none}
+body.solo-volto .subs img{display:none}
 @media (prefers-reduced-motion:reduce){.logo::before,.logo::after,.mic.on{animation:none}}
 </style>
 </head>
@@ -196,7 +205,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   <div class="top">
     <div>
       <div class="logo" data-t="A.R.G.U.S.">A.R.G.U.S.</div>
-      <div class="sub" id="sub">VOLTO · v2.0.0</div>
+      <div class="sub" id="sub">VOLTO · v2.1.0</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
@@ -296,6 +305,28 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
   var $=function(id){return document.getElementById(id);};
   var CFG={url:'',codice:''};
+  /* ===== ARGUS desktop: la pagina gira dentro la finestra aperta da ArgusDesktop sul PC ===== */
+  var DESK=(function(){try{var q=new URLSearchParams(location.search);if(q.get('desktop')!=='1')return null;
+    var t=(location.hash.match(/t=([\w-]+)/)||[])[1]||'';return {t:t,porta:parseInt(q.get('porta'),10)||47321,modo:'iniziale'};}catch(e){return null;}})();
+  function finestra(modo){
+    if(!DESK)return;DESK.modo=modo;document.body.classList.toggle('solo-volto',modo==='volto');
+    try{fetch('http://127.0.0.1:'+DESK.porta+'/finestra?modo='+modo+'&t='+encodeURIComponent(DESK.t),{mode:'no-cors',cache:'no-store'}).catch(function(e){console.log('ArgusDesktop non risponde',e);});}catch(e){}
+    if(typeof logReg==='function')logReg('Finestra: '+modo);
+  }
+  function quandoZitto(fn){var n=0,iv=setInterval(function(){if((!speaking&&stato!=='parla')||++n>150){clearInterval(iv);fn();}},200);}
+  /** Comandi della finestra: li esegue il PC subito, senza passare da Gemini. */
+  function comandoFinestra(testo){
+    if(!DESK)return false;
+    var t=testo.toLowerCase().replace(/[.,!?]/g,' ').replace(/\s+/g,' ').trim(),msg='',modo='';
+    if(/\b(apri|mostra|mostrami|fammi vedere|allarga)\s+(il\s+|tutto il\s+)?mondo\b/.test(t)){modo='mondo';msg='Ecco il mondo, signore.';}
+    else if(/\b(chiudi|riduci|rimpicciolisci)\s+(il\s+)?mondo\b/.test(t)){modo='volto';msg='Torno piccolo.';}
+    else if(/\b(nasconditi|nascondi|sparisci|vai a dormire|a dormire|riposo|riposati|vai via)\b/.test(t)){modo='nascosto';msg='Agli ordini. Mi chiami quando serve.';}
+    if(!modo)return false;
+    riga('tu',testo);riga('jv',msg);
+    if(modo==='nascosto'){parla(msg);quandoZitto(function(){finestra('nascosto');});}
+    else{finestra(modo);parla(msg);}
+    return true;
+  }
   try{CFG=JSON.parse(localStorage.getItem('jarvis_cfg'))||CFG;}catch(e){}
   function api(dati,cfg){
     cfg=cfg||CFG;
@@ -408,6 +439,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   var occupato=false;
   function chiedi(testo,aVoce){
     testo=testo.trim();if(!testo||occupato)return;
+    if(comandoFinestra(testo))return;
     occupato=true;riga('tu',testo);setStato('pensa');hint.textContent='';
     var fatto=function(risposta,audio){occupato=false;riga('jv',risposta);$('modAI').textContent='ATTIVO';$('modAI').className='ok';parla(risposta,audio);};
     var errore=function(err){occupato=false;$('modAI').textContent='ERRORE';$('modAI').className='wip';
@@ -892,7 +924,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   (function(){var im=new Image();im.onload=function(){var n=im.naturalWidth,c=document.createElement('canvas');c.width=c.height=n;var g=c.getContext('2d');
     g.drawImage(im,0,0,n,n);g.globalCompositeOperation='destination-in';var gr=g.createRadialGradient(n/2,n/2,n*.30,n/2,n/2,n*.5);
     gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.75,'rgba(0,0,0,.85)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,n,n);faccia=c;};im.src=VOLTO_SRC;})();
-  function mostraVolto(){$('sub').textContent=(VOLTO==='robot'?'VOLTO':'NUCLEO NEURALE')+' · v2.0.0';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
+  function mostraVolto(){$('sub').textContent=(VOLTO==='robot'?'VOLTO':'NUCLEO NEURALE')+' · v2.1.0';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
 
   /* ================= ANIMAZIONE ================= */
   var t0=performance.now(),last=t0,rotY=0,arrivi=0,ipsT=0,spawnAcc=0,C1=[0,240,255],C2=[255,43,214];
@@ -986,6 +1018,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
     if(pulses.length>500)pulses.splice(0,pulses.length-500);
 
     var cx=W/2,cy=H*(W<620?.42:.45),base=Math.min(W,H)*(W<620?.27:.21)*cur.scale;
+    if(DESK&&DESK.modo==='volto'){cy=H*.36;base=Math.min(W,H*.72)*.3*cur.scale;}
     var cY=Math.cos(rotY),sY=Math.sin(rotY),tilt=.35+Math.sin(t*.23)*.12,cX=Math.cos(tilt),sX=Math.sin(tilt);
     for(i=0;i<nodes.length;i++){n=nodes[i];var wob=1+.025*Math.sin(t*1.3+n.ph)+level*.16*Math.sin(n.ph*3+t*9);
       var x=n.x*wob,y=n.y*wob,zz=n.z*wob,x1=x*cY-zz*sY,z1=x*sY+zz*cY,y1=y*cX-z1*sX,z2=y*sX+z1*cX,f=2.6/(2.6+z2);
@@ -1148,7 +1181,9 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   function svegliato(){
     kick=1;hint.textContent='Sì, signore?';
     fermaMic();
-    setTimeout(avviaAscolto,300);
+    var nascosto=DESK&&DESK.modo!=='volto'&&DESK.modo!=='mondo';
+    if(nascosto)finestra('volto');
+    setTimeout(avviaAscolto,nascosto?600:300);
   }
   function riprendiWW(){
     if(!staz||!WW.sess||WW.attivo||ascolta||occupato||speaking)return;
@@ -1164,7 +1199,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   }
   function prossimoAnnuncio(){
     if(!annunci.length||ascolta||occupato||speaking)return;
-    var a=annunci.shift();riga('jv','📣 '+a);parla(a);
+    var a=annunci.shift();if(DESK&&DESK.modo==='nascosto')finestra('volto');riga('jv','📣 '+a);parla(a);
   }
   function controllaNovita(){
     if(!CFG.url)return;
@@ -1191,6 +1226,7 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
     statoWW('CARICAMENTO','wip');hint.textContent='Preparo il riconoscimento della parola di attivazione… (la prima volta scarica circa 3 MB)';
     caricaModelli().then(function(){return avviaMic();}).then(function(){
       hint.textContent='Sempre attivo. Dica «'+nomeParola()+'» e poi la domanda.';
+      if(DESK&&DESK.modo==='iniziale')setTimeout(function(){finestra('nascosto');},1500);
     }).catch(function(e){
       statoWW('NON DISPONIBILE','wip');
       hint.textContent='Parola chiave non disponibile ('+e.message+'). Gli avvisi vocali restano attivi: per parlare tocca il microfono.';
@@ -1220,7 +1256,10 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
   $('cSog').value=SOGLIA;$('cSogV').textContent=fmt2(SOGLIA);
   $('cSog').addEventListener('input',function(){SOGLIA=parseFloat(this.value);$('cSogV').textContent=fmt2(SOGLIA);try{localStorage.setItem('jarvis_soglia',String(SOGLIA));}catch(e){}});
   statoWW('SPENTA','wip');
-  if((function(){try{return localStorage.getItem('jarvis_staz')==='on';}catch(e){return false;}})()&&CFG.url){
+  if(DESK){document.title='ARGUS-DESKTOP';
+    if(CFG.url)setTimeout(attivaStaz,800);
+    else hint.textContent='Prima volta su questo PC: collega ARGUS (indirizzo e codice), poi chiudi e riapri il PC o riavvia ArgusDesktop.';}
+  else if((function(){try{return localStorage.getItem('jarvis_staz')==='on';}catch(e){return false;}})()&&CFG.url){
     $('stazBtn').classList.add('blink');hint.textContent='Tocca un punto qualsiasi per riattivare la modalità sempre attiva.';
     document.addEventListener('pointerdown',function primo(ev){
       document.removeEventListener('pointerdown',primo,true);
