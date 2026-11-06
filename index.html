@@ -217,7 +217,7 @@ body.solo-volto .subs img{display:none}
   <div class="top">
     <div>
       <div class="logo" data-t="A.R.G.U.S.">A.R.G.U.S.</div>
-      <div class="sub" id="sub">VOLTO · v2.3.0</div>
+      <div class="sub" id="sub">VOLTO · v2.3.1</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
@@ -323,6 +323,7 @@ body.solo-volto .subs img{display:none}
     var t=(location.hash.match(/t=([\w-]+)/)||[])[1]||'';return {t:t,porta:parseInt(q.get('porta'),10)||47321,modo:'iniziale'};}catch(e){return null;}})();
   function finestra(modo){
     if(!DESK)return;DESK.modo=modo;document.body.classList.toggle('solo-volto',modo==='volto');
+    if(modo==='mondo')setTimeout(function(){rinfrescaWidget(true);},700);
     try{fetch('http://127.0.0.1:'+DESK.porta+'/finestra?modo='+modo+'&t='+encodeURIComponent(DESK.t),{mode:'no-cors',cache:'no-store'}).catch(function(e){console.log('ArgusDesktop non risponde',e);});}catch(e){}
     if(typeof logReg==='function')logReg('Finestra: '+modo);
   }
@@ -567,7 +568,7 @@ body.solo-volto .subs img{display:none}
     if(comandoAscolto(testo))return;
     var iv=intentoVista(testo);if(iv){azioneVista(testo,iv,aVoce);return;}
     occupato=true;riga('tu',testo);setStato('pensa');hint.textContent='';
-    var fatto=function(risposta,audio){occupato=false;riga('jv',risposta);$('modAI').textContent='ATTIVO';$('modAI').className='ok';parla(risposta,audio);};
+    var fatto=function(risposta,audio){occupato=false;setTimeout(function(){rinfrescaWidget(true);},1500);riga('jv',risposta);$('modAI').textContent='ATTIVO';$('modAI').className='ok';parla(risposta,audio);};
     var errore=function(err){occupato=false;$('modAI').textContent='ERRORE';$('modAI').className='wip';
       var msg=(err&&err.message&&err.message.indexOf('Failed to fetch')<0)?err.message:'Non riesco a raggiungere il server. Controlli la connessione e riprovi.';riga('jv',msg);parla(msg);console.log(err);};
     var t0=Date.now();
@@ -922,11 +923,16 @@ body.solo-volto .subs img{display:none}
     var s=c.soldi||{},y=c.sistemi||{},n=(s.n_scaduti||0)+(y.siti_giu||[]).length+(y.bozze||0);$('wdgN').hidden=!n;$('wdgN').textContent=n;
   }
   function mostraLayer(){var on=!!WST.visibili;$('wlayer').hidden=!on;$('wlayer').classList.toggle('on',on);$('wdgBtn').setAttribute('aria-pressed',on?'true':'false');}
-  function caricaWidget(){if(!CFG.url)return;var t0=performance.now();api({azione:'cruscotto'}).then(function(j){LAT=Math.round(performance.now()-t0);if(j.cruscotto){disegnaWidget(j.cruscotto);logReg('Cruscotto aggiornato · '+LAT+' ms');}},function(e){logReg('Cruscotto non raggiungibile','tu');console.log('Widget: '+(e&&e.message));});}
+  var ultimoWidget=0,widgetInCorso=false;
+  /** Aggiorna i widget se sono visibili: subito se forza, altrimenti solo se l'ultimo aggiornamento è vecchio. */
+  function rinfrescaWidget(forza){if(!WST.visibili||widgetInCorso)return;if(forza||Date.now()-ultimoWidget>100000)caricaWidget();}
+  function caricaWidget(){if(!CFG.url)return;widgetInCorso=true;ultimoWidget=Date.now();setTimeout(function(){widgetInCorso=false;},4000);var t0=performance.now();api({azione:'cruscotto'}).then(function(j){LAT=Math.round(performance.now()-t0);if(j.cruscotto){disegnaWidget(j.cruscotto);logReg('Cruscotto aggiornato · '+LAT+' ms');}},function(e){logReg('Cruscotto non raggiungibile','tu');console.log('Widget: '+(e&&e.message));});}
   $('wdgBtn').onclick=function(){WST.visibili=!WST.visibili;salvaW();mostraLayer();if(WST.visibili)caricaWidget();};
   $('cWdgReset').onclick=function(){if(MAPPA){try{MAPPA.remove();}catch(e){}MAPPA=null;}WST={visibili:true,pos:{},compatti:{},nascosti:{}};salvaW();$('wlayer').innerHTML='';mostraLayer();if(ULTIMO)disegnaWidget(ULTIMO);else caricaWidget();};
   var rsz;addEventListener('resize',function(){clearTimeout(rsz);rsz=setTimeout(function(){if(MAPPA){try{MAPPA.remove();}catch(e){}MAPPA=null;}$('wlayer').innerHTML='';if(ULTIMO)disegnaWidget(ULTIMO);},250);});
-  mostraLayer();caricaWidget();setInterval(caricaWidget,5*60*1000);
+  mostraLayer();caricaWidget();setInterval(function(){rinfrescaWidget(false);},2*60*1000);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)rinfrescaWidget(false);});
+  addEventListener('focus',function(){rinfrescaWidget(false);});
 
   /* ================= GESTI (MediaPipe, tutto sul dispositivo) ================= */
   var G={on:false,rec:null,video:null,stream:null,last:0,x:innerWidth/2,y:innerHeight/2,pz:false,pzT:0,pzX:0,pzY:0,drag:null,hov:null,
@@ -1082,7 +1088,7 @@ body.solo-volto .subs img{display:none}
   (function(){var im=new Image();im.onload=function(){var n=im.naturalWidth,c=document.createElement('canvas');c.width=c.height=n;var g=c.getContext('2d');
     g.drawImage(im,0,0,n,n);g.globalCompositeOperation='destination-in';var gr=g.createRadialGradient(n/2,n/2,n*.30,n/2,n/2,n*.5);
     gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.75,'rgba(0,0,0,.85)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,n,n);faccia=c;};im.src=VOLTO_SRC;})();
-  function mostraVolto(){$('sub').textContent=(VOLTO==='robot'?'VOLTO':'NUCLEO NEURALE')+' · v2.3.0';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
+  function mostraVolto(){$('sub').textContent=(VOLTO==='robot'?'VOLTO':'NUCLEO NEURALE')+' · v2.3.1';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
 
   /* ================= ANIMAZIONE ================= */
   var t0=performance.now(),last=t0,rotY=0,arrivi=0,ipsT=0,spawnAcc=0,C1=[0,240,255],C2=[255,43,214];
@@ -1369,6 +1375,7 @@ body.solo-volto .subs img{display:none}
       mostraInfo(j.info);
       if(ultimoAvviso===null){ultimoAvviso=j.adesso;}
       (j.avvisi||[]).forEach(function(a){annunci.push(a.x);ultimoAvviso=Math.max(ultimoAvviso,a.t);});
+      if((j.avvisi||[]).length)rinfrescaWidget(true);
       try{localStorage.setItem('jarvis_ultimo_avviso',String(ultimoAvviso));}catch(e){}
       prossimoAnnuncio();
     },function(e){console.log(e);});
