@@ -217,7 +217,7 @@ body.solo-volto .subs img{display:none}
   <div class="top">
     <div>
       <div class="logo" data-t="A.R.G.U.S.">A.R.G.U.S.</div>
-      <div class="sub" id="sub">VOLTO · v2.3.1</div>
+      <div class="sub" id="sub">VOLTO · v2.3.2</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
@@ -610,8 +610,8 @@ body.solo-volto .subs img{display:none}
      resta in ascolto qualche secondo per continuare la conversazione senza «Hey Jarvis». */
   var PAUSA=parseInt(localStorage.getItem('argus_pausa'),10)||1800;
   var CONVERSA=localStorage.getItem('argus_conversa')!=='0';
-  var ultimaVoce=false,ultimoDetto='';
-  var CHIUSURA=/^((ok|okay|sì|si|no|perfetto|va bene)[\s,]+)?(grazie( mille| tante)?|basta( così)?|niente|nient'altro|a posto( così)?|è tutto|tutto qui|no grazie|ho finito|fine)\s*(argus|jarvis)?[\s.!]*$/i;
+  var ultimaVoce=false,ultimoDetto='',ascoltaDal=0;
+  var CHIUSURA=/^((ok|no)[\s,]+)?(grazie( mille| tante)?|basta( così)?|niente|nient'altro|a posto( così)?|è tutto|tutto qui|no grazie|ho finito|fine)\s*(argus|jarvis)?[\s.!]*$/i;
   /** Regolazioni dell'ascolto a voce: le esegue l'interfaccia, senza Gemini. */
   function comandoAscolto(testo){
     var t=testo.toLowerCase(),msg='';
@@ -641,13 +641,15 @@ body.solo-volto .subs img{display:none}
     rec.onstart=function(){if(CFG.url&&!opz.seguito)api({azione:'info'}).then(function(j){mostraInfo(j.info);},function(){});
       ascolta=true;$('mic').classList.add('on');setStato('ascolto');
       hint.textContent=opz.seguito?'La ascolto… (dica «grazie» per chiudere)':'Parli pure. Rispondo quando fa una pausa.';
+      ascoltaDal=Date.now();
       tMax=setTimeout(function(){invia();chiudi();},45000);
-      if(opz.attesa)tAtt=setTimeout(function(){if(!parlato)chiudi();},opz.attesa);};
+      tAtt=setTimeout(function(){if(!testo)chiudi();},opz.attesa||8000);};
     rec.onspeechstart=function(){userTalk=1;parlato=true;};
     rec.onresult=function(e){var fin='',tmp='';
       for(var k=0;k<e.results.length;k++){var t=e.results[k][0].transcript;if(e.results[k].isFinal)fin+=t+' ';else tmp+=t;}
-      kick=1;userTalk=1;parlato=true;testo=(fin+tmp).replace(/\s+/g,' ').trim();finale=testo;
-      if(!testo)return;
+      var nuovo=(fin+tmp).replace(/\s+/g,' ').trim();
+      if(nuovo.replace(/[^a-zà-ù0-9]/gi,'').length<3)return;   // rumori: niente frasi di una o due lettere
+      kick=1;userTalk=1;parlato=true;testo=nuovo;finale=testo;
       if(!vivo)vivo=riga('tu',testo);else vivo.textContent=testo;
       clearTimeout(tSil);tSil=setTimeout(invia,PAUSA);};
     rec.onerror=function(e){
@@ -1088,7 +1090,7 @@ body.solo-volto .subs img{display:none}
   (function(){var im=new Image();im.onload=function(){var n=im.naturalWidth,c=document.createElement('canvas');c.width=c.height=n;var g=c.getContext('2d');
     g.drawImage(im,0,0,n,n);g.globalCompositeOperation='destination-in';var gr=g.createRadialGradient(n/2,n/2,n*.30,n/2,n/2,n*.5);
     gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.75,'rgba(0,0,0,.85)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,n,n);faccia=c;};im.src=VOLTO_SRC;})();
-  function mostraVolto(){$('sub').textContent=(VOLTO==='robot'?'VOLTO':'NUCLEO NEURALE')+' · v2.3.1';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
+  function mostraVolto(){$('sub').textContent=(VOLTO==='robot'?'VOLTO':'NUCLEO NEURALE')+' · v2.3.2';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
 
   /* ================= ANIMAZIONE ================= */
   var t0=performance.now(),last=t0,rotY=0,arrivi=0,ipsT=0,spawnAcc=0,C1=[0,240,255],C2=[255,43,214];
@@ -1349,18 +1351,26 @@ body.solo-volto .subs img{display:none}
     if(nascosto)finestra('volto');
     setTimeout(avviaAscolto,nascosto?600:300);
   }
+  var partendoWW=false;
   function riprendiWW(){
-    if(!staz||!WW.sess||WW.attivo||ascolta||occupato||speaking)return;
-    avviaMic().catch(function(e){statoWW('ERRORE','wip');hint.textContent='Microfono non disponibile: '+e.message;});
+    if(!staz||!WW.sess||WW.attivo||ascolta||occupato||speaking||partendoWW)return;
+    partendoWW=true;
+    avviaMic().then(function(){partendoWW=false;},function(e){partendoWW=false;statoWW('ERRORE','wip');hint.textContent='Microfono non disponibile: '+e.message;});
   }
+  /* Guardiano: se per qualsiasi motivo «Hey Jarvis» resta spento, lo riaccende (controllo ogni 5 secondi). */
+  setInterval(function(){
+    if(!staz)return;
+    if(ascolta&&ascoltaDal&&Date.now()-ascoltaDal>60000){try{rec.abort();}catch(e){}ascolta=false;$('mic').classList.remove('on');if(stato==='ascolto')setStato('attesa');}
+    if(!WW.attivo&&!ascolta&&!occupato&&!speaking&&!annunci.length)riprendiWW();
+  },5000);
   function dopoInterazione(){
     setTimeout(function(){
       if(ascolta||occupato||speaking)return;
       if(staz&&annunci.length)return prossimoAnnuncio();
       // conversazione: dopo una risposta a voce resto in ascolto senza bisogno di «Hey Jarvis»
-      if(CONVERSA&&ultimaVoce&&SR&&!(DESK&&DESK.modo==='nascosto')){
+      if(CONVERSA&&ultimaVoce&&SR&&/\?/.test(ultimoDetto.slice(-160))&&!(DESK&&DESK.modo==='nascosto')){
         if(staz&&WW.attivo)fermaMic();
-        return avviaAscolto({seguito:true,attesa:/\?\s*$/.test(ultimoDetto)?12000:7000});
+        return avviaAscolto({seguito:true,attesa:10000});
       }
       if(staz)riprendiWW();
     },500);
