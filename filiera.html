@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A.R.G.U.S. · La filiera di CybernetLab</title>
+<style>
+:root{--oro:#e3b54a;--oro2:#f6dc8f;--scuro:#07070a;--pann:#111116;--testo:#ece6d6;--grigio:#9a937f}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--scuro);color:var(--testo);font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;min-height:100%}
+canvas#cielo{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+main{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:44px 22px 60px}
+.eti{font-size:12px;letter-spacing:.32em;color:var(--oro);text-transform:uppercase}
+h1{font-size:clamp(28px,4.6vw,52px);line-height:1.08;margin:12px 0 10px;font-weight:700;letter-spacing:-.01em}
+h1 span{background:linear-gradient(90deg,var(--oro2),var(--oro));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sotto{color:var(--grigio);font-size:clamp(15px,1.6vw,18px);max-width:760px;margin:0}
+.linea{position:relative;margin:54px 0 18px;display:grid;grid-template-columns:repeat(8,1fr);gap:8px}
+.linea:before{content:"";position:absolute;left:5%;right:5%;top:31px;height:2px;background:linear-gradient(90deg,transparent,rgba(227,181,74,.55),transparent)}
+.flusso{position:absolute;top:28px;left:5%;width:8px;height:8px;border-radius:50%;background:var(--oro2);box-shadow:0 0 14px var(--oro);animation:corre 6s linear infinite}
+@keyframes corre{from{left:5%}to{left:95%}}
+.tappa{position:relative;background:none;border:0;color:inherit;cursor:pointer;text-align:center;padding:0;font:inherit;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;align-self:start}
+.tappa .pal{width:62px;height:62px;margin:0 auto;border-radius:50%;display:grid;place-items:center;font-size:24px;background:radial-gradient(circle at 35% 30%,#2a2416,#0d0c09);border:1px solid rgba(227,181,74,.45);box-shadow:0 0 0 6px rgba(227,181,74,.05);transition:.25s}
+.tappa:hover .pal,.tappa.su .pal{border-color:var(--oro2);box-shadow:0 0 22px rgba(227,181,74,.45),0 0 0 6px rgba(227,181,74,.12);transform:translateY(-3px)}
+.tappa b{display:block;margin-top:12px;font-size:14px;letter-spacing:.02em}
+.tappa small{display:block;color:var(--grigio);font-size:12px;margin-top:3px;line-height:1.3}
+.pannello{margin-top:34px;display:grid;grid-template-columns:1.1fr 1fr;gap:18px}
+.card{background:linear-gradient(180deg,rgba(24,22,17,.92),rgba(12,12,14,.92));border:1px solid rgba(227,181,74,.22);border-radius:16px;padding:22px 24px;backdrop-filter:blur(6px)}
+.card h2{margin:6px 0 10px;font-size:24px}
+.card p{color:#cfc8b4;line-height:1.55;margin:0 0 12px}
+.card ul{margin:0;padding-left:18px;color:#cfc8b4;line-height:1.7}
+.log{font-family:ui-monospace,Consolas,monospace;font-size:13.5px;min-height:230px}
+.log .riga{opacity:0;transform:translateY(4px);animation:entra .35s forwards;padding:4px 0;color:#e8dfc6}
+.log .riga i{color:var(--oro);font-style:normal;margin-right:8px}
+.log .fine{margin-top:12px;padding:10px 12px;border-radius:10px;background:rgba(227,181,74,.1);border:1px solid rgba(227,181,74,.35);color:var(--oro2)}
+@keyframes entra{to{opacity:1;transform:none}}
+.reparti{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:40px}
+.rep{border:1px solid rgba(227,181,74,.18);border-radius:14px;padding:16px;background:rgba(14,13,11,.85)}
+.rep b{color:var(--oro2)}.rep p{margin:6px 0 0;color:var(--grigio);font-size:13.5px;line-height:1.45}
+.patto{margin-top:34px;text-align:center;color:var(--grigio);font-size:15px}
+.patto b{color:var(--oro2)}
+@media (max-width:860px){
+  .linea{grid-template-columns:repeat(4,1fr);row-gap:26px}.linea:before,.flusso{display:none}
+  .pannello{grid-template-columns:1fr}.reparti{grid-template-columns:1fr 1fr}
+}
+@media (prefers-reduced-motion:reduce){.flusso{animation:none}.log .riga{animation:none;opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<canvas id="cielo" aria-hidden="true"></canvas>
+<main>
+  <div class="eti">A.R.G.U.S. · la filiera</div>
+  <h1>Dalla prima email<br><span>al pagamento.</span></h1>
+  <p class="sotto">Ogni passo del lavoro di CybernetLab, seguito da una sola intelligenza. ARGUS prepara, controlla e ricorda. Tu approvi con un tocco.</p>
+
+  <div class="linea" id="linea"><div class="flusso"></div></div>
+
+  <div class="pannello">
+    <div class="card" id="scheda"></div>
+    <div class="card log" id="log" aria-live="polite"></div>
+  </div>
+
+  <div class="reparti">
+    <div class="rep"><b>💼 Vendite</b><p>Richieste nuove, preventivi senza risposta, clienti da richiamare.</p></div>
+    <div class="rep"><b>💶 Contabilità</b><p>Fatture da emettere e da ricevere, incassi, solleciti, scadenze.</p></div>
+    <div class="rep"><b>🛠 Operazioni</b><p>Interventi, progetti e tappe, siti dei clienti sempre sotto controllo.</p></div>
+    <div class="rep"><b>📣 Marketing</b><p>Post e immagini pronti come bozza, idee per i clienti di sempre.</p></div>
+  </div>
+  <p class="patto">Ogni mattina alle 8 i reparti fanno la riunione e propongono il lavoro del giorno.<br><b>Niente parte da solo:</b> ogni email, preventivo e messaggio aspetta il tuo ✅.</p>
+</main>
+
+<script>
+var TAPPE=[
+ {i:'✉️',n:'Richiesta',s:'email, WhatsApp, voce',
+  t:'Il cliente scrive come gli viene.',p:'Un messaggio inoltrato, una telefonata raccontata a voce, un\'email: ARGUS capisce cosa serve, aggiorna la scheda del cliente e mette in agenda quando richiamarlo.',
+  l:['Ricevuto messaggio inoltrato da Telegram','Riconosciuto il cliente: Studio Bianchi','Richiesta: sito con 5 pagine e prenotazioni online','Scheda cliente aggiornata','Promemoria: richiamare giovedì alle 10'],f:'Proposta pronta. Creo il preventivo?'},
+ {i:'📄',n:'Preventivo',s:'offerta in stile software house',
+  t:'Il preventivo si scrive da solo.',p:'Prende i prezzi dal listino, segnala quelli da verificare e crea l\'offerta PDF con fasi, tempi e condizioni di pagamento. L\'email al cliente parte solo col tuo ✅.',
+  l:['Letto il listino della software house','5 voci, 1 prezzo da verificare','Offerta PDF P-2026-014 creata','Bozza email al cliente pronta'],f:'Totale 2.840 €. La mando, signore?'},
+ {i:'🧭',n:'Progetto',s:'tappe 40 · 30 · 30',
+  t:'Accettato? Parte il progetto.',p:'Il preventivo accettato diventa un progetto con le sue tappe di pagamento. Ogni traguardo raggiunto prepara la richiesta di pagamento.',
+  l:['Preventivo P-2026-014 accettato','Creato il progetto con 3 tappe','Tappa 1: acconto 40% da incassare','Richiesta di pagamento pronta'],f:'Mando la richiesta dell\'acconto?'},
+ {i:'🛠',n:'Operazioni',s:'agenda, interventi, siti',
+  t:'Le giornate in ordine.',p:'Appuntamenti, interventi tecnici e cose da fare in un solo posto. I siti dei clienti vengono controllati ogni ora, i certificati prima che scadano.',
+  l:['Domani: 3 interventi, primo alle 8:30','Sito di un cliente non risponde da 12 minuti','Certificato SSL in scadenza tra 9 giorni','Aggiunto alle cose da fare'],f:'Vuole che avvisi il cliente?'},
+ {i:'🧾',n:'Fatture',s:'emesse e ricevute',
+  t:'La sua «segretaria» contabile.',p:'Ogni mattina legge le fatture dei fornitori arrivate per email, trova fornitore e categoria e controlla gli importi. Per le tue fatture prepara la richiesta al commercialista.',
+  l:['Lette 14 fatture arrivate stanotte','Fornitore e categoria trovati per tutte','12 pronte, 2 da guardare','Hosting: importo più alto del solito'],f:'Approvo le 12 pronte?'},
+ {i:'💶',n:'Incassi',s:'solleciti gentili',
+  t:'Nessun pagamento dimenticato.',p:'Sa chi deve pagare, quanto e da quando. Prepara solleciti cortesi al momento giusto e ti dice cosa entra questo mese.',
+  l:['Da incassare: 4.120 €','2 pagamenti in ritardo','Sollecito cortese preparato per il più vecchio','Previsto in entrata questo mese: 2.600 €'],f:'Mando il sollecito?'},
+ {i:'📣',n:'Marketing',s:'post sempre in bozza',
+  t:'Contenuti senza fatica.',p:'Idee, testi e immagini per i social, pronti come bozza. Pubblica solo quando lo decidi tu.',
+  l:['Idea: prima e dopo del sito di un cliente','Testo e hashtag scritti','Immagine creata','Bozza caricata su TikTok'],f:'La bozza è pronta nell\'app.'},
+ {i:'🤝',n:'Assistenza',s:'piani e ore',
+  t:'Il cliente resta cliente.',p:'Piani di manutenzione, ore usate e ore extra, rinnovi di domini e hosting: ARGUS avvisa prima che scada qualcosa e prepara la proposta di rinnovo.',
+  l:['Ore di ottobre registrate: 11,5','1 cliente ha superato le ore del piano','Dominio in scadenza tra 25 giorni','Avviso di rinnovo preparato'],f:'Glielo mando adesso?'}
+];
+var linea=document.getElementById('linea'),scheda=document.getElementById('scheda'),log=document.getElementById('log'),timer=[],att=0,auto=null;
+TAPPE.forEach(function(x,k){var b=document.createElement('button');b.className='tappa';b.type='button';
+  b.innerHTML='<div class="pal">'+x.i+'</div><b>'+x.n+'</b><small>'+x.s+'</small>';
+  b.onclick=function(){clearInterval(auto);mostra(k);};linea.appendChild(b);});
+function mostra(k){att=k;var x=TAPPE[k];
+  [].forEach.call(linea.querySelectorAll('.tappa'),function(b,j){b.classList.toggle('su',j===k);});
+  scheda.innerHTML='<div class="eti">'+(k+1)+' / '+TAPPE.length+' · '+x.n+'</div><h2>'+x.t+'</h2><p>'+x.p+'</p>';
+  timer.forEach(clearTimeout);timer=[];log.innerHTML='<div class="eti" style="margin-bottom:10px">ARGUS al lavoro</div>';
+  x.l.forEach(function(r,j){timer.push(setTimeout(function(){var d=document.createElement('div');d.className='riga';d.innerHTML='<i>✓</i>'+r;log.appendChild(d);},350+j*520));});
+  timer.push(setTimeout(function(){var d=document.createElement('div');d.className='riga fine';d.textContent=x.f;log.appendChild(d);},350+x.l.length*520+250));}
+mostra(0);auto=setInterval(function(){mostra((att+1)%TAPPE.length);},7000);
+
+/* cielo stellato */
+(function(){var c=document.getElementById('cielo'),g=c.getContext('2d'),st=[],W,H;
+  function dim(){W=c.width=innerWidth*devicePixelRatio;H=c.height=innerHeight*devicePixelRatio;st=[];for(var i=0;i<160;i++)st.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.3*devicePixelRatio+.2,v:Math.random()*.15+.03,a:Math.random()});}
+  addEventListener('resize',dim);dim();
+  (function giro(){g.clearRect(0,0,W,H);var gr=g.createRadialGradient(W*.75,H*.15,0,W*.75,H*.15,W*.6);gr.addColorStop(0,'rgba(227,181,74,.10)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,W,H);
+    st.forEach(function(s){s.y-=s.v;if(s.y<0)s.y=H;s.a+=.02;g.globalAlpha=.35+Math.sin(s.a)*.3;g.fillStyle=s.r>1.1?'#f6dc8f':'#fff';g.beginPath();g.arc(s.x,s.y,s.r,0,7);g.fill();});
+    g.globalAlpha=1;requestAnimationFrame(giro);})();})();
+</script>
+</body>
+</html>
