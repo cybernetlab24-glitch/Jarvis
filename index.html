@@ -222,7 +222,7 @@ body.solo-volto .subs img{display:none}
   <div class="top">
     <div>
       <div class="logo" data-t="A.R.G.U.S.">A.R.G.U.S.</div>
-      <div class="sub" id="sub">VOLTO · v2.5.1</div>
+      <div class="sub" id="sub">VOLTO · v2.6.0</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
@@ -566,6 +566,15 @@ body.solo-volto .subs img{display:none}
 
   /* ================= DOMANDE A JARVIS ================= */
   var occupato=false;
+  /* Posizione del telefono: solo quando chiede un sito «qui» / «a questo hotel» (per il sito al volo). */
+  var SITO_QUI=/\bsit[oi]\b/i,LUOGO_QUI=/(dove (sono|mi trovo|siamo)|\bqui\b|\bqua\b|quest[oa] (hotel|albergo|posto|ristorante|locale|bar|negozio|attivit|struttura|pizzeria)|in cui (sono|mi trovo)|posizione|sono (finito|ospite|in un|in una|al |all))/i;
+  function posizioneSeServe(testo){
+    if(!navigator.geolocation||!SITO_QUI.test(testo)||!LUOGO_QUI.test(testo)||/(modific|cambi|aggiorn|corregg)/i.test(testo))return Promise.resolve(null);
+    hint.textContent='Prendo la posizione…';
+    return new Promise(function(ok){var fatto=false;var fine=function(v){if(!fatto){fatto=true;ok(v);}};
+      setTimeout(function(){fine(null);},9000);
+      navigator.geolocation.getCurrentPosition(function(p){fine({lat:p.coords.latitude,lon:p.coords.longitude,acc:Math.round(p.coords.accuracy)});},function(){fine(null);},{enableHighAccuracy:true,timeout:8000,maximumAge:120000});});
+  }
   function chiedi(testo,aVoce){
     testo=testo.trim();if(!testo||occupato)return;
     ultimaVoce=!!aVoce;
@@ -577,7 +586,8 @@ body.solo-volto .subs img{display:none}
     var errore=function(err){occupato=false;$('modAI').textContent='ERRORE';$('modAI').className='wip';
       var msg=(err&&err.message&&err.message.indexOf('Failed to fetch')<0)?err.message:'Non riesco a raggiungere il server. Controlli la connessione e riprovi.';riga('jv',msg);parla(msg);console.log(err);};
     var t0=Date.now();
-    api({azione:'chiedi',testo:testo,voce:!!aVoce,voceAI:voceOn?VOCE_AI:''}).then(function(j){
+    posizioneSeServe(testo).then(function(pos){
+    return api({azione:'chiedi',testo:testo,voce:!!aVoce,voceAI:voceOn?VOCE_AI:'',posizione:pos||undefined});}).then(function(j){
       fatto(j.risposta,j.audio);
       if(voceOn&&VOCE_AI&&!j.audio&&typeof logReg==='function')logReg('Voce Gemini non disponibile: uso quella del browser');
       if(j.immagine){var im=document.createElement('img');im.src=j.immagine;im.alt='Immagine creata da ARGUS';
@@ -625,7 +635,8 @@ body.solo-volto .subs img{display:none}
     else if(/(non restare|smetti di restare|non rimanere) in ascolto|conversazione (spenta|off|disattivata)|disattiva (la )?conversazione/.test(t)){CONVERSA=false;msg='Fatto: dopo ogni risposta torno ad aspettare «Hey Jarvis».';}
     else if(/(resta|rimani) (sempre )?in ascolto|conversazione (accesa|on|attiva)|attiva (la )?conversazione/.test(t)){CONVERSA=true;msg='Fatto: dopo le mie risposte resto in ascolto qualche secondo.';}
     else if(/(aspetto|look|tema)\b.{0,20}\b(oro|dorat|nero e oro|sfera)/.test(t)||/(sfera dorata|nero e oro)/.test(t)){VOLTO='oro';msg='Come desidera: nero e oro.';}
-    else if(/(mostra|apri|fammi vedere|fai vedere)\b.{0,15}\bfiliera/.test(t)){msg='Ecco la filiera di CybernetLab.';try{window.open(new URL('filiera.html',location.href).href,'_blank');}catch(e){}}
+    else if(/(mostra|apri|fammi vedere|fai vedere)\b.{0,15}\bfiliera/.test(t)){msg='Ecco la filiera di CybernetLab.';var uF=new URL('filiera.html',location.href).href,wF=null;try{wF=window.open(uF,'_blank');}catch(e){}
+      if(!wF){msg='Ecco la filiera: tocchi il collegamento qui sotto per aprirla.';setTimeout(function(){var a=document.createElement('a');a.href=uF;a.target='_blank';a.rel='noopener';a.textContent='▶ Apri la filiera di CybernetLab';a.style.cssText='display:block;color:#e3b54a;margin:6px 0;font-weight:600';$('subs').appendChild(a);$('subs').scrollTop=1e6;if(DESK&&DESK.modo!=='mondo')finestra('mondo');},50);}}
     else if(/(aspetto|look|tema)\b.{0,20}\b(robot|robotic)/.test(t)){VOLTO='robot';msg='Torno al volto robotico.';}
     else if(/(aspetto|look|tema)\b.{0,20}\b(nucleo|globo|neural)/.test(t)){VOLTO='nucleo';msg='Ecco il nucleo neurale.';}
     if(/^(Come desidera|Torno al volto|Ecco il nucleo)/.test(msg)){try{localStorage.setItem('argus_volto',VOLTO);}catch(e){}$('cVolto').value=VOLTO;mostraVolto();}
@@ -1104,7 +1115,7 @@ body.solo-volto .subs img{display:none}
   (function(){var im=new Image();im.onload=function(){var n=im.naturalWidth,c=document.createElement('canvas');c.width=c.height=n;var g=c.getContext('2d');
     g.drawImage(im,0,0,n,n);g.globalCompositeOperation='destination-in';var gr=g.createRadialGradient(n/2,n/2,n*.30,n/2,n/2,n*.5);
     gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.75,'rgba(0,0,0,.85)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,n,n);faccia=c;};im.src=VOLTO_SRC;})();
-  function mostraVolto(){document.body.classList.toggle('tema-oro',VOLTO==='oro');$('sub').textContent=(VOLTO==='robot'?'VOLTO':VOLTO==='oro'?'SFERA':'NUCLEO NEURALE')+' · v2.5.1';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
+  function mostraVolto(){document.body.classList.toggle('tema-oro',VOLTO==='oro');$('sub').textContent=(VOLTO==='robot'?'VOLTO':VOLTO==='oro'?'SFERA':'NUCLEO NEURALE')+' · v2.6.0';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
 
   /* ================= ANIMAZIONE ================= */
   var t0=performance.now(),last=t0,rotY=0,arrivi=0,ipsT=0,spawnAcc=0,C1=[0,240,255],C2=[255,43,214];
@@ -1489,4 +1500,19 @@ body.solo-volto .subs img{display:none}
     if(CFG.url)setTimeout(attivaStaz,800);
     else hint.textContent='Prima volta su questo PC: collega ARGUS (indirizzo e codice), poi chiudi e riapri il PC o riavvia ArgusDesktop.';}
   else if((function(){try{return localStorage.getItem('jarvis_staz')==='on';}catch(e){return false;}})()&&CFG.url){
-    $('stazBtn').classList.add('blink');hint.textContent='Tocca un punto
+    $('stazBtn').classList.add('blink');hint.textContent='Tocca un punto qualsiasi per riattivare la modalità sempre attiva.';
+    document.addEventListener('pointerdown',function primo(ev){
+      document.removeEventListener('pointerdown',primo,true);
+      if(ev.target&&ev.target.id==='stazBtn')return;
+      ev.stopPropagation();ev.preventDefault();attivaStaz();
+    },true);
+  }
+
+  var giorni=['DOM','LUN','MAR','MER','GIO','VEN','SAB'];
+  function orologio(){var d=new Date();$('ora').textContent=d.toLocaleTimeString('it-IT',{hour12:false});$('data').textContent=giorni[d.getDay()]+' '+d.toLocaleDateString('it-IT');}
+  setInterval(orologio,1000);orologio();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
