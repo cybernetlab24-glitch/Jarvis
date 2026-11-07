@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -205,7 +204,9 @@ body.solo-volto .hud{padding:8px 10px;grid-template-rows:1fr auto}
 body.solo-volto .stato{bottom:3%}
 body.solo-volto .stato b{font-size:.95rem;letter-spacing:.3em}
 body.solo-volto .stato span{font-size:.72rem}
-body.solo-volto .subs{max-height:23vh;font-size:.72rem;padding:6px 9px;background:rgba(4,9,18,.6)}
+body.solo-volto .subs,body.solo-volto #diag{display:none!important}
+body.solo-volto{overflow:hidden}
+body.solo-volto ::-webkit-scrollbar{display:none}
 body.solo-volto .subs>*:not(:nth-last-child(-n+2)){display:none}
 body.solo-volto .subs img{display:none}
 @media (prefers-reduced-motion:reduce){.logo::before,.logo::after,.mic.on{animation:none}}
@@ -221,7 +222,7 @@ body.solo-volto .subs img{display:none}
   <div class="top">
     <div>
       <div class="logo" data-t="A.R.G.U.S.">A.R.G.U.S.</div>
-      <div class="sub" id="sub">VOLTO · v2.5.0</div>
+      <div class="sub" id="sub">VOLTO · v2.5.1</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
@@ -1103,7 +1104,7 @@ body.solo-volto .subs img{display:none}
   (function(){var im=new Image();im.onload=function(){var n=im.naturalWidth,c=document.createElement('canvas');c.width=c.height=n;var g=c.getContext('2d');
     g.drawImage(im,0,0,n,n);g.globalCompositeOperation='destination-in';var gr=g.createRadialGradient(n/2,n/2,n*.30,n/2,n/2,n*.5);
     gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.75,'rgba(0,0,0,.85)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,n,n);faccia=c;};im.src=VOLTO_SRC;})();
-  function mostraVolto(){document.body.classList.toggle('tema-oro',VOLTO==='oro');$('sub').textContent=(VOLTO==='robot'?'VOLTO':VOLTO==='oro'?'SFERA':'NUCLEO NEURALE')+' · v2.5.0';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
+  function mostraVolto(){document.body.classList.toggle('tema-oro',VOLTO==='oro');$('sub').textContent=(VOLTO==='robot'?'VOLTO':VOLTO==='oro'?'SFERA':'NUCLEO NEURALE')+' · v2.5.1';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
 
   /* ================= ANIMAZIONE ================= */
   var t0=performance.now(),last=t0,rotY=0,arrivi=0,ipsT=0,spawnAcc=0,C1=[0,240,255],C2=[255,43,214];
@@ -1488,19 +1489,4 @@ body.solo-volto .subs img{display:none}
     if(CFG.url)setTimeout(attivaStaz,800);
     else hint.textContent='Prima volta su questo PC: collega ARGUS (indirizzo e codice), poi chiudi e riapri il PC o riavvia ArgusDesktop.';}
   else if((function(){try{return localStorage.getItem('jarvis_staz')==='on';}catch(e){return false;}})()&&CFG.url){
-    $('stazBtn').classList.add('blink');hint.textContent='Tocca un punto qualsiasi per riattivare la modalità sempre attiva.';
-    document.addEventListener('pointerdown',function primo(ev){
-      document.removeEventListener('pointerdown',primo,true);
-      if(ev.target&&ev.target.id==='stazBtn')return;
-      ev.stopPropagation();ev.preventDefault();attivaStaz();
-    },true);
-  }
-
-  var giorni=['DOM','LUN','MAR','MER','GIO','VEN','SAB'];
-  function orologio(){var d=new Date();$('ora').textContent=d.toLocaleTimeString('it-IT',{hour12:false});$('data').textContent=giorni[d.getDay()]+' '+d.toLocaleDateString('it-IT');}
-  setInterval(orologio,1000);orologio();
-  requestAnimationFrame(frame);
-})();
-</script>
-</body>
-</html>
+    $('stazBtn').classList.add('blink');hint.textContent='Tocca un punto
