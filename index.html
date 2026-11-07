@@ -134,9 +134,6 @@ button:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
 .mw{position:absolute;width:var(--ww,210px);pointer-events:auto;background:rgba(12,10,26,.82);border:1px solid var(--line);border-top:2px solid var(--cyan);
   backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;flex-direction:column;min-width:0;
   clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%);box-shadow:0 6px 24px rgba(0,0,0,.45);touch-action:auto}
-/* modalità leggera (PC poco potenti): niente sfocature dietro i riquadri, che vanno ricalcolate a ogni fotogramma */
-body.leggero .mw,body.leggero .ov,body.leggero .fin{backdrop-filter:none;-webkit-backdrop-filter:none}
-body.leggero .mw{background:rgba(12,10,26,.95);box-shadow:none}
 .mw.w{border-top-color:var(--yellow)} .mw.r{border-top-color:var(--magenta)}
 .mw.drag{opacity:.85;box-shadow:0 0 0 1px var(--cyan),0 10px 30px rgba(0,240,255,.25);z-index:2}
 .mw .th{display:flex;align-items:center;gap:6px;padding:5px 6px 2px 4px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
@@ -186,6 +183,9 @@ body.leggero .mw{background:rgba(12,10,26,.95);box-shadow:none}
 .leaflet-tooltip.tip::before{display:none}
 .mw .leaflet-control-attribution{background:rgba(5,4,11,.75)!important;color:#7d7aa0!important;font:9px var(--mono)}.mw .leaflet-control-attribution a{color:#5fd4ff!important}
 @media (min-width:621px){ .mobile-read{display:none} }
+/* ARGUS aspetto «sfera dorata»: tema nero e oro */
+body.tema-oro{--bg:#030302;--panel:rgba(16,12,6,.82);--line:#3b2e17;--ink:#fff3dc;--muted:#a8956d;--cyan:#f0b44c;--magenta:#ff8a3d;--yellow:#ffd780;background:#030302}
+body.tema-oro .grid,body.tema-oro .scan{opacity:.25;filter:sepia(1) saturate(2) hue-rotate(-12deg)}
 /* ARGUS vista: anteprima olografica della fotocamera */
 .occhio{position:fixed;inset:0;z-index:70;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(2,6,14,.74);pointer-events:none}
 .occhio[hidden]{display:none}
@@ -220,7 +220,7 @@ body.solo-volto .subs img{display:none}
   <div class="top">
     <div>
       <div class="logo" data-t="A.R.G.U.S.">A.R.G.U.S.</div>
-      <div class="sub" id="sub">VOLTO · v2.3.4</div>
+      <div class="sub" id="sub">VOLTO · v2.4.0</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
@@ -299,7 +299,7 @@ body.solo-volto .subs img{display:none}
     <button type="button" class="x" id="cProvaVoce">🔊 PROVA LA VOCE</button>
     <label for="cVolto">ASPETTO DI ARGUS</label>
     <select id="cVolto" style="font:14px var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line);padding:12px;width:100%">
-      <option value="robot">Volto robotico</option><option value="nucleo">Nucleo neurale (globo)</option>
+      <option value="robot">Volto robotico</option><option value="nucleo">Nucleo neurale (globo)</option><option value="oro">Sfera dorata (nero e oro)</option>
     </select>
     <label for="cParola">PAROLA DI ATTIVAZIONE</label>
     <select id="cParola" style="font:14px var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line);padding:12px;width:100%">
@@ -355,18 +355,7 @@ body.solo-volto .subs img{display:none}
         if(!j.ok)throw new Error(j.errore||'Errore sconosciuto.');return j;});
   }
 
-  /* v2.3.4 — modalità leggera: sul PC (ArgusDesktop) è attiva di serie, così a schermo intero l'animazione
-     non ruba il processore alla parola di attivazione. localStorage argus_leggero: '1' sempre, '0' mai. */
-  var LEGGERO=(function(){var v=null;try{v=localStorage.getItem('argus_leggero');}catch(e){}return v==='1'||(v!=='0'&&!!DESK);})();
-  document.body.classList.toggle('leggero',LEGGERO);
-  var ultimoDisegno=0,lentiT=0,lentiN=0;
-  function resize(){DPR=Math.min(window.devicePixelRatio||1,LEGGERO?1:2);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);}
-  /** Se i fotogrammi sono lenti per più di 3 secondi, passa da sola alla modalità leggera. */
-  function controllaLentezza(ms){
-    if(LEGGERO)return;
-    if(ms>45){lentiN++;}else{lentiN=Math.max(0,lentiN-1);}
-    if(lentiN>90){LEGGERO=true;document.body.classList.add('leggero');resize();if(typeof logReg==='function')logReg('PC lento: attivata la modalità leggera');}
-  }
+  function resize(){DPR=Math.min(window.devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);}
   addEventListener('resize',resize);resize();
 
   /* ================= RETE NEURALE ================= */
@@ -443,8 +432,8 @@ body.solo-volto .subs img{display:none}
     if(!voceOn){animaSolo(testo);return;}
     if(audio){suonaAudio(audio,testo);return;}
     if(VOCE_AI&&CFG.url){
-      setStato('pensa','Preparo la voce…');preparaVoce=Date.now();
-      api({azione:'voce',testo:String(testo).slice(0,900),voceAI:VOCE_AI}).then(function(j){preparaVoce=0;suonaAudio(j.audio,testo);},function(e){preparaVoce=0;
+      setStato('pensa','Preparo la voce…');
+      api({azione:'voce',testo:String(testo).slice(0,900),voceAI:VOCE_AI}).then(function(j){suonaAudio(j.audio,testo);},function(e){
         if(typeof logReg==='function')logReg('Voce Gemini non disponibile: uso quella del browser');parlaBrowser(testo);});
       return;
     }
@@ -625,11 +614,6 @@ body.solo-volto .subs img{display:none}
   var PAUSA=parseInt(localStorage.getItem('argus_pausa'),10)||1800;
   var CONVERSA=localStorage.getItem('argus_conversa')!=='0';
   var ultimaVoce=false,ultimoDetto='',ascoltaDal=0;
-  /* v2.3.4: segnali «il microfono sta per partire» e «sto preparando la voce», così il guardiano
-     non riaccende «Hey Jarvis» nel mezzo e non partono due ascolti insieme (che si bloccano a vicenda). */
-  var avvioMic=0,prenotaMic=0,preparaVoce=0;
-  function micImpegnato(){var n=Date.now();
-    return ascolta||(avvioMic&&n-avvioMic<8000)||(prenotaMic&&n-prenotaMic<3000)||(preparaVoce&&n-preparaVoce<20000);}
   var CHIUSURA=/^((ok|no)[\s,]+)?(grazie( mille| tante)?|basta( così)?|niente|nient'altro|a posto( così)?|è tutto|tutto qui|no grazie|ho finito|fine)\s*(argus|jarvis)?[\s.!]*$/i;
   /** Regolazioni dell'ascolto a voce: le esegue l'interfaccia, senza Gemini. */
   function comandoAscolto(testo){
@@ -638,20 +622,22 @@ body.solo-volto .subs img{display:none}
     else if(/(rispondi|rispondimi|sii) più (in fretta|veloce|rapido)|aspetta (di )?meno/.test(t)){PAUSA=Math.max(1000,PAUSA-400);msg='Va bene: ora rispondo dopo '+(PAUSA/1000).toFixed(1).replace('.',',')+' secondi di silenzio.';}
     else if(/(non restare|smetti di restare|non rimanere) in ascolto|conversazione (spenta|off|disattivata)|disattiva (la )?conversazione/.test(t)){CONVERSA=false;msg='Fatto: dopo ogni risposta torno ad aspettare «Hey Jarvis».';}
     else if(/(resta|rimani) (sempre )?in ascolto|conversazione (accesa|on|attiva)|attiva (la )?conversazione/.test(t)){CONVERSA=true;msg='Fatto: dopo le mie risposte resto in ascolto qualche secondo.';}
+    else if(/(aspetto|look|tema)\b.{0,20}\b(oro|dorat|nero e oro|sfera)/.test(t)||/(sfera dorata|nero e oro)/.test(t)){VOLTO='oro';msg='Come desidera: nero e oro.';}
+    else if(/(aspetto|look|tema)\b.{0,20}\b(robot|robotic)/.test(t)){VOLTO='robot';msg='Torno al volto robotico.';}
+    else if(/(aspetto|look|tema)\b.{0,20}\b(nucleo|globo|neural)/.test(t)){VOLTO='nucleo';msg='Ecco il nucleo neurale.';}
+    if(/^(Come desidera|Torno al volto|Ecco il nucleo)/.test(msg)){try{localStorage.setItem('argus_volto',VOLTO);}catch(e){}$('cVolto').value=VOLTO;mostraVolto();}
     if(!msg)return false;
     try{localStorage.setItem('argus_pausa',String(PAUSA));localStorage.setItem('argus_conversa',CONVERSA?'1':'0');}catch(e){}
     riga('tu',testo);riga('jv',msg);parla(msg);return true;
   }
   function avviaAscolto(opz){
     opz=(opz&&opz.seguito)?opz:{};
-    prenotaMic=0;
     if(!SR||occupato)return;
     if(ascolta){try{rec.stop();}catch(e){}return;}
-    if(avvioMic&&Date.now()-avvioMic<8000)return;   // un ascolto sta già partendo
     stopVoce();finale='';
-    var r=new SR();rec=r;r.lang='it-IT';r.interimResults=true;r.continuous=true;r.maxAlternatives=1;
+    rec=new SR();rec.lang='it-IT';rec.interimResults=true;rec.continuous=true;rec.maxAlternatives=1;
     var vivo=null,inviato=false,testo='',tSil=null,tAtt=null,tMax=null,parlato=false;
-    function chiudi(){try{r.stop();}catch(x){}}
+    function chiudi(){try{rec.stop();}catch(x){}}
     function pulisci(){clearTimeout(tSil);clearTimeout(tAtt);clearTimeout(tMax);}
     function invia(){
       if(inviato)return;var t=testo.trim();if(!t)return;
@@ -659,37 +645,33 @@ body.solo-volto .subs img{display:none}
       if(opz.seguito&&CHIUSURA.test(t)){ultimaVoce=false;riga('tu',t);var m='Prego, signore. Sono qui se serve.';riga('jv',m);parla(m);return;}
       chiedi(t,true);
     }
-    r.onstart=function(){avvioMic=0;if(r!==rec){chiudi();return;}
-      if(staz&&WW.attivo)fermaMic();   // il guardiano l'aveva riacceso nel frattempo
-      if(CFG.url&&!opz.seguito)api({azione:'info'}).then(function(j){mostraInfo(j.info);},function(){});
+    rec.onstart=function(){if(CFG.url&&!opz.seguito)api({azione:'info'}).then(function(j){mostraInfo(j.info);},function(){});
       ascolta=true;$('mic').classList.add('on');setStato('ascolto');
       hint.textContent=opz.seguito?'La ascolto… (dica «grazie» per chiudere)':'Parli pure. Rispondo quando fa una pausa.';
       ascoltaDal=Date.now();
       tMax=setTimeout(function(){invia();chiudi();},45000);
       tAtt=setTimeout(function(){if(!testo)chiudi();},opz.attesa||8000);};
-    r.onspeechstart=function(){userTalk=1;parlato=true;};
-    r.onresult=function(e){if(r!==rec)return;var fin='',tmp='';
+    rec.onspeechstart=function(){userTalk=1;parlato=true;};
+    rec.onresult=function(e){var fin='',tmp='';
       for(var k=0;k<e.results.length;k++){var t=e.results[k][0].transcript;if(e.results[k].isFinal)fin+=t+' ';else tmp+=t;}
       var nuovo=(fin+tmp).replace(/\s+/g,' ').trim();
       if(nuovo.replace(/[^a-zà-ù0-9]/gi,'').length<3)return;   // rumori: niente frasi di una o due lettere
       kick=1;userTalk=1;parlato=true;testo=nuovo;finale=testo;
       if(!vivo)vivo=riga('tu',testo);else vivo.textContent=testo;
       clearTimeout(tSil);tSil=setTimeout(invia,PAUSA);};
-    r.onerror=function(e){
-      if(r!==rec||e.error==='no-speech'||e.error==='aborted')return;
+    rec.onerror=function(e){
+      if(e.error==='no-speech'||e.error==='aborted')return;
       var m={'not-allowed':'Permesso microfono negato. Tocca l\'icona a sinistra dell\'indirizzo → Autorizzazioni → Microfono → Consenti, poi ricarica.',
         'network':'Il riconoscimento vocale richiede internet.','audio-capture':'Nessun microfono disponibile.'}[e.error];
       hint.textContent=m||('Errore microfono: '+e.error);
       if(e.error==='not-allowed'){$('modMic').textContent='BLOCCATO';$('modMic').className='wip';}};
-    r.onend=function(){pulisci();if(r!==rec)return;   // un ascolto vecchio non deve toccare quello nuovo
-      avvioMic=0;ascolta=false;userTalk=0;$('mic').classList.remove('on');
+    rec.onend=function(){ascolta=false;userTalk=0;$('mic').classList.remove('on');pulisci();
       if(!inviato&&testo.trim()){invia();return;}
       if(vivo&&vivo.parentNode)vivo.parentNode.removeChild(vivo);
       if(!inviato){if(stato==='ascolto')setStato('attesa');if(opz.seguito)hint.textContent='';ultimaVoce=false;dopoInterazione();}};
-    avvioMic=Date.now();
-    try{r.start();}catch(e){avvioMic=0;hint.textContent='Il microfono non è partito, riprovi.';ultimaVoce=false;dopoInterazione();}
+    try{rec.start();}catch(e){hint.textContent='Il microfono non è partito, riprovi.';ultimaVoce=false;dopoInterazione();}
   }
-  function premiMic(){if(staz&&WW.attivo&&!ascolta){fermaMic();prenotaMic=Date.now();setTimeout(avviaAscolto,300);}else avviaAscolto();}
+  function premiMic(){if(staz&&WW.attivo&&!ascolta){fermaMic();setTimeout(avviaAscolto,300);}else avviaAscolto();}
   $('mic').addEventListener('click',premiMic);
   cv.addEventListener('click',premiMic);
 
@@ -712,9 +694,9 @@ body.solo-volto .subs img{display:none}
   function salvaW(){try{localStorage.setItem('argus_widget',JSON.stringify(WST));}catch(e){}}
   function formato(){return innerWidth<700?'stretto':'largo';}
   var BASE=['prossimo','oggi','soldi','preventivi','siti','scadenze','argus'];
-  var EXTRA=['domani','meteo','settimana','incassi','social','sistemi','registro'];
-  var DEF_COL={2:[['oggi','prossimo','domani','meteo','settimana','registro'],['sistemi','argus','soldi','incassi','preventivi','scadenze','siti','social']],
-    4:[['oggi','prossimo','settimana'],['domani','meteo','registro'],['sistemi','incassi','social'],['argus','soldi','preventivi','scadenze','siti']]};
+  var EXTRA=['domani','meteo','settimana','incassi','social','sistemi','squadra','registro'];
+  var DEF_COL={2:[['oggi','prossimo','domani','meteo','settimana','registro'],['squadra','sistemi','argus','soldi','incassi','preventivi','scadenze','siti','social']],
+    4:[['oggi','prossimo','settimana'],['domani','meteo','registro'],['squadra','sistemi','incassi','social'],['argus','soldi','preventivi','scadenze','siti']]};
   var ORDINE=BASE;
   function autoMode(){return innerWidth>=1240&&innerHeight>=560;}
   function ordine(){return autoMode()?BASE.concat(EXTRA):BASE;}
@@ -771,7 +753,7 @@ body.solo-volto .subs img{display:none}
         az:[{t:'ELENCO',q:'Quali scadenze dei clienti ho nei prossimi 30 giorni?'}]},
       argus:{t:'DA CONFERMARE',cls:y.bozze?'w':'',big:(y.bozze||0)+' email · '+(y.lavori||0)+' lavori',
         d:'<p>'+(y.lavoro_in_corso?'In corso: '+escH(y.lavoro_in_corso):(y.bozze?'Bozze in attesa di ✅ Invia su Telegram.':'Tutto in ordine.'))+'</p>',az:[]},
-      domani:wDomani(c),meteo:wMeteo(c),settimana:wSettimana(c),incassi:wIncassi(c),social:wSocial(c),sistemi:wSistemi(c),registro:wRegistro()
+      domani:wDomani(c),meteo:wMeteo(c),settimana:wSettimana(c),incassi:wIncassi(c),social:wSocial(c),sistemi:wSistemi(c),squadra:wSquadra(c),registro:wRegistro()
     };
   }
   function wDomani(c){var d=c.domani||{},iv=d.interventi||[],ap=(d.appuntamenti||[]),tappe=iv.map(function(x){return x.luogo||x.comune;}).concat(ap.filter(function(a){return a.luogo;}).map(function(a){return a.luogo;}));
@@ -799,6 +781,10 @@ body.solo-volto .subs img{display:none}
     return {t:'SOCIAL',cls:s.bozze?'w':'',big:(s.bozze||0)+' bozze · '+(s.approvati||0)+' approvati',
       d:(u?'<p>Ultimo: «'+escH(u.titolo)+'» · '+escH(u.data)+' · '+escH(u.stato)+'</p>':'')+'<p>Bozza automatica: '+escH(s.giorno||'—')+' alle 19 · stile '+escH(s.stile||'wow')+'</p>',
       az:[{t:'NUOVO POST',q:'Preparami un post per i social'}]};}
+  function wSquadra(c){var q=c.squadra||{},r=q.riunione||{},rep=r.reparti||{},n=r.proposte||0,nomi={vendite:'💼 Vendite',contabilita:'💶 Contabilità',operazioni:'🛠 Operazioni',marketing:'📣 Marketing'};
+    return {t:'SQUADRA',cls:n?'w':'',big:q.missioni_in_coda?q.missioni_in_coda+(q.missioni_in_coda===1?' missione in corso':' missioni in corso'):(n?n+(n===1?' proposta':' proposte'):'Tutto in ordine'),
+      d:'<ul>'+Object.keys(nomi).map(function(k){var x=rep[k]||{};return '<li>'+nomi[k]+(x.n?' · <b>'+x.n+'</b>':'')+' — '+escH(x.stato||'in attesa della riunione')+'</li>';}).join('')+'</ul>'+(q.ricordi?'<p>🧠 '+q.ricordi+' cose imparate</p>':''),
+      az:[{t:'RIUNIONE',q:'Fai una riunione della squadra'},{t:'MISSIONI',q:'A che punto sono le missioni?'}]};}
   function wSistemi(c){var v=c.servizi||{},y=c.sistemi||{},so=c.social||{};
     var rg=function(st,n,val){return '<span class="dot '+st+'"></span><span>'+escH(n)+'</span><span>'+escH(val)+'</span>';};
     var gOn=typeof G!=='undefined'&&G&&G.on;
@@ -953,7 +939,7 @@ body.solo-volto .subs img{display:none}
   var ultimoWidget=0,widgetInCorso=false;
   /** Aggiorna i widget se sono visibili: subito se forza, altrimenti solo se l'ultimo aggiornamento è vecchio. */
   function rinfrescaWidget(forza){if(!WST.visibili||widgetInCorso)return;if(forza||Date.now()-ultimoWidget>100000)caricaWidget();}
-  function caricaWidget(){if(!CFG.url)return;widgetInCorso=true;ultimoWidget=Date.now();setTimeout(function(){widgetInCorso=false;},4000);var t0=performance.now();api({azione:'cruscotto'}).then(function(j){LAT=Math.round(performance.now()-t0);if(j.cruscotto){disegnaWidget(j.cruscotto);logReg('Cruscotto aggiornato · '+LAT+' ms');}},function(e){logReg('Cruscotto non raggiungibile','tu');console.log('Widget: '+(e&&e.message));});}
+  function caricaWidget(){if(!CFG.url)return;widgetInCorso=true;ultimoWidget=Date.now();setTimeout(function(){widgetInCorso=false;},4000);var t0=performance.now();api({azione:'cruscotto'}).then(function(j){LAT=Math.round(performance.now()-t0);if(j.cruscotto){j.cruscotto.squadra=j.squadra||null;disegnaWidget(j.cruscotto);logReg('Cruscotto aggiornato · '+LAT+' ms');}},function(e){logReg('Cruscotto non raggiungibile','tu');console.log('Widget: '+(e&&e.message));});}
   $('wdgBtn').onclick=function(){WST.visibili=!WST.visibili;salvaW();mostraLayer();if(WST.visibili)caricaWidget();};
   $('cWdgReset').onclick=function(){if(MAPPA){try{MAPPA.remove();}catch(e){}MAPPA=null;}WST={visibili:true,pos:{},compatti:{},nascosti:{}};salvaW();$('wlayer').innerHTML='';mostraLayer();if(ULTIMO)disegnaWidget(ULTIMO);else caricaWidget();};
   var rsz;addEventListener('resize',function(){clearTimeout(rsz);rsz=setTimeout(function(){if(MAPPA){try{MAPPA.remove();}catch(e){}MAPPA=null;}$('wlayer').innerHTML='';if(ULTIMO)disegnaWidget(ULTIMO);},250);});
@@ -1115,7 +1101,7 @@ body.solo-volto .subs img{display:none}
   (function(){var im=new Image();im.onload=function(){var n=im.naturalWidth,c=document.createElement('canvas');c.width=c.height=n;var g=c.getContext('2d');
     g.drawImage(im,0,0,n,n);g.globalCompositeOperation='destination-in';var gr=g.createRadialGradient(n/2,n/2,n*.30,n/2,n/2,n*.5);
     gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.75,'rgba(0,0,0,.85)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,n,n);faccia=c;};im.src=VOLTO_SRC;})();
-  function mostraVolto(){$('sub').textContent=(VOLTO==='robot'?'VOLTO':'NUCLEO NEURALE')+' · v2.3.4';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
+  function mostraVolto(){document.body.classList.toggle('tema-oro',VOLTO==='oro');$('sub').textContent=(VOLTO==='robot'?'VOLTO':VOLTO==='oro'?'SFERA':'NUCLEO NEURALE')+' · v2.4.0';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
 
   /* ================= ANIMAZIONE ================= */
   var t0=performance.now(),last=t0,rotY=0,arrivi=0,ipsT=0,spawnAcc=0,C1=[0,240,255],C2=[255,43,214];
@@ -1132,7 +1118,7 @@ body.solo-volto .subs img{display:none}
   var PART=[];
   function sfondo(t,dt,cx,cy,base){
     var lv=level,spd=reduce?.25:1;
-    if(!PART.length){var np=W<700?45:(LEGGERO?60:110);for(var q=0;q<np;q++)PART.push({x:Math.random(),y:Math.random(),v:.004+Math.random()*.012,s:.6+Math.random()*1.8,f:Math.random()*6});}
+    if(!PART.length){var np=W<700?45:110;for(var q=0;q<np;q++)PART.push({x:Math.random(),y:Math.random(),v:.004+Math.random()*.012,s:.6+Math.random()*1.8,f:Math.random()*6});}
     // pavimento a griglia in prospettiva che scorre verso di te
     var oy=H*.66,fy=oy-H*.05;
     ctx.save();ctx.beginPath();ctx.rect(0,oy,W,H-oy);ctx.clip();
@@ -1188,12 +1174,40 @@ body.solo-volto .subs img{display:none}
       g2.addColorStop(0,'rgba(0,240,255,0)');g2.addColorStop(.5,'rgba(0,240,255,.35)');g2.addColorStop(1,'rgba(0,240,255,0)');ctx.globalAlpha=1;ctx.fillStyle=g2;ctx.fillRect(x0+D*.12,yy-D*.04,D*.76,D*.08);}
     ctx.globalAlpha=1;
   }
+  /* ================= ASPETTO «SFERA DORATA» (nero e oro) ================= */
+  var SFERA=null,spG=sprite('255,190,90'),spW=sprite('255,236,190');
+  function preparaSfera(){var n=W<700?1500:2800,pts=[],g=Math.PI*(3-Math.sqrt(5));
+    for(var i=0;i<n;i++){var y=1-(i/(n-1))*2,r=Math.sqrt(1-y*y),th=g*i;
+      pts.push({x:Math.cos(th)*r,y:y,z:Math.sin(th)*r,lat:Math.asin(y),lon:th,ph:Math.random()*6.283,s:.7+Math.random()*1.2,ch:Math.random()<.18});}
+    SFERA=pts;}
+  function sfondoOro(t,dt,cx,cy){
+    if(!PART.length){var np=W<700?45:110;for(var q=0;q<np;q++)PART.push({x:Math.random(),y:Math.random(),v:.004+Math.random()*.012,s:.6+Math.random()*1.8,f:Math.random()*6});}
+    var spd=reduce?.25:1,lv=level;ctx.globalCompositeOperation='lighter';
+    for(var q2=0;q2<PART.length;q2++){var pa=PART[q2];pa.y-=pa.v*dt*.35*spd*(1+lv*3);if(pa.y<-.02){pa.y=1.02;pa.x=Math.random();}
+      var px=pa.x*W+Math.sin(t*.25+pa.f)*18,py=pa.y*H,ss=pa.s*.8;ctx.globalAlpha=Math.min(1,(.10+lv*.3)*(.5+.5*Math.sin(t*.9+pa.f)));
+      ctx.drawImage(spG,px-ss*3,py-ss*3,ss*6,ss*6);}
+    ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
+  }
+  function disegnaSfera(t,cx,cy,base){
+    if(!SFERA)preparaSfera();
+    var lv=level,st=stato,turb=(st==='pensa'?.34:st==='ascolto'?.17:.13)+lv*.32;
+    var rot=t*(st==='pensa'?.55:.16)*(reduce?.4:1),cR=Math.cos(rot),sR=Math.sin(rot),til=.32+Math.sin(t*.2)*.1,cT=Math.cos(til),sT=Math.sin(til);
+    var R=base*1.08*(1+lv*.16+(st==='ascolto'?.05:0));
+    ctx.globalCompositeOperation='lighter';
+    var cg=ctx.createRadialGradient(cx,cy,0,cx,cy,R*1.25);
+    cg.addColorStop(0,'rgba(255,215,140,'+(.26+lv*.34)+')');cg.addColorStop(.28,'rgba(225,140,45,'+(.09+lv*.14)+')');cg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=cg;ctx.fillRect(cx-R*1.3,cy-R*1.3,R*2.6,R*2.6);
+    var fasePar=st==='parla'?lv*.22:0;
+    for(var i=0;i<SFERA.length;i++){var p=SFERA[i];
+      var d=1+turb*(Math.sin(p.lon*3+t*.7)*Math.cos(p.lat*4-t*.5)*.6+Math.sin(p.lon*5-t*.9+p.lat*2)*.4)+fasePar*Math.sin(t*9+p.ph);
+      var x=p.x*d,y=p.y*d,z=p.z*d,x1=x*cR-z*sR,z1=x*sR+z*cR,y1=y*cT-z1*sT,z2=y*sT+z1*cT,f=2.8/(2.8+z2);
+      var a=(.18+(1-z2)*.36)*(.65+.35*Math.sin(t*2+p.ph))+lv*.22,sz=p.s*f*(1+lv*.5);
+      ctx.globalAlpha=Math.min(1,a);ctx.fillStyle=p.ch?'#fff0c8':(z2<0?'#f3bf5c':'#b97a26');ctx.fillRect(cx+x1*R*f,cy+y1*R*f,sz,sz);}
+    var cs=R*(.12+lv*.12+(st==='pensa'?.03*Math.sin(t*12):0));ctx.globalAlpha=1;ctx.drawImage(spW,cx-cs,cy-cs,cs*2,cs*2);
+    ctx.globalAlpha=.55+lv*.4;ctx.drawImage(spG,cx-cs*2.4,cy-cs*2.4,cs*4.8,cs*4.8);
+    ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
+  }
   function frame(now){
-    // finestra nascosta o pagina in secondo piano: 1 fotogramma al secondo; modalità leggera: 30 al secondo
-    var minMs=(document.hidden||(DESK&&DESK.modo==='nascosto'))?1000:(LEGGERO?33:0);
-    if(minMs&&now-ultimoDisegno<minMs){requestAnimationFrame(frame);return;}
-    if(ultimoDisegno&&!minMs)controllaLentezza(now-ultimoDisegno);
-    ultimoDisegno=now;
     var dt=Math.min(.05,(now-last)/1000);last=now;var t=(now-t0)/1000,S=STATI[stato],p,e,A,B,n,mx,my,a;
     var la=speaking?livelloAudio():-1;
     if(la>=0){levelT=Math.max(levelT*.82,Math.min(1,la*1.1),kick*.5);}
@@ -1221,6 +1235,8 @@ body.solo-volto .subs img{display:none}
       n.sx=cx+x1*base*f;n.sy=cy+y1*base*f;n.d=(1-z2)/2;n.f=f;n.act*=Math.pow(.08,dt);}
 
     ctx.clearRect(0,0,W,H);
+    if(VOLTO==='oro'){sfondoOro(t,dt,cx,cy);disegnaSfera(t,cx,cy,base);for(i=0;i<edges.length;i++)edges[i].act*=Math.pow(.05,dt);}
+    else{
     sfondo(t,dt,cx,cy,base);
     var halo=ctx.createRadialGradient(cx,cy,0,cx,cy,base*1.6);
     halo.addColorStop(0,mixA(C1,C2,cur.tint,.10+level*.12));halo.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=halo;ctx.fillRect(0,0,W,H);
@@ -1244,6 +1260,7 @@ body.solo-volto .subs img{display:none}
       ctx.globalAlpha=.9;ctx.drawImage(Math.random()<cur.tint?spM:spC,qx-sz/2,qy-sz/2,sz,sz);}
     for(i=0;i<nodes.length;i++){n=nodes[i];var sz2=(n.inner?5:4)*n.f*(1+n.act*2.2+level*.6)+2,aa=.25+n.d*.55+n.act*.4,m=Math.min(1,cur.tint+n.act*.25);
       ctx.globalAlpha=aa*(1-m);ctx.drawImage(spC,n.sx-sz2*2,n.sy-sz2*2,sz2*4,sz2*4);ctx.globalAlpha=aa*m;ctx.drawImage(spM,n.sx-sz2*2,n.sy-sz2*2,sz2*4,sz2*4);}
+    }
     }
     ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
     ipsT+=dt;if(ipsT>=.5){$('rI').textContent=Math.round(arrivi/ipsT);arrivi=0;ipsT=0;}
@@ -1371,34 +1388,31 @@ body.solo-volto .subs img{display:none}
       var sc=Math.max.apply(null,o);WW.pred++;
       WW.score=WW.pred>5?sc:0;
       if(WW.score>WW.picco||Date.now()-WW.piccoT>4000){WW.picco=WW.score;WW.piccoT=Date.now();}
-      if(WW.score>=SOGLIA&&Date.now()-WW.ultimo>2500&&!speaking&&!occupato&&!micImpegnato()){WW.ultimo=Date.now();svegliato();}
+      if(WW.score>=SOGLIA&&Date.now()-WW.ultimo>2500&&!speaking&&!occupato&&!ascolta){WW.ultimo=Date.now();svegliato();}
     });
   }
   function svegliato(){
     kick=1;hint.textContent='Sì, signore?';
-    fermaMic();prenotaMic=Date.now();
+    fermaMic();
     var nascosto=DESK&&DESK.modo!=='volto'&&DESK.modo!=='mondo';
     if(nascosto)finestra('volto');
     setTimeout(avviaAscolto,nascosto?600:300);
   }
   var partendoWW=false;
   function riprendiWW(){
-    if(!staz||!WW.sess||WW.attivo||micImpegnato()||occupato||speaking)return;
-    if(partendoWW&&Date.now()-partendoWW<10000)return;   // se il microfono non risponde entro 10 s, riprovo
-    var mio=partendoWW=Date.now();
-    avviaMic().then(function(){if(partendoWW===mio)partendoWW=false;
-        if(micImpegnato()||speaking||occupato)fermaMic();   // nel frattempo è partito un ascolto o ARGUS parla
-      },function(e){if(partendoWW===mio)partendoWW=false;statoWW('ERRORE','wip');hint.textContent='Microfono non disponibile: '+e.message;});
+    if(!staz||!WW.sess||WW.attivo||ascolta||occupato||speaking||partendoWW)return;
+    partendoWW=true;
+    avviaMic().then(function(){partendoWW=false;},function(e){partendoWW=false;statoWW('ERRORE','wip');hint.textContent='Microfono non disponibile: '+e.message;});
   }
   /* Guardiano: se per qualsiasi motivo «Hey Jarvis» resta spento, lo riaccende (controllo ogni 5 secondi). */
   setInterval(function(){
     if(!staz)return;
     if(ascolta&&ascoltaDal&&Date.now()-ascoltaDal>60000){try{rec.abort();}catch(e){}ascolta=false;$('mic').classList.remove('on');if(stato==='ascolto')setStato('attesa');}
-    if(!WW.attivo&&!micImpegnato()&&!occupato&&!speaking&&!annunci.length)riprendiWW();
+    if(!WW.attivo&&!ascolta&&!occupato&&!speaking&&!annunci.length)riprendiWW();
   },5000);
   function dopoInterazione(){
     setTimeout(function(){
-      if(micImpegnato()||occupato||speaking)return;
+      if(ascolta||occupato||speaking)return;
       if(staz&&annunci.length)return prossimoAnnuncio();
       // conversazione: dopo una risposta a voce resto in ascolto senza bisogno di «Hey Jarvis»
       if(CONVERSA&&ultimaVoce&&SR&&/\?/.test(ultimoDetto.slice(-160))&&!(DESK&&DESK.modo==='nascosto')){
@@ -1410,7 +1424,7 @@ body.solo-volto .subs img{display:none}
   }
   function prossimoAnnuncio(){
     if(!annunci.length||ascolta||occupato||speaking)return;
-    var a=annunci.shift();if(DESK&&DESK.modo==='nascosto')finestra('volto');riga('jv','📣 '+a);parla(a);
+    var a=annunci.shift();if(DESK&&DESK.modo==='nascosto')finestra('volto');riga('jv','📣 '+a);ultimaVoce=/\?\s*$/.test(a);parla(a);
   }
   function controllaNovita(){
     if(!CFG.url)return;
