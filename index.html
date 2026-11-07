@@ -222,7 +222,7 @@ body.solo-volto .subs img{display:none}
   <div class="top">
     <div>
       <div class="logo" data-t="A.R.G.U.S.">A.R.G.U.S.</div>
-      <div class="sub" id="sub">VOLTO · v2.7.2</div>
+      <div class="sub" id="sub">VOLTO · v2.7.4</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
@@ -332,7 +332,14 @@ body.solo-volto .subs img{display:none}
     if(modo==='mondo')setTimeout(function(){rinfrescaWidget(true);},700);
     try{fetch('http://127.0.0.1:'+DESK.porta+'/finestra?modo='+modo+'&t='+encodeURIComponent(DESK.t),{mode:'no-cors',cache:'no-store'}).catch(function(e){console.log('ArgusDesktop non risponde',e);});}catch(e){}
     if(typeof logReg==='function')logReg('Finestra: '+modo);
+    if(modo==='volto')setTimeout(function(){faccia(stato);},150);
   }
+  function faccia(s){if(!DESK)return;try{fetch('http://127.0.0.1:'+DESK.porta+'/faccia?s='+s+'&t='+encodeURIComponent(DESK.t),{mode:'no-cors',cache:'no-store'}).catch(function(){});}catch(e){}}
+  /* clic sul volto del PC (finestra di Windows): ArgusDesktop ce lo passa come «evento» */
+  if(DESK)setInterval(function(){if(DESK.modo==='mondo')return;
+    fetch('http://127.0.0.1:'+DESK.porta+'/eventi?t='+encodeURIComponent(DESK.t),{cache:'no-store'}).then(function(r){return r.ok?r.text():'';}).then(function(t){
+      (t||'').split(',').forEach(function(e){if(e==='mondo')finestra('mondo');else if(e==='ascolta'&&!occupato){if(typeof logReg==='function')logReg('Clic sul volto: ti ascolto');premiMic();}});
+    },function(){});},1000);
   function quandoZitto(fn){var n=0,iv=setInterval(function(){if((!speaking&&stato!=='parla')||++n>150){clearInterval(iv);fn();}},200);}
   /** Comandi della finestra: li esegue il PC subito, senza passare da Gemini. */
   function comandoFinestra(testo){
@@ -386,7 +393,7 @@ body.solo-volto .subs img{display:none}
   };
   var stato='attesa',cur={rot:.12,fire:2,scale:1,tint:0},level=0,levelT=0,speaking=false,userTalk=0,kick=0;
   var statoDal=Date.now(),occupatoDal=0,parlaDal=0;
-  function setStato(s,sub){if(s!==stato&&typeof logReg==='function'&&s!=='attesa')logReg('Stato: '+STATI[s].t.toLowerCase(),'tu');if(s!==stato)statoDal=Date.now();if(s==='parla')parlaDal=Date.now();stato=s;$('statoT').textContent=STATI[s].t;$('statoS').textContent=sub||STATI[s].s;}
+  function setStato(s,sub){if(s!==stato&&typeof logReg==='function'&&s!=='attesa')logReg('Stato: '+STATI[s].t.toLowerCase(),'tu');if(s!==stato){statoDal=Date.now();if(DESK&&DESK.modo==='volto')faccia(s);}if(s==='parla')parlaDal=Date.now();stato=s;$('statoT').textContent=STATI[s].t;$('statoS').textContent=sub||STATI[s].s;}
 
   /* ================= SOTTOTITOLI ================= */
   function riga(cls,testo){logReg((cls==='tu'?'Tu: ':'ARGUS: ')+testo,cls==='tu'?'tu':'');var p=document.createElement('p');p.className=cls;p.textContent=testo;$('subs').appendChild(p);
@@ -442,7 +449,7 @@ body.solo-volto .subs img{display:none}
     .then(function(r){if(!r.ok)throw new Error('voce '+r.status);return r.blob();});}
   function parlaKokoro(testo){
     var g=KGEN,pezzi=pezziVoce(testo),i=0;if(!pezzi.length){animaSolo(testo);return;}
-    var riserva=function(resto){if(g!==KGEN)return;if(typeof logReg==='function')logReg('Voce Kokoro non disponibile: uso la voce di riserva');
+    var riserva=function(resto,err){if(g!==KGEN)return;if(typeof logReg==='function')logReg('Voce Kokoro non disponibile ('+((err&&err.message)||err||'?')+'): uso la voce di riserva');
       if(CFG.url){api({azione:'voce',testo:resto.slice(0,900),voceAI:'Charon'}).then(function(j){if(g===KGEN)suonaAudio(j.audio,resto);},function(){if(g===KGEN)parlaBrowser(resto);});}else parlaBrowser(resto);};
     setStato('pensa','Preparo la voce…');
     var prossimo=voceKokoro(pezzi[0]);
@@ -450,7 +457,7 @@ body.solo-volto .subs img{display:none}
       prossimo.then(function(b){if(g!==KGEN)return;var url=URL.createObjectURL(b);i++;
         if(i<pezzi.length)prossimo=voceKokoro(pezzi[i]);
         suonaAudio(url,pezzi[i-1],function(){URL.revokeObjectURL(url);if(g!==KGEN)return;if(i<pezzi.length)suona();else finito();});
-      },function(){riserva(pezzi.slice(i).join(' '));});
+      },function(e){riserva(pezzi.slice(i).join(' '),e);});
     };
     suona();
   }
@@ -689,7 +696,7 @@ body.solo-volto .subs img{display:none}
       if(opz.seguito&&CHIUSURA.test(t)){ultimaVoce=false;riga('tu',t);var m='Prego, signore. Sono qui se serve.';riga('jv',m);parla(m);return;}
       chiedi(t,true);
     }
-    rec.onstart=function(){if(CFG.url&&!opz.seguito)api({azione:'info'}).then(function(j){mostraInfo(j.info);},function(){});
+    rec.onstart=function(){if(typeof logReg==='function')logReg('Ascolto: partito');if(CFG.url&&!opz.seguito)api({azione:'info'}).then(function(j){mostraInfo(j.info);},function(){});
       ascolta=true;$('mic').classList.add('on');setStato('ascolto');
       hint.textContent=opz.seguito?'La ascolto… (dica «grazie» per chiudere)':'Parli pure. Rispondo quando fa una pausa.';
       ascoltaDal=Date.now();
@@ -704,6 +711,7 @@ body.solo-volto .subs img{display:none}
       if(!vivo)vivo=riga('tu',testo);else vivo.textContent=testo;
       clearTimeout(tSil);tSil=setTimeout(invia,PAUSA);};
     rec.onerror=function(e){
+      if(typeof logReg==='function')logReg('Ascolto: errore '+e.error);
       if(e.error==='no-speech'||e.error==='aborted')return;
       var m={'not-allowed':'Permesso microfono negato. Tocca l\'icona a sinistra dell\'indirizzo → Autorizzazioni → Microfono → Consenti, poi ricarica.',
         'network':'Il riconoscimento vocale richiede internet.','audio-capture':'Nessun microfono disponibile.'}[e.error];
@@ -713,7 +721,7 @@ body.solo-volto .subs img{display:none}
       if(!inviato&&testo.trim()){invia();return;}
       if(vivo&&vivo.parentNode)vivo.parentNode.removeChild(vivo);
       if(!inviato){if(stato==='ascolto')setStato('attesa');if(opz.seguito)hint.textContent='';ultimaVoce=false;dopoInterazione();}};
-    try{rec.start();}catch(e){hint.textContent='Il microfono non è partito, riprovi.';ultimaVoce=false;dopoInterazione();}
+    try{rec.start();}catch(e){if(typeof logReg==='function')logReg('Ascolto: non parte ('+e.message+')');hint.textContent='Il microfono non è partito, riprovi.';ultimaVoce=false;dopoInterazione();}
   }
   function premiMic(){if(staz&&WW.attivo&&!ascolta){fermaMic();setTimeout(avviaAscolto,300);}else avviaAscolto();}
   $('mic').addEventListener('click',premiMic);
@@ -747,7 +755,7 @@ body.solo-volto .subs img{display:none}
   /* --- registro attività (live, su questo dispositivo) --- */
   var REG=[];
   function logReg(t,cls){var d=new Date(),o=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+':'+('0'+d.getSeconds()).slice(-2);
-    if(!REG)REG=[];if(REG.length&&REG[0].s===t)return;REG.unshift({o:o,s:String(t).slice(0,140),c:cls||''});if(REG.length>40)REG.length=40;if(typeof aggiornaUno==='function')aggiornaUno('registro');}
+    if(!REG)REG=[];if(window.mandaLogPC)mandaLogPC(t);if(REG.length&&REG[0].s===t)return;REG.unshift({o:o,s:String(t).slice(0,140),c:cls||''});if(REG.length>40)REG.length=40;if(typeof aggiornaUno==='function')aggiornaUno('registro');}
   /* --- meteo (Open-Meteo, gratuito, senza chiave) --- */
   var METEO=null,METEO_T=0,LAT=0;
   var WMO=function(c){c=Number(c);return c===0?['☀️','Sereno']:c<=2?['🌤','Poco nuvoloso']:c===3?['☁️','Coperto']:c<=48?['🌫','Nebbia']:c<=57?['🌦','Pioviggine']:c<=67?['🌧','Pioggia']:c<=77?['❄️','Neve']:c<=82?['🌦','Rovesci']:['⛈','Temporale'];};
@@ -1145,7 +1153,7 @@ body.solo-volto .subs img{display:none}
   (function(){var im=new Image();im.onload=function(){var n=im.naturalWidth,c=document.createElement('canvas');c.width=c.height=n;var g=c.getContext('2d');
     g.drawImage(im,0,0,n,n);g.globalCompositeOperation='destination-in';var gr=g.createRadialGradient(n/2,n/2,n*.30,n/2,n/2,n*.5);
     gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.75,'rgba(0,0,0,.85)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,n,n);faccia=c;};im.src=VOLTO_SRC;})();
-  function mostraVolto(){document.body.classList.toggle('tema-oro',VOLTO==='oro');$('sub').textContent=(VOLTO==='robot'?'VOLTO':VOLTO==='oro'?'SFERA':'NUCLEO NEURALE')+' · v2.7.2';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
+  function mostraVolto(){document.body.classList.toggle('tema-oro',VOLTO==='oro');$('sub').textContent=(VOLTO==='robot'?'VOLTO':VOLTO==='oro'?'SFERA':'NUCLEO NEURALE')+' · v2.7.4';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
 
   /* ================= ANIMAZIONE ================= */
   var t0=performance.now(),last=t0,rotY=0,arrivi=0,ipsT=0,spawnAcc=0,C1=[0,240,255],C2=[255,43,214];
@@ -1439,11 +1447,11 @@ body.solo-volto .subs img{display:none}
     });
   }
   function svegliato(){
-    kick=1;hint.textContent='Sì, signore?';
-    fermaMic();
+    kick=1;hint.textContent='Sì, signore?';if(typeof logReg==='function')logReg('Sveglia: «'+nomeParola()+'» sentito ('+WW.score.toFixed(2)+')');
     var nascosto=DESK&&DESK.modo!=='volto'&&DESK.modo!=='mondo';
     if(nascosto)finestra('volto');
-    setTimeout(avviaAscolto,nascosto?600:300);
+    fermaMic();
+    setTimeout(avviaAscolto,250);
   }
   var partendoWW=false;
   function riprendiWW(){
@@ -1470,12 +1478,24 @@ body.solo-volto .subs img{display:none}
     if(annunci.length&&!ascolta&&!occupato&&!speaking){prossimoAnnuncio();return;}
     if(!WW.attivo&&!ascolta&&!occupato&&!speaking)riprendiWW();
   },3000);
-  /* Se le orecchie non rispondono: un clic sul volto = ti ascolto; doppio clic = apri il mondo */
-  (function(){var tClick=null;
-    $('core').addEventListener('click',function(){
-      if(tClick){clearTimeout(tClick);tClick=null;if(DESK)finestra('mondo');return;}
-      tClick=setTimeout(function(){tClick=null;if(occupato)return;stopVoce();if(staz&&WW.attivo)fermaMic();if(!ascolta)avviaAscolto();},300);
-    });})();
+  /* Se le orecchie non rispondono: clic sul volto = ti ascolto (premiMic); doppio clic = apri il mondo */
+  $('core').addEventListener('dblclick',function(){if(DESK)finestra('mondo');});
+  /* Sul PC il registro finisce anche in argus-desktop.log: così si vede cosa succede con la finestra nascosta */
+  if(DESK){
+    var ultimoInviato='';
+    window.mandaLogPC=function(m){m=String(m).slice(0,300);if(m===ultimoInviato)return;ultimoInviato=m;
+      try{fetch('http://127.0.0.1:'+DESK.porta+'/log?t='+encodeURIComponent(DESK.t)+'&m='+encodeURIComponent(m),{mode:'no-cors',cache:'no-store'}).catch(function(){});}catch(e){}};
+    window.addEventListener('error',function(e){mandaLogPC('ERRORE pagina: '+(e.message||e)+' @'+(e.lineno||''));});
+    window.addEventListener('unhandledrejection',function(e){mandaLogPC('ERRORE promessa: '+((e.reason&&e.reason.message)||e.reason));});
+    var maxLiv=0,maxSc=0;setInterval(function(){maxLiv=Math.max(maxLiv,WW.livello||0);maxSc=Math.max(maxSc,WW.score||0);},250);
+    setInterval(function(){
+      mandaLogPC('Battito: staz='+staz+' orecchie='+(WW.attivo?'accese':'spente')+' audio='+(WW.ctx?WW.ctx.state:'-')+
+        ' ultimoAudio='+(WW.ultimoAudio?Math.round((Date.now()-WW.ultimoAudio)/1000)+'s fa':'mai')+' voceMax='+Math.round(maxLiv*100)+'% somiglMax='+maxSc.toFixed(2)+
+        ' soglia='+SOGLIA+' pagina='+document.visibilityState+' modo='+DESK.modo+' stato='+stato+' parla='+speaking+' occupato='+occupato+' ascolta='+ascolta+
+        ' annunci='+annunci.length+' audioVoce='+(AUD?'si':'no')+' voce='+VOCE_AI);
+      maxLiv=0;maxSc=0;
+    },20000);
+  }
   function dopoInterazione(){
     setTimeout(function(){
       if(ascolta||occupato||speaking)return;
