@@ -222,7 +222,7 @@ body.solo-volto .subs img{display:none}
   <div class="top">
     <div>
       <div class="logo" data-t="A.R.G.U.S.">A.R.G.U.S.</div>
-      <div class="sub" id="sub">VOLTO · v2.6.0</div>
+      <div class="sub" id="sub">VOLTO · v2.7.0</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
@@ -292,6 +292,7 @@ body.solo-volto .subs img{display:none}
       <option value="Charon">Gemini · Charon (uomo, profonda e calma)</option><option value="Orus">Gemini · Orus (uomo, deciso)</option>
       <option value="Fenrir">Gemini · Fenrir (uomo, energico)</option><option value="Iapetus">Gemini · Iapetus (uomo, chiaro)</option>
       <option value="Algieba">Gemini · Algieba (uomo, morbida)</option><option value="Puck">Gemini · Puck (uomo, vivace)</option>
+      <option value="kokoro:im_nicola">Kokoro · Nicola (uomo, solo sul PC, gratis senza limiti)</option><option value="kokoro:if_sara">Kokoro · Sara (donna, solo sul PC)</option>
       <option value="Kore">Gemini · Kore (donna, sicura)</option><option value="Aoede">Gemini · Aoede (donna, leggera)</option><option value="Leda">Gemini · Leda (donna, giovane)</option>
     </select>
     <select id="cVoce" style="font:14px var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line);padding:12px;width:100%"></select>
@@ -410,29 +411,54 @@ body.solo-volto .subs img{display:none}
   }
   if('speechSynthesis' in window){scegliVoce();speechSynthesis.onvoiceschanged=scegliVoce;}
   /* --- voce naturale di Gemini: audio dal server, bocca sincronizzata con il volume reale --- */
-  var VOCE_AI='';try{VOCE_AI=localStorage.getItem('argus_voce_ai')||'';}catch(e){}
+  /* sul PC (ArgusDesktop) la voce si sceglie a parte: di base Kokoro, che gira in locale */
+  var CHIAVE_VOCE=DESK?'argus_voce_ai_pc':'argus_voce_ai';
+  var VOCE_AI='';try{var vs0=localStorage.getItem(CHIAVE_VOCE);VOCE_AI=vs0===null?(DESK?'kokoro:im_nicola':''):vs0;}catch(e){VOCE_AI=DESK?'kokoro:im_nicola':'';}
+  function eKokoro(){return VOCE_AI.indexOf('kokoro:')===0;}
+  function voceServer(){return voceOn&&!eKokoro()?VOCE_AI:'';}
   var AUD=null,AC=null,AN=null,ABUF=null;
   function mostraVoceAI(){var s=$('cVoceAI');if(s)s.value=VOCE_AI;var b=$('cVoce');if(b)b.hidden=!!VOCE_AI;var t=$('cTono');if(t){t.disabled=!!VOCE_AI;}}
-  function suonaAudio(src,testo){
+  function suonaAudio(src,testo,dopo){
     try{
       var el=new Audio();el.src=src;AUD=el;
       try{if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)();}if(AC.state==='suspended')AC.resume();
         var sorg=AC.createMediaElementSource(el);AN=AC.createAnalyser();AN.fftSize=512;ABUF=new Uint8Array(AN.fftSize);sorg.connect(AN);AN.connect(AC.destination);}catch(e){AN=null;}
       el.onplay=function(){speaking=true;setStato('parla');};
-      el.onended=function(){if(AUD===el){AUD=null;AN=null;}finito();};
+      el.onended=function(){if(AUD===el){AUD=null;AN=null;}if(dopo)dopo();else finito();};
       el.onerror=function(){if(AUD===el){AUD=null;AN=null;}parlaBrowser(testo);};
       var p=el.play();if(p&&p.catch)p.catch(function(){if(AUD===el){AUD=null;AN=null;}parlaBrowser(testo);});
     }catch(e){parlaBrowser(testo);}
   }
   function livelloAudio(){if(!AN||!ABUF)return -1;AN.getByteTimeDomainData(ABUF);var s=0;for(var i=0;i<ABUF.length;i++){var v=(ABUF[i]-128)/128;s+=v*v;}return Math.min(1,Math.sqrt(s/ABUF.length)*5.5);}
-  function stopVoce(){speaking=false;try{speechSynthesis.cancel();}catch(e){}if(AUD){try{AUD.pause();}catch(e){}AUD=null;AN=null;}}
+  function stopVoce(){KGEN++;speaking=false;try{speechSynthesis.cancel();}catch(e){}if(AUD){try{AUD.pause();}catch(e){}AUD=null;AN=null;}}
   function finito(){speaking=false;setStato('attesa');dopoInterazione();}
   function animaSolo(testo){speaking=true;setStato('parla');setTimeout(finito,Math.max(1500,testo.split(/\s+/).length*330));}
+  /* --- Kokoro sul PC: ArgusDesktop avvia il server della voce sulla porta successiva --- */
+  var KGEN=0;
+  function pezziVoce(t){t=String(t||'').replace(/https?:\S+/g,'').trim();var fr=t.match(/[^.!?;:\n]+[.!?;:\n]*/g)||[t],out=[],cur='';
+    fr.forEach(function(f){if((cur+f).length>(out.length?240:110)&&cur){out.push(cur.trim());cur='';}cur+=f;});if(cur.trim())out.push(cur.trim());return out;}
+  function voceKokoro(pezzo){return fetch('http://127.0.0.1:'+(Number(DESK.porta)+1)+'/parla?t='+encodeURIComponent(DESK.t)+'&voce='+encodeURIComponent(VOCE_AI.slice(7))+'&testo='+encodeURIComponent(pezzo),{cache:'no-store'})
+    .then(function(r){if(!r.ok)throw new Error('voce '+r.status);return r.blob();});}
+  function parlaKokoro(testo){
+    var g=KGEN,pezzi=pezziVoce(testo),i=0;if(!pezzi.length){animaSolo(testo);return;}
+    var riserva=function(resto){if(g!==KGEN)return;if(typeof logReg==='function')logReg('Voce Kokoro non disponibile: uso la voce di riserva');
+      if(CFG.url){api({azione:'voce',testo:resto.slice(0,900),voceAI:'Charon'}).then(function(j){if(g===KGEN)suonaAudio(j.audio,resto);},function(){if(g===KGEN)parlaBrowser(resto);});}else parlaBrowser(resto);};
+    setStato('pensa','Preparo la voce…');
+    var prossimo=voceKokoro(pezzi[0]);
+    var suona=function(){
+      prossimo.then(function(b){if(g!==KGEN)return;var url=URL.createObjectURL(b);i++;
+        if(i<pezzi.length)prossimo=voceKokoro(pezzi[i]);
+        suonaAudio(url,pezzi[i-1],function(){URL.revokeObjectURL(url);if(g!==KGEN)return;if(i<pezzi.length)suona();else finito();});
+      },function(){riserva(pezzi.slice(i).join(' '));});
+    };
+    suona();
+  }
   function parla(testo,audio){
     ultimoDetto=String(testo||'');
     stopVoce();
     if(!voceOn){animaSolo(testo);return;}
     if(audio){suonaAudio(audio,testo);return;}
+    if(eKokoro()){if(DESK){parlaKokoro(testo);return;}parlaBrowser(testo);return;}
     if(VOCE_AI&&CFG.url){
       setStato('pensa','Preparo la voce…');
       api({azione:'voce',testo:String(testo).slice(0,900),voceAI:VOCE_AI}).then(function(j){suonaAudio(j.audio,testo);},function(e){
@@ -560,7 +586,7 @@ body.solo-volto .subs img{display:none}
     prendi.then(function(c){
       var nomi=(int.fonte!=='schermo'&&VOLTI.length)?trovaVolti(c).then(function(r){var n=[];r.forEach(function(x){var k=chiE(x.descriptor);if(k&&n.indexOf(k)<0)n.push(k);});return n;},function(){return [];}):Promise.resolve([]);
       return nomi.then(function(n){setStato('pensa','Analizzo…');
-        return api({azione:'vedi',immagine:c.toDataURL('image/jpeg',.82),domanda:testo,persone:n,fonte:int.fonte==='schermo'?'schermo':(TELEFONO?'telefono':'webcam'),voce:!!aVoce,voceAI:voceOn?VOCE_AI:''});});
+        return api({azione:'vedi',immagine:c.toDataURL('image/jpeg',.82),domanda:testo,persone:n,fonte:int.fonte==='schermo'?'schermo':(TELEFONO?'telefono':'webcam'),voce:!!aVoce,voceAI:voceServer()});});
     }).then(function(j){fatto(j.risposta,j.audio);},errore);
   }
 
@@ -587,9 +613,9 @@ body.solo-volto .subs img{display:none}
       var msg=(err&&err.message&&err.message.indexOf('Failed to fetch')<0)?err.message:'Non riesco a raggiungere il server. Controlli la connessione e riprovi.';riga('jv',msg);parla(msg);console.log(err);};
     var t0=Date.now();
     posizioneSeServe(testo).then(function(pos){
-    return api({azione:'chiedi',testo:testo,voce:!!aVoce,voceAI:voceOn?VOCE_AI:'',posizione:pos||undefined});}).then(function(j){
+    return api({azione:'chiedi',testo:testo,voce:!!aVoce,voceAI:voceServer(),posizione:pos||undefined});}).then(function(j){
       fatto(j.risposta,j.audio);
-      if(voceOn&&VOCE_AI&&!j.audio&&typeof logReg==='function')logReg('Voce Gemini non disponibile: uso quella del browser');
+      if(voceServer()&&!j.audio&&typeof logReg==='function')logReg('Voce Gemini non disponibile: uso quella del browser');
       if(j.immagine){var im=document.createElement('img');im.src=j.immagine;im.alt='Immagine creata da ARGUS';
         im.onclick=function(){im.classList.toggle('grande');};$('subs').appendChild(im);$('subs').scrollTop=1e6;}
       var tm=j.tempi||{},sec=function(ms){return (ms/1000).toFixed(1).replace('.',',')+' s';};
@@ -1115,7 +1141,7 @@ body.solo-volto .subs img{display:none}
   (function(){var im=new Image();im.onload=function(){var n=im.naturalWidth,c=document.createElement('canvas');c.width=c.height=n;var g=c.getContext('2d');
     g.drawImage(im,0,0,n,n);g.globalCompositeOperation='destination-in';var gr=g.createRadialGradient(n/2,n/2,n*.30,n/2,n/2,n*.5);
     gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.75,'rgba(0,0,0,.85)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,n,n);faccia=c;};im.src=VOLTO_SRC;})();
-  function mostraVolto(){document.body.classList.toggle('tema-oro',VOLTO==='oro');$('sub').textContent=(VOLTO==='robot'?'VOLTO':VOLTO==='oro'?'SFERA':'NUCLEO NEURALE')+' · v2.6.0';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
+  function mostraVolto(){document.body.classList.toggle('tema-oro',VOLTO==='oro');$('sub').textContent=(VOLTO==='robot'?'VOLTO':VOLTO==='oro'?'SFERA':'NUCLEO NEURALE')+' · v2.7.0';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
 
   /* ================= ANIMAZIONE ================= */
   var t0=performance.now(),last=t0,rotY=0,arrivi=0,ipsT=0,spawnAcc=0,C1=[0,240,255],C2=[255,43,214];
@@ -1486,7 +1512,7 @@ body.solo-volto .subs img{display:none}
   $('cProvaVoce').onclick=function(){var v=voceOn;voceOn=true;parla('Buongiorno, signore. Sono ARGUS, al suo servizio.');voceOn=v;};
   scegliVoce();
   mostraVoceAI();
-  $('cVoceAI').addEventListener('change',function(){VOCE_AI=this.value;try{localStorage.setItem('argus_voce_ai',VOCE_AI);}catch(e){}mostraVoceAI();});
+  $('cVoceAI').addEventListener('change',function(){VOCE_AI=this.value;try{localStorage.setItem(CHIAVE_VOCE,VOCE_AI);}catch(e){}mostraVoceAI();});
   $('cVolto').value=VOLTO;mostraVolto();
   $('cVolto').addEventListener('change',function(){VOLTO=this.value;try{localStorage.setItem('argus_volto',VOLTO);}catch(e){}mostraVolto();});
   $('cParola').value=PAROLA;mostraParola();
