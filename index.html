@@ -222,7 +222,7 @@ body.solo-volto .subs img{display:none}
   <div class="top">
     <div>
       <div class="logo" data-t="A.R.G.U.S.">A.R.G.U.S.</div>
-      <div class="sub" id="sub">VOLTO · v2.7.4</div>
+      <div class="sub" id="sub">VOLTO · v2.7.5</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
@@ -332,9 +332,9 @@ body.solo-volto .subs img{display:none}
     if(modo==='mondo')setTimeout(function(){rinfrescaWidget(true);},700);
     try{fetch('http://127.0.0.1:'+DESK.porta+'/finestra?modo='+modo+'&t='+encodeURIComponent(DESK.t),{mode:'no-cors',cache:'no-store'}).catch(function(e){console.log('ArgusDesktop non risponde',e);});}catch(e){}
     if(typeof logReg==='function')logReg('Finestra: '+modo);
-    if(modo==='volto')setTimeout(function(){faccia(stato);},150);
+    if(modo==='volto')setTimeout(function(){statoVolto(stato);},150);
   }
-  function faccia(s){if(!DESK)return;try{fetch('http://127.0.0.1:'+DESK.porta+'/faccia?s='+s+'&t='+encodeURIComponent(DESK.t),{mode:'no-cors',cache:'no-store'}).catch(function(){});}catch(e){}}
+  function statoVolto(s){if(!DESK)return;try{fetch('http://127.0.0.1:'+DESK.porta+'/faccia?s='+s+'&t='+encodeURIComponent(DESK.t),{mode:'no-cors',cache:'no-store'}).catch(function(){});}catch(e){}}
   /* clic sul volto del PC (finestra di Windows): ArgusDesktop ce lo passa come «evento» */
   if(DESK)setInterval(function(){if(DESK.modo==='mondo')return;
     fetch('http://127.0.0.1:'+DESK.porta+'/eventi?t='+encodeURIComponent(DESK.t),{cache:'no-store'}).then(function(r){return r.ok?r.text():'';}).then(function(t){
@@ -393,7 +393,7 @@ body.solo-volto .subs img{display:none}
   };
   var stato='attesa',cur={rot:.12,fire:2,scale:1,tint:0},level=0,levelT=0,speaking=false,userTalk=0,kick=0;
   var statoDal=Date.now(),occupatoDal=0,parlaDal=0;
-  function setStato(s,sub){if(s!==stato&&typeof logReg==='function'&&s!=='attesa')logReg('Stato: '+STATI[s].t.toLowerCase(),'tu');if(s!==stato){statoDal=Date.now();if(DESK&&DESK.modo==='volto')faccia(s);}if(s==='parla')parlaDal=Date.now();stato=s;$('statoT').textContent=STATI[s].t;$('statoS').textContent=sub||STATI[s].s;}
+  function setStato(s,sub){if(s!==stato&&typeof logReg==='function'&&s!=='attesa')logReg('Stato: '+STATI[s].t.toLowerCase(),'tu');if(s!==stato){statoDal=Date.now();if(DESK&&DESK.modo==='volto'){try{statoVolto(s);}catch(e){}}}if(s==='parla')parlaDal=Date.now();stato=s;$('statoT').textContent=STATI[s].t;$('statoS').textContent=sub||STATI[s].s;}
 
   /* ================= SOTTOTITOLI ================= */
   function riga(cls,testo){logReg((cls==='tu'?'Tu: ':'ARGUS: ')+testo,cls==='tu'?'tu':'');var p=document.createElement('p');p.className=cls;p.textContent=testo;$('subs').appendChild(p);
@@ -1153,7 +1153,7 @@ body.solo-volto .subs img{display:none}
   (function(){var im=new Image();im.onload=function(){var n=im.naturalWidth,c=document.createElement('canvas');c.width=c.height=n;var g=c.getContext('2d');
     g.drawImage(im,0,0,n,n);g.globalCompositeOperation='destination-in';var gr=g.createRadialGradient(n/2,n/2,n*.30,n/2,n/2,n*.5);
     gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.75,'rgba(0,0,0,.85)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,n,n);faccia=c;};im.src=VOLTO_SRC;})();
-  function mostraVolto(){document.body.classList.toggle('tema-oro',VOLTO==='oro');$('sub').textContent=(VOLTO==='robot'?'VOLTO':VOLTO==='oro'?'SFERA':'NUCLEO NEURALE')+' · v2.7.4';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
+  function mostraVolto(){document.body.classList.toggle('tema-oro',VOLTO==='oro');$('sub').textContent=(VOLTO==='robot'?'VOLTO':VOLTO==='oro'?'SFERA':'NUCLEO NEURALE')+' · v2.7.5';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
 
   /* ================= ANIMAZIONE ================= */
   var t0=performance.now(),last=t0,rotY=0,arrivi=0,ipsT=0,spawnAcc=0,C1=[0,240,255],C2=[255,43,214];
