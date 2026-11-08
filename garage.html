@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>A.R.G.U.S. · CybernetLab Garage</title>
+<style>
+:root{--oro:#e3b54a;--oro2:#f6dc8f;--scuro:#07070a;--testo:#ece6d6;--grigio:#9a937f;--linea:rgba(227,181,74,.22)}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--scuro);color:var(--testo);font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;min-height:100%}
+canvas#cielo{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+header{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:14px;padding:16px clamp(16px,4vw,48px);
+  background:rgba(7,7,10,.78);backdrop-filter:blur(12px);border-bottom:1px solid var(--linea)}
+.eti{font-size:12px;letter-spacing:.32em;color:var(--oro);text-transform:uppercase}
+header h1{margin:4px 0 0;font-size:clamp(18px,2.6vw,26px);letter-spacing:.14em}
+button{font:inherit;cursor:pointer;color:var(--oro2);background:rgba(227,181,74,.07);border:1px solid rgba(227,181,74,.4);border-radius:10px;padding:9px 14px}
+button:hover,button:focus-visible{background:rgba(227,181,74,.16);outline:none;box-shadow:0 0 16px rgba(227,181,74,.25)}
+main{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:34px clamp(16px,4vw,48px) 70px}
+.hero h2{font-size:clamp(30px,5vw,58px);line-height:1.05;margin:10px 0 10px;font-weight:700}
+.hero h2 span{background:linear-gradient(90deg,var(--oro2),var(--oro));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{color:var(--grigio);max-width:680px;margin:0;font-size:clamp(15px,1.6vw,18px)}
+.numeri{display:flex;flex-wrap:wrap;gap:10px;margin:28px 0 18px}
+.chip{border:1px solid var(--linea);border-radius:999px;padding:7px 14px;font-size:13px;color:var(--grigio);background:rgba(14,13,11,.7);cursor:pointer;user-select:none}
+.chip b{color:var(--oro2);margin-left:4px}.chip.su{border-color:var(--oro);color:var(--oro2);background:rgba(227,181,74,.12)}
+.cerca{width:100%;padding:13px 16px;border-radius:12px;border:1px solid var(--linea);background:rgba(14,13,11,.85);color:var(--testo);font:inherit;margin-bottom:22px}
+.cerca:focus{outline:none;border-color:var(--oro)}
+.stato{color:var(--grigio);font-size:14px;margin:-8px 0 18px;min-height:20px}.stato.err{color:#ffb4a8}
+.posti{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:18px}
+.posto{display:flex;flex-direction:column;justify-content:flex-start;position:relative;text-align:left;color:inherit;font:inherit;padding:22px 22px 20px;min-height:250px;border-radius:16px;cursor:pointer;
+  border:1px solid var(--linea);background:linear-gradient(180deg,rgba(24,22,17,.94),rgba(10,10,12,.94));overflow:hidden;transition:transform .25s,box-shadow .25s,border-color .25s}
+.posto:hover,.posto:focus-visible{transform:translateY(-5px);border-color:rgba(227,181,74,.55);box-shadow:0 14px 34px rgba(0,0,0,.5),0 0 26px rgba(227,181,74,.14);outline:none}
+.posto:before{content:"";position:absolute;left:0;right:0;bottom:0;height:46px;background:repeating-linear-gradient(90deg,transparent 0 34px,rgba(227,181,74,.12) 34px 36px);
+  mask:linear-gradient(transparent,#000);-webkit-mask:linear-gradient(transparent,#000)}
+.posto:after{content:attr(data-n);position:absolute;right:16px;top:8px;font:800 64px/1 system-ui,sans-serif;color:rgba(227,181,74,.07)}
+.posto .id{font:700 12px ui-monospace,Consolas,monospace;letter-spacing:.24em;color:var(--oro)}
+.posto h3{margin:14px 0 8px;font-size:22px;max-width:85%}
+.posto p{margin:0;color:#cfc8b4;line-height:1.5;font-size:14.5px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.meta{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
+.pill{font-size:11.5px;letter-spacing:.04em;padding:4px 9px;border-radius:6px;border:1px solid var(--linea);color:var(--grigio)}
+.pill.s-Parcheggiato{color:#f3e6c4;border-color:rgba(227,181,74,.45)}.pill.s-In.valutazione{color:#9fd3ff;border-color:rgba(120,190,255,.4)}
+.pill.s-Promosso{color:#9ff0b6;border-color:rgba(110,220,150,.45)}.pill.s-Archiviato{opacity:.6}
+.vuoto{grid-column:1/-1;text-align:center;color:var(--grigio);padding:50px 10px;border:1px dashed var(--linea);border-radius:16px}
+.velo{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:18px;background:rgba(3,3,5,.82);backdrop-filter:blur(8px)}
+.velo[hidden]{display:none}
+.scheda{width:min(720px,100%);max-height:90vh;overflow:auto;border:1px solid rgba(227,181,74,.45);border-radius:18px;padding:clamp(20px,4vw,36px);
+  background:linear-gradient(180deg,#17150f,#0b0b0d);box-shadow:0 0 60px rgba(227,181,74,.12)}
+.scheda .riga{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.scheda h2{font-size:clamp(24px,4vw,38px);margin:12px 0 10px}
+.scheda h4{margin:20px 0 6px;color:var(--oro);font-size:12px;letter-spacing:.24em;text-transform:uppercase}
+.scheda p,.scheda li{color:#d8d0bc;line-height:1.65}.scheda ul{margin:0;padding-left:20px}
+.scheda a{color:var(--oro2)}
+.nota{margin-top:24px;font-size:13px;color:var(--grigio);border-top:1px solid var(--linea);padding-top:14px}
+@media (max-width:560px){header{flex-direction:column;align-items:flex-start}}
+@media (prefers-reduced-motion:reduce){.posto{transition:none}}
+</style>
+</head>
+<body>
+<canvas id="cielo" aria-hidden="true"></canvas>
+<header>
+  <div><div class="eti">A.R.G.U.S. · CybernetLab</div><h1>GARAGE</h1></div>
+  <div><button id="aggiorna" type="button">↻ Aggiorna</button> <button id="indietro" type="button">← ARGUS</button></div>
+</header>
+<main>
+  <section class="hero">
+    <div class="eti">Il parcheggio delle idee</div>
+    <h2>Le idee aspettano qui.<br><span>Nessuna va persa.</span></h2>
+    <p>Ogni idea ha il suo posto. Quando è il momento giusto, ARGUS la tira fuori e la squadra prepara il piano di lancio.</p>
+  </section>
+  <div class="numeri" id="numeri"></div>
+  <input class="cerca" id="cerca" type="search" placeholder="Cerca tra le idee parcheggiate…" aria-label="Cerca tra le idee">
+  <div class="stato" id="stato" role="status"></div>
+  <section class="posti" id="posti" aria-label="Idee parcheggiate"></section>
+  <p class="nota">Per parcheggiare un'idea basta dirlo: «Argus, parcheggia nel garage l'idea di…». Per lanciarla: «Argus, promuovi …».</p>
+</main>
+
+<div class="velo" id="velo" hidden>
+  <div class="scheda" role="dialog" aria-modal="true" aria-labelledby="sTitolo">
+    <div class="riga"><span class="eti" id="sId"></span><button id="chiudi" type="button">Chiudi ×</button></div>
+    <h2 id="sTitolo"></h2>
+    <div class="meta" id="sMeta"></div>
+    <h4>Descrizione</h4><p id="sDesc"></p>
+    <h4>Funzioni</h4><ul id="sFunz"></ul>
+    <h4>Note</h4><p id="sNote"></p>
+    <div id="sVal"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+var $=function(id){return document.getElementById(id);};
+var CFG={};try{CFG=JSON.parse(localStorage.getItem('jarvis_cfg'))||{};}catch(e){}
+var IDEE=[],FILTRO='';
+var STATI=['Parcheggiato','In valutazione','Promosso','Archiviato'];
+function stato(t,err){$('stato').textContent=t||'';$('stato').className='stato'+(err?' err':'');}
+function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
+function pill(t,cls){return el('span','pill'+(cls?' '+cls:''),t);}
+function carica(){
+  if(!CFG.url){stato('Apri ARGUS su questo dispositivo, collega Apps Script dalle impostazioni ⚙ e torna qui.',true);return;}
+  stato('Apro il garage…');
+  fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({azione:'garage_lista',codice:CFG.codice}),redirect:'follow'})
+    .then(function(r){return r.json();}).then(function(j){
+      if(!j.ok)throw new Error(j.errore||'richiesta non riuscita');
+      IDEE=Array.isArray(j.idee)?j.idee:[];disegna();stato('');
+    }).catch(function(e){stato('Non riesco a leggere il garage: '+e.message,true);});
+}
+function disegna(){
+  var n={};STATI.forEach(function(s){n[s]=0;});IDEE.forEach(function(x){n[x.stato]=(n[x.stato]||0)+1;});
+  var num=$('numeri');num.replaceChildren();
+  var tutte=el('span','chip'+(FILTRO?'':' su'),'Tutte');tutte.appendChild(el('b',null,String(IDEE.length)));tutte.onclick=function(){FILTRO='';disegna();};num.appendChild(tutte);
+  STATI.forEach(function(s){var c=el('span','chip'+(FILTRO===s?' su':''),s);c.appendChild(el('b',null,String(n[s]||0)));c.onclick=function(){FILTRO=FILTRO===s?'':s;disegna();};num.appendChild(c);});
+  var k=$('cerca').value.toLowerCase().trim();
+  var l=IDEE.filter(function(x){return (!FILTRO||x.stato===FILTRO)&&(!k||[x.id,x.nome,x.descrizione,x.categoria,x.funzioni].join(' ').toLowerCase().indexOf(k)>=0);});
+  var box=$('posti');box.replaceChildren();
+  if(!l.length){box.appendChild(el('div','vuoto',IDEE.length?'Nessuna idea con questi filtri.':'Il garage è vuoto: di\' ad ARGUS «parcheggia nel garage l\'idea di…».'));return;}
+  l.forEach(function(x){
+    var b=el('button','posto');b.type='button';b.setAttribute('data-n',String(x.id).replace(/\D/g,'').replace(/^0+/,'')||'');
+    b.appendChild(el('div','id',x.id));b.appendChild(el('h3',null,x.nome));b.appendChild(el('p',null,x.descrizione||'Nessuna descrizione'));
+    var m=el('div','meta');m.appendChild(pill(x.stato||'Parcheggiato','s-'+String(x.stato||'Parcheggiato').replace(/ /g,'.')));
+    if(x.categoria)m.appendChild(pill(x.categoria));if(x.valutazione)m.appendChild(pill('★ '+String(x.valutazione).split(' · ')[0]));
+    b.appendChild(m);b.onclick=function(){apri(x);};box.appendChild(b);
+  });
+}
+function apri(x){
+  $('sId').textContent=x.id;$('sTitolo').textContent=x.nome;$('sDesc').textContent=x.descrizione||'—';$('sNote').textContent=x.note||'—';
+  var m=$('sMeta');m.replaceChildren();m.appendChild(pill(x.stato||'Parcheggiato','s-'+String(x.stato||'').replace(/ /g,'.')));
+  if(x.categoria)m.appendChild(pill(x.categoria));if(x.priorita)m.appendChild(pill('Priorità: '+x.priorita));
+  var f=$('sFunz');f.replaceChildren();String(x.funzioni||'').split(/;|\n/).map(function(s){return s.trim();}).filter(Boolean).forEach(function(s){f.appendChild(el('li',null,s));});
+  if(!f.children.length)f.appendChild(el('li',null,'—'));
+  var v=$('sVal');v.replaceChildren();
+  if(x.valutazione){var parti=String(x.valutazione).split(' · ');v.appendChild(el('h4',null,'Valutazione di ARGUS'));var p=el('p',null,parti[0]+' ');
+    if(parti[1]&&/^https:\/\//.test(parti[1])){var a=el('a',null,'Apri il documento');a.href=parti[1];a.target='_blank';a.rel='noopener';p.appendChild(a);}v.appendChild(p);}
+  $('velo').hidden=false;$('chiudi').focus();
+}
+function chiudi(){$('velo').hidden=true;}
+$('chiudi').onclick=chiudi;$('velo').addEventListener('click',function(e){if(e.target===$('velo'))chiudi();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')chiudi();});
+$('cerca').oninput=disegna;$('aggiorna').onclick=carica;
+/* aperto da ARGUS in una finestra a parte: «← ARGUS» la chiude e ARGUS resta acceso dietro */
+$('indietro').onclick=function(){if(window.opener&&!window.opener.closed){window.close();}else{location.href='index.html';}};
+carica();
+
+/* cielo stellato */
+(function(){var c=$('cielo'),g=c.getContext('2d'),st=[],W,H;
+  function dim(){W=c.width=innerWidth*devicePixelRatio;H=c.height=innerHeight*devicePixelRatio;st=[];for(var i=0;i<150;i++)st.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.3*devicePixelRatio+.2,v:Math.random()*.12+.03,a:Math.random()*6});}
+  addEventListener('resize',dim);dim();
+  (function giro(){g.clearRect(0,0,W,H);var gr=g.createRadialGradient(W*.8,H*.1,0,W*.8,H*.1,W*.6);gr.addColorStop(0,'rgba(227,181,74,.09)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,W,H);
+    st.forEach(function(s){s.y-=s.v;if(s.y<0)s.y=H;s.a+=.02;g.globalAlpha=.3+Math.sin(s.a)*.25;g.fillStyle=s.r>1.1?'#f6dc8f':'#fff';g.beginPath();g.arc(s.x,s.y,s.r,0,7);g.fill();});
+    g.globalAlpha=1;requestAnimationFrame(giro);})();})();
+</script>
+</body>
+</html>
