@@ -210,6 +210,11 @@ body.solo-volto ::-webkit-scrollbar{display:none}
 body.solo-volto .subs>*:not(:nth-last-child(-n+2)){display:none}
 body.solo-volto .subs img{display:none}
 @media (prefers-reduced-motion:reduce){.logo::before,.logo::after,.mic.on{animation:none}}
+.linkBox{margin:8px 0 10px;padding:9px 11px;border:1px solid rgba(227,181,74,.35);border-radius:10px;background:rgba(227,181,74,.06)}
+.linkBox b{display:block;font-size:.78rem;letter-spacing:.08em;color:var(--oro,#e3b54a);margin-bottom:4px}
+.linkBox a{display:block;padding:6px 0;border-top:1px solid rgba(255,255,255,.07);color:inherit;text-decoration:none}
+.linkBox a:first-of-type{border-top:0}.linkBox a span{display:block;color:#f3e6c4;font-weight:600}.linkBox a small{opacity:.6}
+.linkBox a:hover span{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -222,7 +227,7 @@ body.solo-volto .subs img{display:none}
   <div class="top">
     <div>
       <div class="logo" data-t="A.R.G.U.S.">A.R.G.U.S.</div>
-      <div class="sub" id="sub">VOLTO · v2.7.5</div>
+      <div class="sub" id="sub">VOLTO · v2.7.6</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
@@ -334,6 +339,11 @@ body.solo-volto .subs img{display:none}
     if(typeof logReg==='function')logReg('Finestra: '+modo);
     if(modo==='volto')setTimeout(function(){statoVolto(stato);},150);
   }
+  /* link delle ricerche web: schede cliccabili nella conversazione del core (e anche su Telegram) */
+  function mostraLink(l){var box=document.createElement('div');box.className='linkBox';
+    box.innerHTML='<b>🔗 Link trovati</b>'+l.map(function(x){var d='';try{d=new URL(x.url).hostname.replace(/^www\./,'');}catch(e){}
+      return '<a href="'+escH(x.url)+'" target="_blank" rel="noopener"><span>'+escH(x.titolo)+'</span><small>'+escH(d)+'</small></a>';}).join('');
+    $('subs').appendChild(box);$('subs').scrollTop=1e6;if(typeof logReg==='function')logReg('Link trovati: '+l.length+' (anche su Telegram)');}
   function statoVolto(s){if(!DESK)return;try{fetch('http://127.0.0.1:'+DESK.porta+'/faccia?s='+s+'&t='+encodeURIComponent(DESK.t),{mode:'no-cors',cache:'no-store'}).catch(function(){});}catch(e){}}
   /* clic sul volto del PC (finestra di Windows): ArgusDesktop ce lo passa come «evento» */
   if(DESK)setInterval(function(){if(DESK.modo==='mondo')return;
@@ -626,6 +636,7 @@ body.solo-volto .subs img{display:none}
     posizioneSeServe(testo).then(function(pos){
     return api({azione:'chiedi',testo:testo,voce:!!aVoce,voceAI:voceServer(),posizione:pos&&!pos.errore?pos:undefined,posizioneErrore:pos&&pos.errore?pos.errore:undefined});}).then(function(j){
       fatto(j.risposta,j.audio);
+      if(j.link&&j.link.length)mostraLink(j.link);
       if(voceServer()&&!j.audio&&typeof logReg==='function')logReg('Voce Gemini non disponibile: uso quella del browser');
       if(j.immagine){var im=document.createElement('img');im.src=j.immagine;im.alt='Immagine creata da ARGUS';
         im.onclick=function(){im.classList.toggle('grande');};$('subs').appendChild(im);$('subs').scrollTop=1e6;}
@@ -1153,7 +1164,7 @@ body.solo-volto .subs img{display:none}
   (function(){var im=new Image();im.onload=function(){var n=im.naturalWidth,c=document.createElement('canvas');c.width=c.height=n;var g=c.getContext('2d');
     g.drawImage(im,0,0,n,n);g.globalCompositeOperation='destination-in';var gr=g.createRadialGradient(n/2,n/2,n*.30,n/2,n/2,n*.5);
     gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.75,'rgba(0,0,0,.85)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,n,n);faccia=c;};im.src=VOLTO_SRC;})();
-  function mostraVolto(){document.body.classList.toggle('tema-oro',VOLTO==='oro');$('sub').textContent=(VOLTO==='robot'?'VOLTO':VOLTO==='oro'?'SFERA':'NUCLEO NEURALE')+' · v2.7.5';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
+  function mostraVolto(){document.body.classList.toggle('tema-oro',VOLTO==='oro');$('sub').textContent=(VOLTO==='robot'?'VOLTO':VOLTO==='oro'?'SFERA':'NUCLEO NEURALE')+' · v2.7.6';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
 
   /* ================= ANIMAZIONE ================= */
   var t0=performance.now(),last=t0,rotY=0,arrivi=0,ipsT=0,spawnAcc=0,C1=[0,240,255],C2=[255,43,214];
