@@ -72,6 +72,10 @@ button[aria-pressed="true"]{background:rgba(32,217,255,.24);color:#fff}
 #gprev span{position:absolute;left:0;right:0;bottom:0;font-size:10.5px;padding:3px 6px;background:rgba(0,0,0,.6);color:var(--oro2)}
 .conferma{position:fixed;left:50%;top:150px;transform:translateX(-50%);z-index:45;padding:12px 18px;border-radius:14px;border:1px solid var(--oro);background:rgba(6,18,35,.96);color:var(--oro2);font-size:15px;box-shadow:0 10px 30px rgba(0,0,0,.6);max-width:92vw}
 .conferma[hidden]{display:none}
+.zonaElimina{margin-top:26px;padding-top:16px;border-top:1px solid rgba(255,90,110,.25);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.zonaElimina button{background:transparent;color:#ff8c9a;border:1px solid rgba(255,90,110,.55);border-radius:999px;padding:9px 16px;font:inherit;cursor:pointer}
+.zonaElimina button.pronto{background:#d9364d;color:#fff;border-color:#ff5a6e}
+.zonaElimina small{color:#8fa4bb}
 @media (max-width:640px){.titolo .eti{display:none}.titolo h1 span{display:none}.top button{padding:7px 10px;font-size:13px}.info p{display:none}.aiuto{display:none}}
 </style>
 </head>
@@ -107,6 +111,7 @@ button[aria-pressed="true"]{background:rgba(32,217,255,.24);color:#fff}
     <h4>Funzioni</h4><ul id="sFunz"></ul>
     <h4>Note</h4><p id="sNote"></p>
     <div id="sVal"></div>
+    <div class="zonaElimina"><button id="eliminaBtn" type="button">🗑 Elimina idea</button><small id="eliminaNota">Elimina per sempre (se vuoi solo nasconderla, usa 👎 archivia).</small></div>
   </div>
 </div>
 
@@ -202,7 +207,22 @@ function apri(x) {
     if (parti[1] && /^https:\/\//.test(parti[1])) { const a = el('a', null, 'Apri il documento'); a.href = parti[1]; a.target = '_blank'; a.rel = 'noopener'; p.appendChild(a); } v.appendChild(p); }
   $('velo').hidden = false; $('chiudi').focus();
 }
-function chiudi() { $('velo').hidden = true; APERTA = null; $('scena').focus(); }
+function chiudi() { $('velo').hidden = true; APERTA = null; rimettiElimina(); $('scena').focus(); }
+/* Elimina: primo tocco = chiede conferma (5 s), secondo tocco = elimina davvero */
+let ELIM = null;
+function rimettiElimina() { ELIM = null; clearTimeout(rimettiElimina.t); const b = $('eliminaBtn'); b.classList.remove('pronto'); b.disabled = false; b.textContent = '🗑 Elimina idea';
+  $('eliminaNota').textContent = 'Elimina per sempre (se vuoi solo nasconderla, usa 👎 archivia).'; }
+$('eliminaBtn').onclick = function () {
+  const x = IDEE.find(i => i.id === APERTA); if (!x) return;
+  if (!ELIM || ELIM !== x.id) { ELIM = x.id; this.classList.add('pronto'); this.textContent = 'Confermi? Tocca di nuovo per eliminare';
+    $('eliminaNota').textContent = '«' + x.nome + '» sparisce dal garage; il mockup va nel cestino di Drive.'; clearTimeout(rimettiElimina.t); rimettiElimina.t = setTimeout(rimettiElimina, 6000); return; }
+  clearTimeout(rimettiElimina.t); this.disabled = true; this.textContent = 'Elimino…'; const id = x.id;
+  fetch(CFG.url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, redirect: 'follow',
+    body: JSON.stringify({ azione: 'garage_elimina', id, conferma: true, codice: CFG.codice }) })
+    .then(r => r.json()).then(j => { if (!j.ok) throw new Error(j.errore || 'non riuscito'); delete IMG[id]; delete IMG_DATI[id]; chiudi(); carica();
+      $('conferma').textContent = '🗑 ' + id + ' eliminata.'; $('conferma').hidden = false; setTimeout(annullaConferma, 3500); })
+    .catch(e => { rimettiElimina(); stato('Non ci sono riuscito: ' + e.message, true); });
+};
 function ideaSel() { return LISTA[SEL]; }
 function chiediConferma(cosa) {
   const x = ideaSel(); if (!x) return;
