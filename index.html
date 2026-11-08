@@ -254,13 +254,13 @@ body.solo-volto .subs img{display:none}
 .linkBox a:hover span{text-decoration:underline}
 
 /* ===== CYBERNETLAB GARAGE 3D · ARGUS VISUAL SKIN ===== */
-#argusHangar3D{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0;pointer-events:none}
-#core{z-index:1;pointer-events:none}
-.grid,.scan,.vign{z-index:1}
+#argusHangar3D{filter:brightness(1.3) saturate(1.3);position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0;pointer-events:none}
+#core{z-index:1;pointer-events:auto;mix-blend-mode:screen}
+.grid,.scan,.vign{z-index:1;opacity:.22}
 .hud{z-index:4}
 .wlayer{z-index:5}
 body{background:#030711}
-body::before,body::after{z-index:2}
+body::before,body::after{z-index:2;opacity:.5}
 .top{padding:10px 16px 8px;border:1px solid rgba(32,217,255,.42);background:linear-gradient(90deg,rgba(4,16,34,.74),rgba(8,12,32,.4));border-radius:12px;box-shadow:inset 0 1px rgba(190,245,255,.08)}
 .logo{letter-spacing:.28em;text-shadow:0 0 18px rgba(32,217,255,.65)}
 .sub{color:#89c4e4}
@@ -1707,7 +1707,6 @@ const cyan=new THREE.MeshBasicMaterial({color:0x20d9ff}),violet=new THREE.MeshBa
 function box(w,h,d,x,y,z,m){const a=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);a.position.set(x,y,z);scene.add(a);return a;}
 function line(points,color,opacity=.5){const geo=new THREE.BufferGeometry().setFromPoints(points.map(p=>new THREE.Vector3(...p)));const o=new THREE.Line(geo,new THREE.LineBasicMaterial({color,transparent:true,opacity}));scene.add(o);return o;}
 box(34,.25,140,0,-.18,-40,floor);
-for(const x of [-10,-6,6,10])box(.13,.05,135,x,.055,-40,x<0?accentGlow:purpleGlow);
 box(34,.3,140,0,14,-40,dark);
 box(.5,14,140,-17,7,-40,dark);box(.5,14,140,17,7,-40,dark);
 const lights=[];
@@ -1716,6 +1715,7 @@ const movingBeams=[];
 const orbitalRings=[];
 const accentGlow=new THREE.MeshBasicMaterial({color:0x34eaff});
 const purpleGlow=new THREE.MeshBasicMaterial({color:0xb176ff});
+for(const x of [-10,-6,6,10])box(.13,.05,135,x,.055,-40,x<0?accentGlow:purpleGlow);
 for(let i=0;i<13;i++){
 const z=12-i*9;
 box(.48,12,.5,-12.7,5.9,z,steel);box(.48,12,.5,12.7,5.9,z,steel);
