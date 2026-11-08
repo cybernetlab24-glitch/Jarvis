@@ -51,6 +51,16 @@ main{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:34px cla
 .scheda p,.scheda li{color:#d8d0bc;line-height:1.65}.scheda ul{margin:0;padding-left:20px}
 .scheda a{color:var(--oro2)}
 .nota{margin-top:24px;font-size:13px;color:var(--grigio);border-top:1px solid var(--linea);padding-top:14px}
+.posto.sel{border-color:var(--oro);box-shadow:0 0 0 2px rgba(227,181,74,.55),0 0 30px rgba(227,181,74,.22)}
+.ghov{outline:2px solid var(--oro2)!important;outline-offset:3px}
+button[aria-pressed="true"]{background:rgba(227,181,74,.22);color:#fff}
+#gcur{position:fixed;left:-14px;top:-14px;width:28px;height:28px;border-radius:50%;border:2px solid var(--oro2);box-shadow:0 0 14px rgba(227,181,74,.7);z-index:40;pointer-events:none;transition:width .1s,height .1s}
+#gcur.pz{background:rgba(246,220,143,.45)}
+#gprev{position:fixed;right:14px;bottom:14px;z-index:30;border:1px solid rgba(227,181,74,.45);border-radius:12px;overflow:hidden;background:#000;cursor:pointer}
+#gprev canvas{display:block;width:160px;height:120px;transform:scaleX(-1)}
+#gprev span{position:absolute;left:0;right:0;bottom:0;font-size:10.5px;padding:3px 6px;background:rgba(0,0,0,.6);color:var(--oro2);letter-spacing:.06em}
+.conferma{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:45;padding:12px 18px;border-radius:14px;border:1px solid var(--oro);background:rgba(20,18,12,.95);color:var(--oro2);font-size:15px;box-shadow:0 10px 30px rgba(0,0,0,.6)}
+.conferma[hidden]{display:none}
 @media (max-width:560px){header{flex-direction:column;align-items:flex-start}}
 @media (prefers-reduced-motion:reduce){.posto{transition:none}}
 </style>
@@ -59,7 +69,7 @@ main{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:34px cla
 <canvas id="cielo" aria-hidden="true"></canvas>
 <header>
   <div><div class="eti">A.R.G.U.S. · CybernetLab</div><h1>GARAGE</h1></div>
-  <div><button id="aggiorna" type="button">↻ Aggiorna</button> <button id="indietro" type="button">← ARGUS</button></div>
+  <div><button id="gestiBtn" type="button" aria-pressed="false" title="Comandi con i gesti della mano (webcam)">✋ Gesti</button> <button id="aggiorna" type="button">↻ Aggiorna</button> <button id="indietro" type="button">← ARGUS</button></div>
 </header>
 <main>
   <section class="hero">
@@ -71,7 +81,8 @@ main{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:34px cla
   <input class="cerca" id="cerca" type="search" placeholder="Cerca tra le idee parcheggiate…" aria-label="Cerca tra le idee">
   <div class="stato" id="stato" role="status"></div>
   <section class="posti" id="posti" aria-label="Idee parcheggiate"></section>
-  <p class="nota">Per parcheggiare un'idea basta dirlo: «Argus, parcheggia nel garage l'idea di…». Per lanciarla: «Argus, promuovi …».</p>
+  <p class="nota">Per parcheggiare un'idea basta dirlo: «Argus, parcheggia nel garage l'idea di…». Per lanciarla: «Argus, promuovi …».<br>
+Gesti (✋ Gesti in alto): 👋 scorri = idea successiva/precedente · ✋ palmo = apri · ✊ pugno = chiudi · 👍 = promuovi · 👎 = archivia (sempre con conferma) · ☝️ indice = cursore, pizzica = clic. Anche con le frecce ← → e Invio.</p>
 </main>
 
 <div class="velo" id="velo" hidden>
@@ -86,6 +97,10 @@ main{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:34px cla
   </div>
 </div>
 
+<div id="gcur" hidden></div>
+<div id="gprev" hidden title="Tocca per nascondere l'anteprima"><canvas id="gcan"></canvas><span id="gprevT">GESTI</span></div>
+<video id="gvid" playsinline muted hidden></video>
+<div class="conferma" id="conferma" role="alert" hidden></div>
 <script>
 'use strict';
 var $=function(id){return document.getElementById(id);};
@@ -122,6 +137,7 @@ function disegna(){
   });
 }
 function apri(x){
+  APERTA=x.id;var i=IDEE.indexOf(x);carte().forEach(function(c,j){if(c.querySelector('.id').textContent===x.id){SEL=j;}c.classList.toggle('sel',c.querySelector('.id').textContent===x.id);});
   $('sId').textContent=x.id;$('sTitolo').textContent=x.nome;$('sDesc').textContent=x.descrizione||'—';$('sNote').textContent=x.note||'—';
   var m=$('sMeta');m.replaceChildren();m.appendChild(pill(x.stato||'Parcheggiato','s-'+String(x.stato||'').replace(/ /g,'.')));
   if(x.categoria)m.appendChild(pill(x.categoria));if(x.priorita)m.appendChild(pill('Priorità: '+x.priorita));
@@ -132,13 +148,98 @@ function apri(x){
     if(parti[1]&&/^https:\/\//.test(parti[1])){var a=el('a',null,'Apri il documento');a.href=parti[1];a.target='_blank';a.rel='noopener';p.appendChild(a);}v.appendChild(p);}
   $('velo').hidden=false;$('chiudi').focus();
 }
-function chiudi(){$('velo').hidden=true;}
+function chiudi(){$('velo').hidden=true;APERTA=null;}
+/* ---------- selezione (gesti e tastiera) ---------- */
+var SEL=-1,APERTA=null,CONF=null;
+function carte(){return [].slice.call(document.querySelectorAll('.posto'));}
+function seleziona(i){var c=carte();if(!c.length)return;SEL=(i+c.length)%c.length;c.forEach(function(x,j){x.classList.toggle('sel',j===SEL);});
+  c[SEL].scrollIntoView({behavior:'smooth',block:'center'});if(APERTA)c[SEL].click();}
+function idSel(){var c=carte();return SEL>=0&&c[SEL]?c[SEL].querySelector('.id').textContent:'';}
+function ideaSel(){var id=APERTA||idSel();return IDEE.filter(function(x){return x.id===id;})[0];}
+function chiediConferma(cosa){var x=ideaSel();if(!x){stato('Seleziona prima un\'idea (scorri con la mano o usa le frecce).');return;}
+  CONF={cosa:cosa,id:x.id,t:Date.now()};var c=$('conferma');
+  c.textContent=(cosa==='Promosso'?'👍 Promuovere «'+x.nome+'»? La squadra prepara il piano di lancio.':'👎 Archiviare «'+x.nome+'»?')+'  Rifai il gesto per confermare · ✊ annulla';
+  c.hidden=false;clearTimeout(chiediConferma.t);chiediConferma.t=setTimeout(annullaConferma,6000);}
+function annullaConferma(){CONF=null;$('conferma').hidden=true;}
+function confermaSeServe(cosa){if(CONF&&CONF.cosa===cosa&&Date.now()-CONF.t<6000){var c=CONF;annullaConferma();cambiaStato(c.id,c.cosa);return true;}return false;}
+function cambiaStato(id,st){stato(st==='Promosso'?'Promuovo '+id+'…':'Archivio '+id+'…');
+  fetch(CFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},redirect:'follow',
+    body:JSON.stringify(st==='Promosso'?{azione:'garage_promuovi',idea:id,codice:CFG.codice}:{azione:'garage_aggiorna',id:id,campo:'stato',valore:st,codice:CFG.codice})})
+  .then(function(r){return r.json();}).then(function(j){if(!j.ok)throw new Error(j.errore||'non riuscito');
+    stato(st==='Promosso'?'✓ '+id+' promossa: la squadra prepara il piano di lancio, arriva su Telegram.':'✓ '+id+' archiviata.');chiudi();carica();})
+  .catch(function(e){stato('Non ci sono riuscito: '+e.message,true);});}
+document.addEventListener('keydown',function(e){if(e.target&&e.target.id==='cerca')return;
+  if(e.key==='ArrowRight'){seleziona(SEL+1);e.preventDefault();}else if(e.key==='ArrowLeft'){seleziona(SEL-1);e.preventDefault();}
+  else if(e.key==='Enter'&&SEL>=0&&$('velo').hidden){var c=carte()[SEL];if(c)c.click();}});
 $('chiudi').onclick=chiudi;$('velo').addEventListener('click',function(e){if(e.target===$('velo'))chiudi();});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')chiudi();});
 $('cerca').oninput=disegna;$('aggiorna').onclick=carica;
 /* aperto da ARGUS in una finestra a parte: «← ARGUS» la chiude e ARGUS resta acceso dietro */
 $('indietro').onclick=function(){if(window.opener&&!window.opener.closed){window.close();}else{location.href='index.html';}};
 carica();
+
+/* ================= GESTI (MediaPipe, come in ARGUS: tutto sul dispositivo) ================= */
+var G={on:false,avvio:false,rec:null,video:null,stream:null,last:0,x:innerWidth/2,y:innerHeight/2,pz:false,pzT:0,pzX:0,pzY:0,hov:null,
+  gesto:'',gestoT:0,gestoFatto:'',polso:[],swipeT:0,mostraPrev:true,frames:0,visto:0};
+var MP_URL='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+var MP_MODELLO='https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task';
+function entro(ms,pr,cosa){return Promise.race([pr,new Promise(function(ok,ko){setTimeout(function(){ko(new Error(cosa+': nessuna risposta dopo '+Math.round(ms/1000)+' secondi'));},ms);})]);}
+function etichettaG(t){$('gprevT').textContent=t?('GESTI · '+t):'GESTI';}
+function creaRic(del){etichettaG(del==='GPU'?'SCARICO IL MODELLO':'USO IL PROCESSORE');
+  return entro(del==='GPU'?15000:45000,G.vision.GestureRecognizer.createFromOptions(G.fs,{baseOptions:{modelAssetPath:MP_MODELLO,delegate:del},runningMode:'VIDEO',numHands:1,
+    minHandDetectionConfidence:0.5,minHandPresenceConfidence:0.5,minTrackingConfidence:0.5}),'modello della mano').then(function(r){try{G.rec&&G.rec.close();}catch(e){}G.rec=r;G.del=del;G.frames=0;G.inizio=performance.now();});}
+function caricaG(){if(G.rec)return Promise.resolve();etichettaG('SCARICO LA LIBRERIA');
+  return entro(30000,import(MP_URL+'/vision_bundle.mjs'),'libreria MediaPipe').then(function(v){G.vision=v;return entro(30000,v.FilesetResolver.forVisionTasks(MP_URL+'/wasm'),'motore MediaPipe');})
+    .then(function(fs){G.fs=fs;return creaRic('GPU').catch(function(){return creaRic('CPU');});});}
+function attivaG(){if(G.avvio)return;G.avvio=true;$('gestiBtn').setAttribute('aria-pressed','true');$('gprev').hidden=false;stato('Accendo i gesti…');
+  caricaG().then(function(){etichettaG('ACCENDO LA WEBCAM');return navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}},audio:false});})
+  .then(function(s){G.stream=s;G.video=$('gvid');G.video.srcObject=s;return G.video.play();})
+  .then(function(){G.on=true;G.avvio=false;G.visto=0;G.inizio=performance.now();$('gcur').hidden=false;etichettaG('');if(SEL<0)seleziona(0);
+    stato('Gesti attivi: 👋 scorri = cambia idea · ✋ apri · ✊ chiudi · 👍 promuovi · 👎 archivia · ☝️ cursore e pizzica per cliccare.');
+    setTimeout(function(){if(G.on&&!G.visto)stato('Non vedo la mano: mettila davanti alla webcam a 40-70 cm, palmo verso lo schermo, con più luce davanti.',true);},14000);
+    requestAnimationFrame(cicloG);})
+  .catch(function(e){G.avvio=false;spegniG();stato('Gesti non disponibili: '+(e&&e.message||e),true);});}
+function spegniG(){G.on=false;$('gestiBtn').setAttribute('aria-pressed','false');$('gcur').hidden=true;$('gprev').hidden=true;
+  try{G.stream&&G.stream.getTracks().forEach(function(t){t.stop();});}catch(e){}G.stream=null;if(G.hov){G.hov.classList.remove('ghov');G.hov=null;}annullaConferma();}
+$('gestiBtn').onclick=function(){if(G.avvio)return;G.on||G.stream?spegniG():attivaG();};
+$('gprev').onclick=function(){G.mostraPrev=false;this.hidden=true;};
+document.addEventListener('visibilitychange',function(){if(document.hidden&&G.on)spegniG();});
+function sotto(x,y){$('gcur').style.visibility='hidden';var el=document.elementFromPoint(x,y);$('gcur').style.visibility='';return el;}
+function cliccabileG(el){return el&&el.closest('button,a,input,.chip');}
+function anteprimaG(l){var cv=$('gcan'),c=cv.getContext('2d');cv.width=160;cv.height=120;try{c.drawImage(G.video,0,0,160,120);}catch(e){}
+  c.fillStyle='rgba(7,7,10,.35)';c.fillRect(0,0,160,120);if(!l){etichettaG('… cerco la mano');return;}etichettaG('✋ MANO');
+  c.fillStyle='#f6dc8f';l.forEach(function(p,i){c.globalAlpha=i===8||i===4?1:.6;c.beginPath();c.arc(p.x*160,p.y*120,i===8||i===4?3:2,0,7);c.fill();});c.globalAlpha=1;}
+function gestoFermo(n){
+  if(n==='Open_Palm'){if($('velo').hidden){var t=cliccabileG(sotto(G.x,G.y)),c=t&&t.closest('.posto');if(c)c.click();else if(SEL>=0)carte()[SEL]&&carte()[SEL].click();etichettaG('APRO');}}
+  else if(n==='Closed_Fist'){if(CONF){annullaConferma();etichettaG('ANNULLATO');}else{chiudi();etichettaG('CHIUSO');}}
+  else if(n==='Thumb_Up'){if(!confermaSeServe('Promosso'))chiediConferma('Promosso');etichettaG('👍');}
+  else if(n==='Thumb_Down'){if(!confermaSeServe('Archiviato'))chiediConferma('Archiviato');etichettaG('👎');}
+}
+function cicloG(){
+  if(!G.on)return;requestAnimationFrame(cicloG);
+  var ora=performance.now();if(ora-G.last<66||!G.video||G.video.readyState<2||G.cambio)return;G.last=ora;
+  var res;try{res=G.rec.recognizeForVideo(G.video,ora);}catch(e){return;}
+  G.frames++;var l=res&&res.landmarks&&res.landmarks[0];if(G.mostraPrev)anteprimaG(l);
+  if(!G.visto&&G.del==='GPU'&&ora-G.inizio>6000&&G.frames>40){G.cambio=true;creaRic('CPU').then(function(){G.cambio=false;},function(){G.cambio=false;});return;}
+  if(!l){if(G.pz){G.pz=false;$('gcur').classList.remove('pz');}G.gesto='';G.polso=[];return;}
+  G.visto=1;
+  var tx=(1-l[8].x-0.15)/0.7*innerWidth,ty=(l[8].y-0.12)/0.6*innerHeight;
+  tx=Math.max(0,Math.min(innerWidth,tx));ty=Math.max(0,Math.min(innerHeight,ty));G.x+=(tx-G.x)*0.45;G.y+=(ty-G.y)*0.45;
+  $('gcur').style.transform='translate('+Math.round(G.x)+'px,'+Math.round(G.y)+'px)';
+  // pizzico = clic
+  var mano=Math.hypot(l[0].x-l[9].x,l[0].y-l[9].y)||0.1,dist=Math.hypot(l[4].x-l[8].x,l[4].y-l[8].y)/mano;
+  if(!G.pz&&dist<0.32){G.pz=true;G.pzT=ora;G.pzX=G.x;G.pzY=G.y;$('gcur').classList.add('pz');}
+  else if(G.pz&&dist>0.5){G.pz=false;$('gcur').classList.remove('pz');if(Math.abs(G.x-G.pzX)+Math.abs(G.y-G.pzY)<40&&ora-G.pzT<900){var t=cliccabileG(sotto(G.x,G.y));if(t)t.click();}}
+  if(!G.pz){var h=cliccabileG(sotto(G.x,G.y));if(h!==G.hov){if(G.hov)G.hov.classList.remove('ghov');G.hov=h;if(h)h.classList.add('ghov');}}
+  // scorrere: il polso attraversa veloce l'inquadratura → idea successiva / precedente
+  var wx=1-l[0].x;G.polso.push({x:wx,t:ora});while(G.polso.length&&ora-G.polso[0].t>350)G.polso.shift();
+  if(!G.pz&&G.polso.length>3&&ora-G.swipeT>1100){var dx=wx-G.polso[0].x;
+    if(Math.abs(dx)>0.33){G.swipeT=ora;G.polso=[];seleziona(SEL+(dx>0?1:-1));etichettaG(dx>0?'SUCCESSIVA ▶':'◀ PRECEDENTE');return;}}
+  // gesti fermi, tenuti un attimo
+  var g=(res.gestures&&res.gestures[0]&&res.gestures[0][0])||{},n=g.score>0.65?g.categoryName:'';if(G.pz||n==='None')n='';
+  if(n!==G.gesto){G.gesto=n;G.gestoT=ora;if(!n)G.gestoFatto='';}
+  else if(n&&G.gestoFatto!==n&&ora-G.gestoT>(n==='Open_Palm'?700:550)&&ora-G.swipeT>800){G.gestoFatto=n;gestoFermo(n);}
+}
 
 /* cielo stellato */
 (function(){var c=$('cielo'),g=c.getContext('2d'),st=[],W,H;
