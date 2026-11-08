@@ -7,7 +7,7 @@
 <title>A.R.G.U.S. · CybernetLab Garage</title>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
 <style>
-:root{--oro:#e3b54a;--oro2:#f6dc8f;--scuro:#05050a;--testo:#ece6d6;--grigio:#9a937f;--linea:rgba(227,181,74,.25)}
+:root{--oro:#20d9ff;--oro2:#b5f4ff;--scuro:#030711;--testo:#e8f7ff;--grigio:#8da9c1;--linea:rgba(32,217,255,.26)}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--scuro);color:var(--testo);font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;overflow:hidden}
 #scena{position:fixed;inset:0;display:block;width:100%;height:100%;outline:none;touch-action:none}
@@ -18,12 +18,12 @@ html,body{margin:0;height:100%;background:var(--scuro);color:var(--testo);font-f
 .eti{font-size:11.5px;letter-spacing:.34em;color:var(--oro);text-transform:uppercase}
 .titolo h1{margin:3px 0 0;font-size:clamp(18px,2.4vw,26px);letter-spacing:.18em}
 .titolo h1 span{color:var(--oro2)}
-button{font:inherit;cursor:pointer;color:var(--oro2);background:rgba(227,181,74,.08);border:1px solid rgba(227,181,74,.42);border-radius:10px;padding:8px 13px;backdrop-filter:blur(6px)}
-button:hover,button:focus-visible{background:rgba(227,181,74,.18);outline:none;box-shadow:0 0 16px rgba(227,181,74,.28)}
-button[aria-pressed="true"]{background:rgba(227,181,74,.24);color:#fff}
+button{font:inherit;cursor:pointer;color:var(--oro2);background:rgba(32,217,255,.08);border:1px solid rgba(32,217,255,.42);border-radius:10px;padding:8px 13px;backdrop-filter:blur(6px)}
+button:hover,button:focus-visible{background:rgba(32,217,255,.18);outline:none;box-shadow:0 0 16px rgba(32,217,255,.28)}
+button[aria-pressed="true"]{background:rgba(32,217,255,.24);color:#fff}
 .barra{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .chip{border:1px solid var(--linea);border-radius:999px;padding:6px 12px;font-size:12.5px;color:var(--grigio);background:rgba(10,10,14,.7);cursor:pointer;user-select:none;backdrop-filter:blur(6px)}
-.chip b{color:var(--oro2);margin-left:4px}.chip.su{border-color:var(--oro);color:var(--oro2);background:rgba(227,181,74,.14)}
+.chip b{color:var(--oro2);margin-left:4px}.chip.su{border-color:var(--oro);color:var(--oro2);background:rgba(32,217,255,.14)}
 .cerca{flex:1;min-width:180px;max-width:360px;padding:8px 13px;border-radius:999px;border:1px solid var(--linea);background:rgba(10,10,14,.75);color:var(--testo);font:inherit;font-size:13.5px}
 .cerca:focus{outline:none;border-color:var(--oro)}
 .stato{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:4;color:var(--grigio);font-size:15px;text-align:center;max-width:80vw;pointer-events:none}
@@ -34,7 +34,7 @@ button[aria-pressed="true"]{background:rgba(227,181,74,.24);color:#fff}
 .info{max-width:560px}
 .info .id{font:700 12px ui-monospace,Consolas,monospace;letter-spacing:.26em;color:var(--oro)}
 .info h2{margin:4px 0 4px;font-size:clamp(20px,3vw,30px)}
-.info p{margin:0;color:#cfc8b4;font-size:14px;line-height:1.5}
+.info p{margin:0;color:#b9d8ed;font-size:14px;line-height:1.5}
 .nav{display:flex;gap:8px;align-items:center}
 .nav button{width:46px;height:46px;border-radius:50%;padding:0;font-size:18px}
 .nav .apri{width:auto;border-radius:999px;padding:0 18px}
@@ -44,31 +44,31 @@ button[aria-pressed="true"]{background:rgba(227,181,74,.24);color:#fff}
 #elenco.su{display:block}
 .posti{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr));gap:16px;max-width:1240px;margin:0 auto}
 .posto{display:flex;flex-direction:column;text-align:left;color:inherit;font:inherit;padding:20px;min-height:200px;border-radius:16px;cursor:pointer;border:1px solid var(--linea);
-  background:linear-gradient(180deg,rgba(24,22,17,.94),rgba(10,10,12,.94))}
-.posto.sel{border-color:var(--oro);box-shadow:0 0 0 2px rgba(227,181,74,.5)}
+  background:linear-gradient(180deg,rgba(11,23,42,.94),rgba(10,10,12,.94))}
+.posto.sel{border-color:var(--oro);box-shadow:0 0 0 2px rgba(32,217,255,.5)}
 .posto .id{font:700 12px ui-monospace,Consolas,monospace;letter-spacing:.24em;color:var(--oro)}
-.posto h3{margin:12px 0 8px;font-size:20px}.posto p{margin:0;color:#cfc8b4;font-size:14px;line-height:1.5}
+.posto h3{margin:12px 0 8px;font-size:20px}.posto p{margin:0;color:#b9d8ed;font-size:14px;line-height:1.5}
 .meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
 .pill{font-size:11.5px;padding:4px 9px;border-radius:6px;border:1px solid var(--linea);color:var(--grigio)}
-.pill.s-Parcheggiato{color:#f3e6c4;border-color:rgba(227,181,74,.5)}.pill.s-In-valutazione{color:#9fd3ff;border-color:rgba(120,190,255,.45)}
+.pill.s-Parcheggiato{color:#c4f3ff;border-color:rgba(32,217,255,.5)}.pill.s-In-valutazione{color:#9fd3ff;border-color:rgba(120,190,255,.45)}
 .pill.s-Promosso{color:#9ff0b6;border-color:rgba(110,220,150,.5)}.pill.s-Archiviato{opacity:.6}
 /* scheda di dettaglio */
 .velo{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:18px;background:rgba(3,3,6,.72);backdrop-filter:blur(6px)}
 .velo[hidden]{display:none}
-.scheda{width:min(720px,100%);max-height:88vh;overflow:auto;border:1px solid rgba(227,181,74,.5);border-radius:18px;padding:clamp(20px,4vw,34px);
-  background:linear-gradient(180deg,rgba(23,21,15,.97),rgba(11,11,13,.97));box-shadow:0 0 70px rgba(227,181,74,.15)}
+.scheda{width:min(720px,100%);max-height:88vh;overflow:auto;border:1px solid rgba(32,217,255,.5);border-radius:18px;padding:clamp(20px,4vw,34px);
+  background:linear-gradient(180deg,rgba(8,20,39,.97),rgba(11,11,13,.97));box-shadow:0 0 70px rgba(32,217,255,.15)}
 .scheda .riga{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .scheda h2{font-size:clamp(24px,4vw,36px);margin:12px 0 10px}
 .scheda h4{margin:18px 0 6px;color:var(--oro);font-size:12px;letter-spacing:.24em;text-transform:uppercase}
-.scheda p,.scheda li{color:#d8d0bc;line-height:1.65}.scheda ul{margin:0;padding-left:20px}.scheda a{color:var(--oro2)}
+.scheda p,.scheda li{color:#c4d9ec;line-height:1.65}.scheda ul{margin:0;padding-left:20px}.scheda a{color:var(--oro2)}
 /* gesti */
 .ghov{outline:2px solid var(--oro2)!important;outline-offset:3px}
-#gcur{position:fixed;left:-14px;top:-14px;width:28px;height:28px;border-radius:50%;border:2px solid var(--oro2);box-shadow:0 0 14px rgba(227,181,74,.7);z-index:40;pointer-events:none}
-#gcur.pz{background:rgba(246,220,143,.45)}
-#gprev{position:fixed;right:14px;bottom:92px;z-index:30;border:1px solid rgba(227,181,74,.45);border-radius:12px;overflow:hidden;background:#000;cursor:pointer}
+#gcur{position:fixed;left:-14px;top:-14px;width:28px;height:28px;border-radius:50%;border:2px solid var(--oro2);box-shadow:0 0 14px rgba(32,217,255,.7);z-index:40;pointer-events:none}
+#gcur.pz{background:rgba(181,244,255,.45)}
+#gprev{position:fixed;right:14px;bottom:92px;z-index:30;border:1px solid rgba(32,217,255,.45);border-radius:12px;overflow:hidden;background:#000;cursor:pointer}
 #gprev canvas{display:block;width:160px;height:120px;transform:scaleX(-1)}
 #gprev span{position:absolute;left:0;right:0;bottom:0;font-size:10.5px;padding:3px 6px;background:rgba(0,0,0,.6);color:var(--oro2)}
-.conferma{position:fixed;left:50%;top:150px;transform:translateX(-50%);z-index:45;padding:12px 18px;border-radius:14px;border:1px solid var(--oro);background:rgba(20,18,12,.96);color:var(--oro2);font-size:15px;box-shadow:0 10px 30px rgba(0,0,0,.6);max-width:92vw}
+.conferma{position:fixed;left:50%;top:150px;transform:translateX(-50%);z-index:45;padding:12px 18px;border-radius:14px;border:1px solid var(--oro);background:rgba(6,18,35,.96);color:var(--oro2);font-size:15px;box-shadow:0 10px 30px rgba(0,0,0,.6);max-width:92vw}
 .conferma[hidden]{display:none}
 @media (max-width:640px){.titolo .eti{display:none}.titolo h1 span{display:none}.top button{padding:7px 10px;font-size:13px}.info p{display:none}.aiuto{display:none}}
 </style>
@@ -117,7 +117,7 @@ const $ = id => document.getElementById(id);
 let CFG = {}; try { CFG = JSON.parse(localStorage.getItem('jarvis_cfg')) || {}; } catch (e) {}
 let IDEE = [], LISTA = [], FILTRO = '', SEL = 0, APERTA = null, CONF = null;
 const STATI = ['Parcheggiato', 'In valutazione', 'Promosso', 'Archiviato'];
-const COLORI = { 'Parcheggiato': 0xe3b54a, 'In valutazione': 0x5fb2ff, 'Promosso': 0x55e08a, 'Archiviato': 0x77736a };
+const COLORI = { 'Parcheggiato': 0x20d9ff, 'In valutazione': 0xa16cff, 'Promosso': 0x55e8b2, 'Archiviato': 0x63738e };
 const ICONE = { entertainment: '🎬', productivity: '🗓️', servizi: '✂️', salute: '🩺', food: '🍝', ristor: '🍝', finanza: '💶', social: '💬', casa: '🏠', viaggi: '✈️', sport: '🏋️', scuola: '🎓', shop: '🛍️', ai: '🤖' };
 function icona(x) { const c = String(x.categoria + ' ' + x.nome).toLowerCase(); for (const k in ICONE) if (c.indexOf(k) >= 0) return ICONE[k]; return '✦'; }
 function stato(t, err) { $('stato').textContent = t || ''; $('stato').className = 'stato' + (err ? ' err' : ''); }
@@ -158,7 +158,7 @@ function aggiornaInfo() {
   if (!x) return;
   box.appendChild(el('div', 'id', x.id + '  ·  POSTO ' + (SEL + 1) + ' DI ' + LISTA.length + '  ·  ' + String(x.stato || 'Parcheggiato').toUpperCase()));
   box.appendChild(el('h2', null, x.nome)); box.appendChild(el('p', null, x.descrizione || ''));
-  box.appendChild(el('div', 'aiuto', '← → per spostarti · Invio o clic sull\'app per aprirla · trascina per guardarti intorno'));
+  box.appendChild(el('div', 'aiuto', '← → per spostarti · Invio o clic sull\'app per aprirla · trascina per esplorare l\'hangar'));
 }
 
 /* ================= SELEZIONE, SCHEDA, CONFERME ================= */
@@ -230,36 +230,86 @@ async function avvia3D() {
   try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }); }
   catch (e) { $('elenco').classList.add('su'); $('vistaBtn').setAttribute('aria-pressed', 'true'); return; }
   const piccolo = innerWidth < 700;
-  renderer.setPixelRatio(Math.min(devicePixelRatio, piccolo ? 1.5 : 2));
+  const ridotto = piccolo || matchMedia('(prefers-reduced-motion: reduce)').matches;
+  renderer.setPixelRatio(Math.min(devicePixelRatio, piccolo ? 1.25 : 1.7));
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
   const scena = new THREE.Scene();
-  scena.background = new THREE.Color(0x05050a);
-  scena.fog = new THREE.FogExp2(0x05050a, 0.045);
+  scena.background = new THREE.Color(0x030711);
+  scena.fog = new THREE.FogExp2(0x030711, 0.026);
   const cam = new THREE.PerspectiveCamera(48, innerWidth / innerHeight, 0.1, 200);
-  const PASSO = 3.4;
+  const PASSO = 5.2;
 
   // --- luci ---
-  scena.add(new THREE.HemisphereLight(0x8a7a5a, 0x05050a, 0.55));
-  const faro = new THREE.SpotLight(0xffe2a0, 60, 22, Math.PI / 6, 0.6, 1.4); faro.position.set(0, 9, 4); scena.add(faro); scena.add(faro.target);
-  const riempi = new THREE.PointLight(0xe3b54a, 6, 14, 2); riempi.position.set(0, 3, 3); scena.add(riempi);
+  scena.add(new THREE.HemisphereLight(0x3876b4, 0x030711, 0.55));
+  const faro = new THREE.SpotLight(0x80dfff, 60, 22, Math.PI / 6, 0.6, 1.4); faro.position.set(0, 9, 4); scena.add(faro); scena.add(faro.target);
+  const riempi = new THREE.PointLight(0x20d9ff, 6, 14, 2); riempi.position.set(0, 3, 3); scena.add(riempi);
 
   // --- hangar: pavimento, griglia, pareti, luci a soffitto ---
-  const pav = new THREE.Mesh(new THREE.PlaneGeometry(400, 60), new THREE.MeshStandardMaterial({ color: 0x0b0b10, roughness: 0.28, metalness: 0.75 }));
+  const pav = new THREE.Mesh(new THREE.PlaneGeometry(400, 60), new THREE.MeshStandardMaterial({ color: 0x07101e, roughness: 0.28, metalness: 0.75 }));
   pav.rotation.x = -Math.PI / 2; scena.add(pav);
-  const griglia = new THREE.GridHelper(400, 200, 0x6a5420, 0x2a2414); griglia.material.transparent = true; griglia.material.opacity = 0.35; griglia.position.y = 0.002; scena.add(griglia);
+  const griglia = new THREE.GridHelper(400, 120, 0x12618b, 0x0b304b); griglia.material.transparent = true; griglia.material.opacity = 0.20; griglia.position.y = 0.002; scena.add(griglia);
   const neon = (c, k) => { const m = new THREE.MeshBasicMaterial({ color: c, toneMapped: false }); m.color.multiplyScalar(k || 2.4); return m; };   // >1 = si illumina col bagliore
-  const muro = new THREE.Mesh(new THREE.PlaneGeometry(400, 14), new THREE.MeshStandardMaterial({ color: 0x0a0a0f, roughness: 0.8, metalness: 0.3 }));
+  const muro = new THREE.Mesh(new THREE.PlaneGeometry(400, 14), new THREE.MeshStandardMaterial({ color: 0x091325, roughness: 0.8, metalness: 0.3 }));
   muro.position.set(0, 7, -5.5); scena.add(muro);
-  const fascia = new THREE.Mesh(new THREE.BoxGeometry(400, 0.05, 0.05), neon(0xe3b54a)); fascia.position.set(0, 0.25, -5.45); scena.add(fascia);
+  const fascia = new THREE.Mesh(new THREE.BoxGeometry(400, 0.05, 0.05), neon(0x20d9ff)); fascia.position.set(0, 0.25, -5.45); scena.add(fascia);
   const fascia2 = fascia.clone(); fascia2.position.y = 6.6; scena.add(fascia2);
   for (let i = -60; i <= 60; i++) {   // luci a soffitto
-    const l = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.04, 0.12), neon(0xfff0c8, 1.6)); l.position.set(i * PASSO, 7.2, 0.5); scena.add(l);
+    const l = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.04, 0.12), neon(0xbceeff, 1.6)); l.position.set(i * PASSO, 7.2, 0.5); scena.add(l);
   }
+  // --- ARCHITETTURA INDUSTRIALE: corridoio, travi, condotti e pannelli ---
+  const acciaio = new THREE.MeshStandardMaterial({ color: 0x14233a, roughness: .48, metalness: .82 });
+  const acciaioScuro = new THREE.MeshStandardMaterial({ color: 0x080f1e, roughness: .66, metalness: .75 });
+  const vetro = new THREE.MeshStandardMaterial({ color: 0x112b45, metalness: .62, roughness: .18, transparent: true, opacity: .68 });
+  const neonViola = neon(0x955cff, 2.1);
+  const neonBlu = neon(0x20d9ff, 2.2);
+  function trave(parent, w, h, d, x, y, z, mat=acciaio) {
+    const o = new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat); o.position.set(x,y,z); parent.add(o); return o;
+  }
+  // Corridoio e struttura ripetuta: geometria leggera e materiali condivisi
+  trave(scena,400,.18,1.3,0,7.35,1.1,acciaioScuro);
+  trave(scena,400,.3,.5,0,7.1,-5.35,acciaio);
+  trave(scena,400,.12,.12,0,6.8,1.3,neonViola);
+  trave(scena,400,.05,.05,0,.18,3.4,neonBlu);
+  trave(scena,400,.08,.08,0,.18,-3.8,neonViola);
+  for(let i=-16;i<=16;i++) {
+    const x=i*PASSO;
+    trave(scena,.3,7.1,.55,x,3.55,-5.15,acciaio);
+    trave(scena,.08,6.5,.12,x+.19,3.55,-4.95,neonViola);
+    trave(scena,.24,7.0,.48,x,3.5,3.9,acciaioScuro);
+    trave(scena,.12,6.7,.13,x,3.4,3.63,neonBlu);
+    trave(scena,.35,.34,9.1,x,7.02,-.5,acciaio);
+    trave(scena,.06,.05,8.8,x,6.79,-.5,neonViola);
+    trave(scena,2.8,.08,.18,x,6.55,-4.98,neonBlu);
+    trave(scena,2.8,.05,.12,x,1.05,-4.98,neonViola);
+    trave(scena,3.9,.035,.12,x,.03,3.1,neonBlu);
+    // Porte tecniche incassate nel muro posteriore
+    trave(scena,3.45,4.65,.09,x,3.25,-5.38,acciaioScuro);
+    trave(scena,.07,4.45,.1,x-1.6,3.25,-5.27,neonViola);
+    trave(scena,.07,4.45,.1,x+1.6,3.25,-5.27,neonViola);
+    trave(scena,3.3,.05,.1,x,5.5,-5.27,neonBlu);
+    trave(scena,1.2,.5,.08,x,6.05,-5.22,vetro);
+  }
+  // Emblema olografico e insegna sospesa sopra la postazione centrale
+  const logoCanvas=document.createElement('canvas');logoCanvas.width=1024;logoCanvas.height=256;
+  const lc=logoCanvas.getContext('2d');lc.clearRect(0,0,1024,256);
+  lc.textAlign='center';lc.textBaseline='middle';lc.shadowColor='#20d9ff';lc.shadowBlur=22;
+  lc.fillStyle='#b5f4ff';lc.font='800 82px Segoe UI, sans-serif';lc.fillText('CYBERNETLAB',512,108);
+  lc.shadowBlur=0;lc.fillStyle='#8e80ff';lc.font='500 29px Segoe UI, sans-serif';lc.fillText('A.R.G.U.S.  /  IDEA VAULT',512,187);
+  const logoTex=new THREE.CanvasTexture(logoCanvas);logoTex.colorSpace=THREE.SRGBColorSpace;
+  const insegna=new THREE.Mesh(new THREE.PlaneGeometry(5.2,1.3),new THREE.MeshBasicMaterial({map:logoTex,transparent:true,depthWrite:false,toneMapped:false}));
+  insegna.position.set(0,5.9,-5.08);scena.add(insegna);
+  // Fasci laterali, per dare profondita senza caricare modelli esterni
+  for(let side of [-1,1]){
+    const x=side*2.1;
+    trave(scena,.12,5.4,.16,x,3.25,-3.9,neonBlu);
+    trave(scena,.2,.2,7,x,6.3,-.25,acciaio);
+  }
+
   // pulviscolo che fluttua
-  const NP = piccolo ? 260 : 600, pos = new Float32Array(NP * 3);
+  const NP = piccolo ? 110 : 320, pos = new Float32Array(NP * 3);
   for (let i = 0; i < NP; i++) { pos[i * 3] = (Math.random() - 0.5) * 80; pos[i * 3 + 1] = Math.random() * 7; pos[i * 3 + 2] = (Math.random() - 0.5) * 14; }
   const polvGeo = new THREE.BufferGeometry(); polvGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  const polvere = new THREE.Points(polvGeo, new THREE.PointsMaterial({ color: 0xf6dc8f, size: 0.035, transparent: true, opacity: 0.55, depthWrite: false }));
+  const polvere = new THREE.Points(polvGeo, new THREE.PointsMaterial({ color: 0xb5f4ff, size: 0.035, transparent: true, opacity: 0.55, depthWrite: false }));
   scena.add(polvere);
 
   // --- un'app = una capsula olografica sul suo posto ---
@@ -268,7 +318,7 @@ async function avvia3D() {
     s.moveTo(x + r, y); s.lineTo(x + w - r, y); s.quadraticCurveTo(x + w, y, x + w, y + r); s.lineTo(x + w, y + h - r); s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
     s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r); s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y); return s;
   }
-  const W = 1.7, HH = 3.0;
+  const W = 2.0, HH = 3.0;
   const corpoGeo = new THREE.ExtrudeGeometry(rettangoloTondo(W, HH, 0.22), { depth: 0.14, bevelEnabled: true, bevelThickness: 0.04, bevelSize: 0.04, bevelSegments: 3, curveSegments: 10 });
   corpoGeo.translate(0, 0, -0.07);
   const bordoGeo = new THREE.EdgesGeometry(new THREE.ShapeGeometry(rettangoloTondo(W + 0.1, HH + 0.1, 0.26), 10));
@@ -280,30 +330,30 @@ async function avvia3D() {
   }
   function schermo(x, i) {
     const cv = document.createElement('canvas'); cv.width = 512; cv.height = 904; const c = cv.getContext('2d');
-    const col = '#' + COLORI[x.stato || 'Parcheggiato'].toString(16).padStart(6, '0');
-    const g = c.createLinearGradient(0, 0, 0, 904); g.addColorStop(0, '#16140f'); g.addColorStop(1, '#07070b'); c.fillStyle = g; c.fillRect(0, 0, 512, 904);
-    c.strokeStyle = 'rgba(227,181,74,.35)'; c.lineWidth = 2; for (let k = 0; k < 904; k += 6) { c.globalAlpha = 0.05; c.beginPath(); c.moveTo(0, k); c.lineTo(512, k); c.stroke(); } c.globalAlpha = 1;
-    c.fillStyle = '#e3b54a'; c.font = '700 26px Consolas, monospace'; c.fillText(x.id, 40, 70);
-    c.textAlign = 'right'; c.fillStyle = 'rgba(227,181,74,.5)'; c.fillText('P' + (i + 1), 472, 70); c.textAlign = 'left';
+    const col = '#' + (COLORI[x.stato || 'Parcheggiato'] || COLORI.Parcheggiato).toString(16).padStart(6, '0');
+    const g = c.createLinearGradient(0, 0, 0, 904); g.addColorStop(0, '#0b1a32'); g.addColorStop(1, '#040a17'); c.fillStyle = g; c.fillRect(0, 0, 512, 904);
+    c.strokeStyle = 'rgba(32,217,255,.35)'; c.lineWidth = 2; for (let k = 0; k < 904; k += 6) { c.globalAlpha = 0.05; c.beginPath(); c.moveTo(0, k); c.lineTo(512, k); c.stroke(); } c.globalAlpha = 1;
+    c.fillStyle = '#20d9ff'; c.font = '700 26px Consolas, monospace'; c.fillText(x.id, 40, 70);
+    c.textAlign = 'right'; c.fillStyle = 'rgba(32,217,255,.5)'; c.fillText('P' + (i + 1), 472, 70); c.textAlign = 'left';
     // icona dell'app
-    c.save(); c.translate(256, 250); const rg = c.createRadialGradient(0, 0, 10, 0, 0, 120); rg.addColorStop(0, 'rgba(246,220,143,.35)'); rg.addColorStop(1, 'rgba(246,220,143,0)');
+    c.save(); c.translate(256, 250); const rg = c.createRadialGradient(0, 0, 10, 0, 0, 120); rg.addColorStop(0, 'rgba(181,244,255,.35)'); rg.addColorStop(1, 'rgba(181,244,255,0)');
     c.fillStyle = rg; c.beginPath(); c.arc(0, 0, 130, 0, 7); c.fill();
-    c.fillStyle = '#0d0c09'; c.strokeStyle = '#e3b54a'; c.lineWidth = 5; c.beginPath(); c.roundRect ? c.roundRect(-95, -95, 190, 190, 46) : c.rect(-95, -95, 190, 190); c.fill(); c.stroke();
-    c.font = '96px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#f6dc8f'; c.fillText(icona(x), 0, 8); c.restore();
-    c.textAlign = 'center'; c.textBaseline = 'alphabetic'; c.fillStyle = '#f3ead2'; c.font = '700 46px "Segoe UI", sans-serif';
+    c.fillStyle = '#07152a'; c.strokeStyle = '#20d9ff'; c.lineWidth = 5; c.beginPath(); c.roundRect ? c.roundRect(-95, -95, 190, 190, 46) : c.rect(-95, -95, 190, 190); c.fill(); c.stroke();
+    c.font = '96px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#b5f4ff'; c.fillText(icona(x), 0, 8); c.restore();
+    c.textAlign = 'center'; c.textBaseline = 'alphabetic'; c.fillStyle = '#e5f7ff'; c.font = '700 46px "Segoe UI", sans-serif';
     const rn = avvolgi(c, x.nome, 256, 440, 440, 54, 2);
-    c.fillStyle = '#b8ad92'; c.font = '28px "Segoe UI", sans-serif'; c.fillText(String(x.categoria || 'Idea').toUpperCase(), 256, 440 + rn * 54 + 8);
-    c.fillStyle = '#cfc5ad'; c.font = '27px "Segoe UI", sans-serif'; avvolgi(c, x.descrizione, 256, 440 + rn * 54 + 70, 430, 38, 5);
+    c.fillStyle = '#8fbad9'; c.font = '28px "Segoe UI", sans-serif'; c.fillText(String(x.categoria || 'Idea').toUpperCase(), 256, 440 + rn * 54 + 8);
+    c.fillStyle = '#b6d6ee'; c.font = '27px "Segoe UI", sans-serif'; avvolgi(c, x.descrizione, 256, 440 + rn * 54 + 70, 430, 38, 5);
     // stato e voto
     c.font = '700 26px "Segoe UI", sans-serif'; const st = String(x.stato || 'Parcheggiato').toUpperCase(); const lw = c.measureText(st).width + 48;
     c.strokeStyle = col; c.fillStyle = col + '22'; c.lineWidth = 3; c.beginPath(); c.roundRect ? c.roundRect(256 - lw / 2, 800, lw, 52, 26) : c.rect(256 - lw / 2, 800, lw, 52); c.fill(); c.stroke();
     c.fillStyle = col; c.fillText(st, 256, 836);
-    if (x.valutazione) { c.fillStyle = '#f6dc8f'; c.font = '700 30px "Segoe UI", sans-serif'; c.fillText('★ ' + String(x.valutazione).split(' · ')[0], 256, 780); }
+    if (x.valutazione) { c.fillStyle = '#b5f4ff'; c.font = '700 30px "Segoe UI", sans-serif'; c.fillText('★ ' + String(x.valutazione).split(' · ')[0], 256, 780); }
     const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
   }
   function etichettaPav(testo) {
     const cv = document.createElement('canvas'); cv.width = 256; cv.height = 128; const c = cv.getContext('2d');
-    c.font = '800 92px "Segoe UI", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = 'rgba(227,181,74,.55)'; c.fillText(testo, 128, 68);
+    c.font = '800 92px "Segoe UI", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = 'rgba(32,217,255,.55)'; c.fillText(testo, 128, 68);
     const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace;
     const m = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.6), new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, toneMapped: false }));
     m.rotation.x = -Math.PI / 2; return m;
@@ -311,18 +361,34 @@ async function avvia3D() {
   const gruppo = new THREE.Group(); scena.add(gruppo);
   let posti = [];
   H.costruisci = function () {
-    posti.forEach(p => { p.root.traverse(o => { if (o.geometry && o.geometry !== corpoGeo && o.geometry !== bordoGeo) o.geometry.dispose(); if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } }); gruppo.remove(p.root); });
+    posti.forEach(p => { p.root.traverse(o => { if (o.geometry && o.geometry !== corpoGeo && o.geometry !== bordoGeo) o.geometry.dispose(); if (o.material && ![acciaio,acciaioScuro,vetro,neonBlu,neonViola].includes(o.material)) {
+        if (o.material.map) o.material.map.dispose(); o.material.dispose(); } }); gruppo.remove(p.root); });
     posti = [];
     LISTA.forEach((x, i) => {
-      const colore = COLORI[x.stato || 'Parcheggiato'];
+      const colore = COLORI[x.stato || 'Parcheggiato'] || COLORI.Parcheggiato;
       const root = new THREE.Group(); root.position.set(i * PASSO, 0, 0); gruppo.add(root);
       // segni del posto auto sul pavimento
-      const lineaM = neon(0xe3b54a);
-      [-1, 1].forEach(s => { const b = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.01, 3.4), lineaM); b.position.set(s * PASSO / 2, 0.006, 0.2); root.add(b); });
-      const fondo = new THREE.Mesh(new THREE.BoxGeometry(PASSO, 0.01, 0.05), lineaM); fondo.position.set(0, 0.006, -1.5); root.add(fondo);
-      const num = etichettaPav('P' + (i + 1)); num.position.set(0, 0.012, 1.45); root.add(num);
+      const lineaM = neon(0x20d9ff, 1.5);
+      [-1, 1].forEach(s => { const b = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.01, 5.0), lineaM); b.position.set(s * (PASSO / 2 - 0.24), 0.006, 0.2); root.add(b); });
+      const fondo = new THREE.Mesh(new THREE.BoxGeometry(PASSO, 0.01, 0.05), lineaM); fondo.position.set(0, 0.006, -2.2); root.add(fondo);
+      const num = etichettaPav('P' + (i + 1)); num.position.set(0, 0.012, 2.1); root.add(num);
+      // Baia tecnologica individuale, con archi e pannelli di controllo
+      const struttura = new THREE.Group(); root.add(struttura);
+      trave(struttura,3.55,.18,.3,0,5.15,-2.3,acciaio);
+      trave(struttura,.2,5,.28,-1.8,2.65,-2.3,acciaio);
+      trave(struttura,.2,5,.28,1.8,2.65,-2.3,acciaio);
+      trave(struttura,3.45,.055,.12,0,4.99,-2.12,neonBlu);
+      trave(struttura,.06,4.75,.12,-1.64,2.65,-2.12,neonViola);
+      trave(struttura,.06,4.75,.12,1.64,2.65,-2.12,neonViola);
+      trave(struttura,2.8,.13,.28,0,.14,-2.25,acciaio);
+      // Consolle laterali che ricordano un vero box di manutenzione
+      [-1,1].forEach(side=>{
+        trave(struttura,.48,1.12,.55,side*1.75,.65,-.6,acciaioScuro);
+        trave(struttura,.39,.035,.47,side*1.75,1.23,-.6,neonViola);
+        trave(struttura,.3,.18,.025,side*1.75,.92,-.29,vetro);
+      });
       // piattaforma olografica
-      const base = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.25, 0.12, 48), new THREE.MeshStandardMaterial({ color: 0x14120d, roughness: 0.35, metalness: 0.8 }));
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.25, 0.12, 48), new THREE.MeshStandardMaterial({ color: 0x0b1c32, roughness: 0.35, metalness: 0.8 }));
       base.position.y = 0.06; root.add(base);
       const anello = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.025, 8, 72), neon(colore)); anello.rotation.x = Math.PI / 2; anello.position.y = 0.13; root.add(anello);
       const anello2 = new THREE.Mesh(new THREE.TorusGeometry(0.85, 0.012, 8, 64), neon(colore)); anello2.rotation.x = Math.PI / 2; anello2.position.y = 0.14; root.add(anello2);
@@ -331,7 +397,7 @@ async function avvia3D() {
       fascio.position.y = 2.3; root.add(fascio);
       // l'app
       const app = new THREE.Group(); app.position.y = 1.95; root.add(app);
-      const corpo = new THREE.Mesh(corpoGeo, new THREE.MeshStandardMaterial({ color: 0x15130f, roughness: 0.25, metalness: 0.85 })); app.add(corpo);
+      const corpo = new THREE.Mesh(corpoGeo, new THREE.MeshStandardMaterial({ color: 0x101d33, roughness: 0.25, metalness: 0.85 })); app.add(corpo);
       const faccia = new THREE.Mesh(new THREE.PlaneGeometry(W - 0.12, HH - 0.12), new THREE.MeshBasicMaterial({ map: schermo(x, i), toneMapped: false, color: 0xd8d8d8 }));
       faccia.position.z = 0.115; app.add(faccia);
       const bmat = new THREE.LineBasicMaterial({ color: colore, transparent: true, opacity: 0.9, toneMapped: false }); bmat.color.multiplyScalar(2.6);
@@ -348,7 +414,7 @@ async function avvia3D() {
   function dimensiona() { renderer.setSize(innerWidth, innerHeight, false); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); composer.setSize(innerWidth, innerHeight); }
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scena, cam));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), piccolo ? 0.7 : 0.9, 0.5, 0.92); composer.addPass(bloom);
+  const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), piccolo ? 0.38 : 0.72, 0.45, 0.91); composer.addPass(bloom);
   composer.addPass(new OutputPass());
   addEventListener('resize', dimensiona); dimensiona();
   // --- mouse / dita: trascina per guardare, clic per aprire ---
@@ -379,15 +445,15 @@ async function avvia3D() {
     if (orologio.update) orologio.update(); const dt = Math.min(0.05, orologio.getDelta()), t = orologio.getElapsed ? orologio.getElapsed() : orologio.elapsedTime;
     const meta = trascinaX != null ? trascinaX : obiettivoX;
     camX += (meta - camX) * Math.min(1, dt * 4.5);
-    cam.position.set(camX + Math.sin(t * 0.25) * 0.15 + guarda * 2, 2.9 + Math.sin(t * 0.4) * 0.05, innerWidth < innerHeight ? 10.5 : 8.6);
+    cam.position.set(camX + Math.sin(t * 0.25) * 0.15 + guarda * 2, 2.9 + Math.sin(t * 0.4) * 0.05, innerWidth < innerHeight ? 13.0 : 10.8);
     cam.lookAt(camX + guarda * 1.2, 1.85, 0);
     faro.position.set(camX, 9, 4); faro.target.position.set(camX, 0, 0); riempi.position.set(camX, 3, 3);
     posti.forEach((p, i) => {
       const scelto = i === SEL, vicino = i === sopra;
-      p.app.position.y = 1.95 + Math.sin(t * 1.2 + p.fase) * 0.07;
-      const ry = scelto ? Math.sin(t * 0.6) * 0.12 : (camX - i * PASSO) * 0.08 + Math.sin(t * 0.5 + p.fase) * 0.08;
+      p.app.position.y = 1.95 + (ridotto ? 0 : Math.sin(t * 1.2 + p.fase) * 0.07);
+      const ry = scelto ? (ridotto ? 0 : Math.sin(t * 0.6) * 0.12) : (camX - i * PASSO) * 0.08 + Math.sin(t * 0.5 + p.fase) * 0.08;
       p.app.rotation.y += (ry - p.app.rotation.y) * Math.min(1, dt * 4);
-      const sc = scelto ? 1.08 : vicino ? 1.04 : 1; p.app.scale.setScalar(p.app.scale.x + (sc - p.app.scale.x) * Math.min(1, dt * 6));
+      const sc = scelto ? 1.10 : vicino ? 1.04 : 1; p.app.scale.setScalar(p.app.scale.x + (sc - p.app.scale.x) * Math.min(1, dt * 6));
       p.anello.rotation.z = t * (scelto ? 0.9 : 0.3); p.anello2.rotation.z = -t * 0.6;
       p.fascio.material.opacity = scelto ? 0.028 + Math.sin(t * 2) * 0.008 : 0.008;
       p.bordo.material.opacity = scelto ? 1 : vicino ? 0.9 : 0.55;
@@ -428,7 +494,7 @@ function sotto(x, y) { $('gcur').style.visibility = 'hidden'; const e = document
 const cliccabileG = e => e && e.closest('button,a,input,.chip');
 function anteprimaG(l) { const cv = $('gcan'), c = cv.getContext('2d'); cv.width = 160; cv.height = 120; try { c.drawImage(G.video, 0, 0, 160, 120); } catch (e) {}
   c.fillStyle = 'rgba(7,7,10,.35)'; c.fillRect(0, 0, 160, 120); if (!l) { etichettaG('… cerco la mano'); return; } etichettaG('✋ MANO');
-  c.fillStyle = '#f6dc8f'; l.forEach((p, i) => { c.globalAlpha = i === 8 || i === 4 ? 1 : .6; c.beginPath(); c.arc(p.x * 160, p.y * 120, i === 8 || i === 4 ? 3 : 2, 0, 7); c.fill(); }); c.globalAlpha = 1; }
+  c.fillStyle = '#b5f4ff'; l.forEach((p, i) => { c.globalAlpha = i === 8 || i === 4 ? 1 : .6; c.beginPath(); c.arc(p.x * 160, p.y * 120, i === 8 || i === 4 ? 3 : 2, 0, 7); c.fill(); }); c.globalAlpha = 1; }
 function gestoFermo(n) {
   if (n === 'Open_Palm') { if ($('velo').hidden) apri(LISTA[SEL]); etichettaG('APRO'); }
   else if (n === 'Closed_Fist') { if (CONF) { annullaConferma(); etichettaG('ANNULLATO'); } else { chiudi(); etichettaG('CHIUSO'); } }
