@@ -261,10 +261,10 @@ body.solo-volto .subs img{display:none}
 .wlayer{z-index:5}
 body{background:#030711}
 body::before,body::after{z-index:2}
-.top{padding:10px 16px 8px;border:1px solid rgba(32,217,255,.22);background:linear-gradient(90deg,rgba(4,16,34,.74),rgba(8,12,32,.4));border-radius:12px;box-shadow:inset 0 1px rgba(190,245,255,.08)}
+.top{padding:10px 16px 8px;border:1px solid rgba(32,217,255,.42);background:linear-gradient(90deg,rgba(4,16,34,.74),rgba(8,12,32,.4));border-radius:12px;box-shadow:inset 0 1px rgba(190,245,255,.08)}
 .logo{letter-spacing:.28em;text-shadow:0 0 18px rgba(32,217,255,.65)}
 .sub{color:#89c4e4}
-.read,.mw,.subs,.box{background:linear-gradient(135deg,rgba(5,19,37,.88),rgba(11,15,36,.78))!important;border-color:rgba(32,217,255,.3)!important;box-shadow:inset 0 1px rgba(177,238,255,.09),0 10px 35px rgba(0,0,0,.32)}
+.read,.mw,.subs,.box{background:linear-gradient(135deg,rgba(5,19,37,.88),rgba(11,15,36,.78))!important;border-color:rgba(32,217,255,.48)!important;box-shadow:inset 0 1px rgba(177,238,255,.09),0 10px 35px rgba(0,0,0,.32)}
 .read{border-left:2px solid rgba(32,217,255,.6);border-radius:5px 14px 14px 5px}
 .read.r{border-left-color:#a16cff}.read.w{border-left-color:#ffc94d}
 .mw{border-top:2px solid #20d9ff!important}
@@ -1707,39 +1707,55 @@ const cyan=new THREE.MeshBasicMaterial({color:0x20d9ff}),violet=new THREE.MeshBa
 function box(w,h,d,x,y,z,m){const a=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);a.position.set(x,y,z);scene.add(a);return a;}
 function line(points,color,opacity=.5){const geo=new THREE.BufferGeometry().setFromPoints(points.map(p=>new THREE.Vector3(...p)));const o=new THREE.Line(geo,new THREE.LineBasicMaterial({color,transparent:true,opacity}));scene.add(o);return o;}
 box(34,.25,140,0,-.18,-40,floor);
+for(const x of [-10,-6,6,10])box(.13,.05,135,x,.055,-40,x<0?accentGlow:purpleGlow);
 box(34,.3,140,0,14,-40,dark);
 box(.5,14,140,-17,7,-40,dark);box(.5,14,140,17,7,-40,dark);
 const lights=[];
+const animatedNeons=[];
+const movingBeams=[];
+const orbitalRings=[];
+const accentGlow=new THREE.MeshBasicMaterial({color:0x34eaff});
+const purpleGlow=new THREE.MeshBasicMaterial({color:0xb176ff});
 for(let i=0;i<13;i++){
 const z=12-i*9;
 box(.48,12,.5,-12.7,5.9,z,steel);box(.48,12,.5,12.7,5.9,z,steel);
 box(25.8,.45,.5,0,11.8,z,steel);
-box(.10,10.5,.12,-12.37,5.8,z+.3,cyan);box(.10,10.5,.12,12.37,5.8,z+.3,cyan);
-box(23.8,.10,.14,0,11.48,z+.28,i%3===0?violet:cyan);
+box(.15,10.5,.18,-12.37,5.8,z+.3,accentGlow);box(.15,10.5,.18,12.37,5.8,z+.3,accentGlow);
+box(.1,11,.1,-11.85,5.8,z+.32,purpleGlow);box(.1,11,.1,11.85,5.8,z+.32,purpleGlow);
+const ceilingNeon=box(23.8,.15,.20,0,11.48,z+.28,i%3===0?purpleGlow:accentGlow);
+animatedNeons.push({mesh:ceilingNeon,phase:i*.57});
 box(2.3,.04,6.5,-8.5,.025,z-3,soft);box(2.3,.04,6.5,8.5,.025,z-3,soft);
-box(.08,.045,7,-4.8,.045,z-3,cyan);box(.08,.045,7,4.8,.045,z-3,cyan);
+box(.12,.075,7,-4.8,.065,z-3,accentGlow);box(.12,.075,7,4.8,.065,z-3,accentGlow);
+const pulse=box(8,.035,.22,0,.075,z-4, i%2?purpleGlow:accentGlow);
+movingBeams.push({mesh:pulse,base:z-4,phase:i*.75});
 for(const side of [-1,1]){
 box(.3,4.7,5.8,side*16.4,3.0,z-3,steel);
-box(.2,.12,5.8,side*16.14,5.4,z-3,violet);
-box(.2,.12,5.8,side*16.14,.65,z-3,cyan);
+box(.25,.18,5.8,side*16.14,5.4,z-3,purpleGlow);
+box(.25,.18,5.8,side*16.14,.65,z-3,accentGlow);
 box(1.4,1.0,2.2,side*14.9,.8,z-3,dark);
 }
 if(i%2===0){const l=new THREE.PointLight(i%4===0?0x8755e8:0x20d9ff,8,13,2);l.position.set(i%4===0?-10:10,8,z);scene.add(l);lights.push(l);}
 }
-const ambient=new THREE.AmbientLight(0x6696c6,1.35);scene.add(ambient);
-const key=new THREE.PointLight(0x20d9ff,24,35,2);key.position.set(0,7,6);scene.add(key);
-const fill=new THREE.PointLight(0x985bff,16,28,2);fill.position.set(-8,5,0);scene.add(fill);
+const ambient=new THREE.AmbientLight(0x6696c6,2.1);scene.add(ambient);
+const key=new THREE.PointLight(0x20d9ff,43,48,2);key.position.set(0,7,6);scene.add(key);
+const fill=new THREE.PointLight(0x985bff,29,42,2);fill.position.set(-8,5,0);scene.add(fill);
 const platform=new THREE.Group();scene.add(platform);
 const cyl=(r1,r2,h,y,m)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,64),m);o.position.y=y;platform.add(o);return o;};
 platform.position.set(0,.1,-1.5);
 cyl(4.1,4.3,.38,.05,dark);cyl(3.65,3.85,.12,.29,steel);cyl(3.3,3.3,.035,.38,soft);
 const ringGeo=new THREE.TorusGeometry(3.45,.055,10,96);
-for(let i=0;i<3;i++){const ring=new THREE.Mesh(ringGeo,i===1?violet:cyan);ring.rotation.x=Math.PI/2;ring.position.y=.44+i*.07;platform.add(ring);}
+for(let i=0;i<3;i++){const ring=new THREE.Mesh(ringGeo,i===1?violet:cyan);ring.rotation.x=Math.PI/2;ring.position.y=.44+i*.07;platform.add(ring);orbitalRings.push(ring);}
+const halo=new THREE.Group();halo.position.set(0,3.3,-1.5);scene.add(halo);
+for(let i=0;i<3;i++){
+ const r=new THREE.Mesh(new THREE.TorusGeometry(4.1+i*.55,.028,8,100),i===1?purpleGlow:accentGlow);
+ r.rotation.set(i*.43,.3+i*.7,i*.6);halo.add(r);orbitalRings.push(r);
+}
+const coreGlow=new THREE.PointLight(0x21dfff,19,18,2);coreGlow.position.set(0,3,-1.5);scene.add(coreGlow);
 const particles=new THREE.Group();scene.add(particles);
-const n=mobile?95:210,coords=new Float32Array(n*3);
+const n=mobile?130:300,coords=new Float32Array(n*3);
 for(let i=0;i<n;i++){coords[i*3]=(Math.random()-.5)*27;coords[i*3+1]=Math.random()*12;coords[i*3+2]=13-Math.random()*110;}
 const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.BufferAttribute(coords,3));
-particles.add(new THREE.Points(pg,new THREE.PointsMaterial({color:0x63ceff,size:mobile?.055:.075,transparent:true,opacity:.55,sizeAttenuation:true})));
+particles.add(new THREE.Points(pg,new THREE.PointsMaterial({color:0x63ceff,size:mobile?.055:.075,transparent:true,opacity:.76,sizeAttenuation:true})));
 const grid=new THREE.GridHelper(160,100,0x1d8dbd,0x103c59);grid.position.y=.006;grid.material.transparent=true;grid.material.opacity=.23;scene.add(grid);
 let mx=0,my=0;window.addEventListener('pointermove',e=>{mx=(e.clientX/innerWidth-.5);my=(e.clientY/innerHeight-.5);},{passive:true});
 function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w<700?76:62;camera.updateProjectionMatrix();}
@@ -1750,7 +1766,15 @@ const body=document.body;const solo=body.classList.contains('solo-volto');
 camera.position.x+=( (solo?0:mx*.8)-camera.position.x)*.025;
 camera.position.y+=( (solo?2.7:3.7+my*.3)-camera.position.y)*.025;
 camera.lookAt(0,solo?2.5:2,-19);
-if(!reduced){platform.rotation.y=t*.045;particles.position.y=Math.sin(t*.17)*.2;key.intensity=22+Math.sin(t*.8)*3;fill.intensity=14+Math.sin(t*.55)*2;}
+if(!reduced){
+ platform.rotation.y=t*.13;halo.rotation.y=t*.12;halo.rotation.z=Math.sin(t*.3)*.12;
+ orbitalRings.forEach((r,i)=>{r.rotation.z+=.003*(i%2?1:-1);});
+ animatedNeons.forEach(n=>{n.mesh.scale.y=.85+.25*Math.sin(t*1.6+n.phase);});
+ movingBeams.forEach((b,i)=>{b.mesh.position.z=b.base+Math.sin(t*1.5+b.phase)*2.6;});
+ particles.position.y=Math.sin(t*.4)*.35;
+ key.intensity=40+Math.sin(t*1.7)*7;fill.intensity=27+Math.sin(t*1.2)*7;
+ coreGlow.intensity=18+Math.sin(t*2.2)*8;
+}
 renderer.render(scene,camera);}
 render();
 }catch(err){console.warn('ARGUS hangar 3D unavailable; existing interface remains operational.',err);canvas.style.display='none';}
