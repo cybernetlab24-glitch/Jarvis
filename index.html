@@ -227,7 +227,7 @@ body.solo-volto .subs img{display:none}
   <div class="top">
     <div>
       <div class="logo" data-t="A.R.G.U.S.">A.R.G.U.S.</div>
-      <div class="sub" id="sub">VOLTO · v2.7.6</div>
+      <div class="sub" id="sub">VOLTO · v2.7.7</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
@@ -344,6 +344,8 @@ body.solo-volto .subs img{display:none}
     box.innerHTML='<b>🔗 Link trovati</b>'+l.map(function(x){var d='';try{d=new URL(x.url).hostname.replace(/^www\./,'');}catch(e){}
       return '<a href="'+escH(x.url)+'" target="_blank" rel="noopener"><span>'+escH(x.titolo)+'</span><small>'+escH(d)+'</small></a>';}).join('');
     $('subs').appendChild(box);$('subs').scrollTop=1e6;if(typeof logReg==='function')logReg('Link trovati: '+l.length+' (anche su Telegram)');}
+  function apriPagina(file,etichetta){var u=new URL(file,location.href).href,w=null;try{w=window.open(u,'_blank');}catch(e){}
+    if(!w)setTimeout(function(){var a=document.createElement('a');a.href=u;a.target='_blank';a.rel='noopener';a.textContent='▶ '+etichetta;a.style.cssText='display:block;color:#e3b54a;margin:6px 0;font-weight:600';$('subs').appendChild(a);$('subs').scrollTop=1e6;if(DESK&&DESK.modo!=='mondo')finestra('mondo');},50);}
   function statoVolto(s){if(!DESK)return;try{fetch('http://127.0.0.1:'+DESK.porta+'/faccia?s='+s+'&t='+encodeURIComponent(DESK.t),{mode:'no-cors',cache:'no-store'}).catch(function(){});}catch(e){}}
   /* clic sul volto del PC (finestra di Windows): ArgusDesktop ce lo passa come «evento» */
   if(DESK)setInterval(function(){if(DESK.modo==='mondo')return;
@@ -683,6 +685,7 @@ body.solo-volto .subs img{display:none}
     else if(/(non restare|smetti di restare|non rimanere) in ascolto|conversazione (spenta|off|disattivata)|disattiva (la )?conversazione/.test(t)){CONVERSA=false;msg='Fatto: dopo ogni risposta torno ad aspettare «Hey Jarvis».';}
     else if(/(resta|rimani) (sempre )?in ascolto|conversazione (accesa|on|attiva)|attiva (la )?conversazione/.test(t)){CONVERSA=true;msg='Fatto: dopo le mie risposte resto in ascolto qualche secondo.';}
     else if(/(aspetto|look|tema)\b.{0,20}\b(oro|dorat|nero e oro|sfera)/.test(t)||/(sfera dorata|nero e oro)/.test(t)){VOLTO='oro';msg='Come desidera: nero e oro.';}
+    else if(/(mostra|apri|fammi vedere|fai vedere|portami)\b.{0,15}\bgarage\b/.test(t)){msg='Apro il Garage, signore.';apriPagina('garage.html','Apri il CybernetLab Garage');}
     else if(/(mostra|apri|fammi vedere|fai vedere)\b.{0,15}\bfiliera/.test(t)){msg='Ecco la filiera di CybernetLab.';var uF=new URL('filiera.html',location.href).href,wF=null;try{wF=window.open(uF,'_blank');}catch(e){}
       if(!wF){msg='Ecco la filiera: tocchi il collegamento qui sotto per aprirla.';setTimeout(function(){var a=document.createElement('a');a.href=uF;a.target='_blank';a.rel='noopener';a.textContent='▶ Apri la filiera di CybernetLab';a.style.cssText='display:block;color:#e3b54a;margin:6px 0;font-weight:600';$('subs').appendChild(a);$('subs').scrollTop=1e6;if(DESK&&DESK.modo!=='mondo')finestra('mondo');},50);}}
     else if(/(aspetto|look|tema)\b.{0,20}\b(robot|robotic)/.test(t)){VOLTO='robot';msg='Torno al volto robotico.';}
@@ -847,7 +850,7 @@ body.solo-volto .subs img{display:none}
   function wSquadra(c){var q=c.squadra||{},r=q.riunione||{},rep=r.reparti||{},n=r.proposte||0,nomi={vendite:'💼 Vendite',contabilita:'💶 Contabilità',operazioni:'🛠 Operazioni',marketing:'📣 Marketing'};
     return {t:'SQUADRA',cls:n?'w':'',big:q.missioni_in_coda?q.missioni_in_coda+(q.missioni_in_coda===1?' missione in corso':' missioni in corso'):(n?n+(n===1?' proposta':' proposte'):'Tutto in ordine'),
       d:'<ul>'+Object.keys(nomi).map(function(k){var x=rep[k]||{};return '<li>'+nomi[k]+(x.n?' · <b>'+x.n+'</b>':'')+' — '+escH(x.stato||'in attesa della riunione')+'</li>';}).join('')+'</ul>'+(q.fatture&&(q.fatture.da_guardare||q.fatture.pronte||q.fatture.in_scadenza)?'<p>🧾 Fatture fornitori: '+[q.fatture.da_guardare?'<b>'+q.fatture.da_guardare+' da guardare</b>':'',q.fatture.pronte?q.fatture.pronte+' pronte':'',q.fatture.in_scadenza?q.fatture.in_scadenza+' da pagare entro 7 giorni':''].filter(String).join(' · ')+'</p>':'')+(q.ricordi?'<p>🧠 '+q.ricordi+' cose imparate</p>':''),
-      az:[{t:'RIUNIONE',q:'Fai una riunione della squadra'},{t:'COME ANDIAMO',q:'Come stiamo andando e cosa ti preoccupa?'},{t:'FATTURE',q:'Controlla le fatture dei fornitori'}]};}
+      az:[{t:'RIUNIONE',q:'Fai una riunione della squadra'},{t:'COME ANDIAMO',q:'Come stiamo andando e cosa ti preoccupa?'},{t:'GARAGE',q:'Cosa c\'è nel garage delle idee?'},{t:'FATTURE',q:'Controlla le fatture dei fornitori'}]};}
   function wSistemi(c){var v=c.servizi||{},y=c.sistemi||{},so=c.social||{};
     var rg=function(st,n,val){return '<span class="dot '+st+'"></span><span>'+escH(n)+'</span><span>'+escH(val)+'</span>';};
     var gOn=typeof G!=='undefined'&&G&&G.on;
@@ -1164,7 +1167,7 @@ body.solo-volto .subs img{display:none}
   (function(){var im=new Image();im.onload=function(){var n=im.naturalWidth,c=document.createElement('canvas');c.width=c.height=n;var g=c.getContext('2d');
     g.drawImage(im,0,0,n,n);g.globalCompositeOperation='destination-in';var gr=g.createRadialGradient(n/2,n/2,n*.30,n/2,n/2,n*.5);
     gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.75,'rgba(0,0,0,.85)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,n,n);faccia=c;};im.src=VOLTO_SRC;})();
-  function mostraVolto(){document.body.classList.toggle('tema-oro',VOLTO==='oro');$('sub').textContent=(VOLTO==='robot'?'VOLTO':VOLTO==='oro'?'SFERA':'NUCLEO NEURALE')+' · v2.7.6';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
+  function mostraVolto(){document.body.classList.toggle('tema-oro',VOLTO==='oro');$('sub').textContent=(VOLTO==='robot'?'VOLTO':VOLTO==='oro'?'SFERA':'NUCLEO NEURALE')+' · v2.7.7';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
 
   /* ================= ANIMAZIONE ================= */
   var t0=performance.now(),last=t0,rotY=0,arrivi=0,ipsT=0,spawnAcc=0,C1=[0,240,255],C2=[255,43,214];
