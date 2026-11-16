@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>P.S.A. – Pet System Atelier · Il gestionale per la toelettatura professionale</title>
+<meta name="description" content="P.S.A. – Pet System Atelier: il gestionale per centri di toelettatura. Agenda, clienti e animali, trattamenti, magazzino e cassa in un'unica piattaforma. Sviluppato da CybernetLab.">
+<meta property="og:title" content="P.S.A. – Pet System Atelier">
+<meta property="og:description" content="Il gestionale intelligente per il mondo della toelettatura professionale. Sviluppato da CybernetLab.">
+<meta property="og:image" content="img/dashboard.jpg">
+<meta name="theme-color" content="#0a0806">
+<style>
+:root{--bg:#070605;--bg2:#0f0c08;--card:rgba(255,236,200,.04);--line:rgba(226,178,92,.22);--oro:#e2b25c;--oro2:#f7d996;--oro3:#a8772c;--ink:#f6efe3;--muted:#b4a68e;
+  --font:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;--serif:"Didot","Bodoni MT","Playfair Display",Georgia,"Times New Roman",serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--font);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{max-width:100%;display:block}
+a{color:inherit}
+.contenitore{width:min(1200px,92vw);margin:0 auto}
+
+/* sfondo: polvere d'oro che si muove piano */
+#polvere{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.55}
+.alone{position:fixed;z-index:0;pointer-events:none;border-radius:50%;filter:blur(90px);opacity:.28}
+.alone.a{width:46vw;height:46vw;left:-12vw;top:-10vw;background:radial-gradient(circle,#c18a35,transparent 70%)}
+.alone.b{width:40vw;height:40vw;right:-14vw;top:40vh;background:radial-gradient(circle,#7a5420,transparent 70%)}
+main,header,footer{position:relative;z-index:1}
+
+/* barra in alto */
+.barra{position:fixed;top:0;left:0;right:0;z-index:20;transition:background .4s,border-color .4s,backdrop-filter .4s;border-bottom:1px solid transparent}
+.barra.piena{background:rgba(7,6,5,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-color:var(--line)}
+.barra .contenitore{display:flex;align-items:center;justify-content:space-between;height:72px}
+.marchio{display:flex;align-items:center;gap:12px;text-decoration:none;font-weight:700;letter-spacing:.18em;font-size:13px;color:var(--oro2)}
+.marchio img{height:38px;width:auto;border-radius:6px}
+.bottone{display:inline-flex;align-items:center;gap:10px;padding:14px 26px;border-radius:999px;font-weight:700;font-size:15px;text-decoration:none;cursor:pointer;border:0;
+  color:#1b1205;background:linear-gradient(110deg,var(--oro3),var(--oro2) 45%,var(--oro) 60%,var(--oro3));background-size:220% 100%;box-shadow:0 10px 30px rgba(226,178,92,.25);
+  transition:background-position .7s,transform .25s,box-shadow .25s}
+.bottone:hover{background-position:100% 0;transform:translateY(-2px);box-shadow:0 14px 40px rgba(226,178,92,.38)}
+.bottone.vuoto{background:transparent;color:var(--oro2);border:1px solid var(--line);box-shadow:none}
+.bottone.vuoto:hover{border-color:var(--oro);background:rgba(226,178,92,.08)}
+.barra .bottone{padding:10px 18px;font-size:13px}
+
+/* hero */
+.hero{min-height:100vh;display:grid;align-items:center;padding:110px 0 60px;text-align:center}
+.hero .logo{width:min(420px,78vw);margin:0 auto 28px;filter:drop-shadow(0 20px 60px rgba(226,178,92,.25));animation:respira 6s ease-in-out infinite}
+@keyframes respira{50%{transform:translateY(-8px);filter:drop-shadow(0 30px 80px rgba(226,178,92,.38))}}
+.eti{display:inline-flex;align-items:center;gap:12px;font-size:12px;letter-spacing:.34em;text-transform:uppercase;color:var(--oro)}
+.eti::before,.eti::after{content:"";width:34px;height:1px;background:linear-gradient(90deg,transparent,var(--oro))}
+.eti::after{transform:scaleX(-1)}
+h1,h2{font-family:var(--serif);font-weight:500;letter-spacing:-.01em;line-height:1.08}
+h1{font-size:clamp(34px,5.4vw,72px);margin:18px auto 18px;max-width:16ch}
+h2{font-size:clamp(28px,3.8vw,50px);margin-bottom:18px}
+.oro{background:linear-gradient(100deg,var(--oro3),var(--oro2) 40%,#fff6df 50%,var(--oro2) 60%,var(--oro3));background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:luccica 7s linear infinite}
+@keyframes luccica{to{background-position:-250% 0}}
+.sotto{font-size:clamp(17px,1.6vw,21px);color:var(--muted);max-width:640px;margin:0 auto}
+.azioni{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:34px}
+.firma{margin-top:22px;font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.firma b{color:var(--ink);letter-spacing:.24em}.firma b span{color:#4fb6ff}
+
+/* schermo in prospettiva */
+.palco{perspective:1600px;margin-top:64px}
+.schermo{position:relative;border-radius:18px;padding:10px;background:linear-gradient(160deg,#2a2015,#0b0907);border:1px solid var(--line);
+  box-shadow:0 50px 120px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.03) inset,0 0 80px rgba(226,178,92,.12);transform-style:preserve-3d;will-change:transform}
+.schermo img{border-radius:10px;width:100%}
+.schermo::after{content:"";position:absolute;inset:0;border-radius:18px;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.07),transparent 35%)}
+.hero .schermo{transform:rotateX(22deg) scale(.94);transition:transform .2s linear}
+
+/* sezioni */
+section{padding:clamp(70px,10vw,130px) 0}
+.intro{text-align:center}
+.intro p{max-width:780px;margin:0 auto;font-size:clamp(17px,1.5vw,20px);color:#e2d6c1}
+.intro .motto{margin-top:30px;font-family:var(--serif);font-size:clamp(22px,2.6vw,34px);color:var(--oro2);font-style:italic}
+
+.funzione{display:grid;grid-template-columns:1fr 1.25fr;gap:clamp(30px,5vw,70px);align-items:center}
+.funzione.giro{grid-template-columns:1.25fr 1fr}
+.funzione.giro .testo{order:2}
+.numero{font:600 13px ui-monospace,Consolas,monospace;color:var(--oro);letter-spacing:.2em}
+.funzione h2{margin-top:10px}
+.funzione p{color:#ddd0ba;font-size:17px}
+.punti{list-style:none;margin-top:20px;display:grid;gap:10px}
+.punti li{position:relative;padding-left:28px;color:#e8dcc8}
+.punti li::before{content:"";position:absolute;left:0;top:.62em;width:14px;height:2px;background:linear-gradient(90deg,var(--oro),transparent)}
+.doppia{display:grid;gap:18px}
+.doppia .schermo:nth-child(2){margin-left:12%;margin-top:-14%;width:88%}
+
+/* magazzino: lettore di codici a barre animato */
+.scanner{position:relative;aspect-ratio:16/10;border-radius:18px;border:1px solid var(--line);overflow:hidden;
+  background:radial-gradient(circle at 30% 20%,rgba(226,178,92,.12),transparent 60%),linear-gradient(160deg,#17110a,#080706);display:grid;place-items:center}
+.codice{display:flex;gap:4px;height:42%;align-items:stretch}
+.codice i{display:block;width:var(--w);background:var(--oro2);opacity:.9;border-radius:1px}
+.laser{position:absolute;left:12%;right:12%;height:2px;top:30%;background:#ff5d4a;box-shadow:0 0 18px 4px rgba(255,93,74,.6);animation:laser 2.4s ease-in-out infinite}
+@keyframes laser{50%{top:70%}}
+.scanner .scheda{position:absolute;right:6%;bottom:8%;padding:14px 18px;border-radius:12px;background:rgba(10,8,6,.85);border:1px solid var(--line);font-size:13px;color:var(--muted);backdrop-filter:blur(6px)}
+.scanner .scheda b{display:block;color:var(--ink);font-size:15px}
+.scanner .scheda .ok{color:#7ddc8b;font-weight:700}
+.scanner .soglia{position:absolute;left:6%;top:8%;padding:10px 14px;border-radius:12px;background:rgba(10,8,6,.85);border:1px solid rgba(255,93,74,.4);font-size:13px;color:#ffb4a8}
+
+/* dispositivi */
+.dispositivi{position:relative;height:clamp(300px,42vw,520px)}
+.dispositivi .pc{position:absolute;left:0;top:0;width:78%}
+.dispositivi .tablet{position:absolute;right:4%;bottom:6%;width:34%;border-radius:22px;padding:8px}
+.dispositivi .tablet img{aspect-ratio:3/4;object-fit:cover;object-position:left top;border-radius:14px}
+.dispositivi .tel{position:absolute;right:30%;bottom:0;width:16%;border-radius:22px;padding:6px}
+.dispositivi .tel img{aspect-ratio:9/19;object-fit:cover;object-position:20% top;border-radius:16px}
+
+/* galleria */
+.galleria{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:40px}
+.galleria button{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:none;cursor:zoom-in;padding:0;position:relative}
+.galleria img{aspect-ratio:16/9;object-fit:cover;width:100%;transition:transform .7s}
+.galleria button:hover img{transform:scale(1.06)}
+.galleria span{position:absolute;left:12px;bottom:10px;font-size:13px;font-weight:600;color:#fff;text-shadow:0 2px 8px #000}
+
+/* perché */
+.perche{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:40px}
+.carta{padding:28px 26px;border-radius:18px;background:var(--card);border:1px solid var(--line);position:relative;overflow:hidden;transition:transform .35s,border-color .35s}
+.carta:hover{transform:translateY(-4px);border-color:rgba(226,178,92,.5)}
+.carta::before{content:"";position:absolute;inset:-1px;background:radial-gradient(300px circle at var(--x,50%) var(--y,0%),rgba(226,178,92,.16),transparent 60%);opacity:0;transition:opacity .3s}
+.carta:hover::before{opacity:1}
+.carta .icona{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(226,178,92,.3),rgba(226,178,92,.05));border:1px solid var(--line);color:var(--oro2);font-size:20px;margin-bottom:16px}
+.carta p{color:#e5d9c4;position:relative}
+
+.filosofia{display:grid;grid-template-columns:1.1fr 1fr;gap:clamp(30px,5vw,70px);align-items:center}
+.citazione{font-family:var(--serif);font-size:clamp(24px,2.8vw,38px);line-height:1.3;color:var(--oro2);border-left:2px solid var(--oro);padding-left:28px}
+.vantaggi{display:grid;gap:14px}
+.vantaggio{display:flex;gap:16px;align-items:flex-start;padding:18px 20px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+.vantaggio b{color:var(--ink)}.vantaggio span{display:block;color:var(--muted);font-size:15px}
+.vantaggio i{font-style:normal;color:var(--oro2);font-size:22px;line-height:1}
+
+/* chiusura */
+.chiusura{text-align:center}
+.chiusura .riquadro{padding:clamp(40px,6vw,80px) clamp(22px,4vw,60px);border-radius:28px;border:1px solid var(--line);
+  background:radial-gradient(ellipse at 50% 0%,rgba(226,178,92,.18),transparent 60%),linear-gradient(180deg,#130f0a,#090806)}
+.chiusura .logo{width:120px;margin:0 auto 20px;border-radius:14px}
+footer{padding:40px 0 60px;text-align:center;color:var(--muted);font-size:14px;border-top:1px solid rgba(226,178,92,.12)}
+footer b{color:var(--oro2);font-family:var(--serif);font-size:18px;font-weight:500;font-style:italic;display:block;margin-bottom:8px}
+
+/* comparsa allo scorrimento */
+.appare{opacity:0;transform:translateY(40px);transition:opacity 1s cubic-bezier(.2,.8,.2,1),transform 1s cubic-bezier(.2,.8,.2,1)}
+.appare.vista{opacity:1;transform:none}
+.appare.d1{transition-delay:.12s}.appare.d2{transition-delay:.24s}.appare.d3{transition-delay:.36s}
+
+/* lightbox */
+.lente{position:fixed;inset:0;z-index:50;background:rgba(4,3,2,.92);display:grid;place-items:center;padding:4vw;opacity:0;pointer-events:none;transition:opacity .35s;cursor:zoom-out}
+.lente.aperta{opacity:1;pointer-events:auto}
+.lente img{max-height:88vh;border-radius:12px;border:1px solid var(--line);box-shadow:0 30px 100px #000;transform:scale(.96);transition:transform .35s}
+.lente.aperta img{transform:none}
+.lente p{position:absolute;bottom:3vh;left:0;right:0;text-align:center;color:var(--muted);font-size:14px}
+
+@media (max-width:860px){
+  .funzione,.funzione.giro,.filosofia{grid-template-columns:1fr}
+  .funzione.giro .testo{order:0}
+  .perche,.galleria{grid-template-columns:1fr 1fr}
+  .barra .marchio span{display:none}
+}
+@media (max-width:540px){.perche,.galleria{grid-template-columns:1fr}.dispositivi .tel{right:24%;width:22%}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.appare{opacity:1;transform:none}.hero .schermo{transform:none}}
+</style>
+</head>
+<body>
+<canvas id="polvere"></canvas><div class="alone a"></div><div class="alone b"></div>
+
+<header class="barra" id="barra">
+  <div class="contenitore">
+    <a class="marchio" href="#inizio"><img src="img/logo.jpg" alt="Logo P.S.A."><span>PET SYSTEM ATELIER</span></a>
+    <a class="bottone" href="#contatti">Richiedi una demo</a>
+  </div>
+</header>
+
+<main>
+  <section class="hero" id="inizio">
+    <div class="contenitore">
+      <img class="logo" src="img/logo.jpg" alt="P.S.A. – Pet System Atelier">
+      <div class="eti">Sviluppato da CybernetLab</div>
+      <h1>Il gestionale intelligente per il mondo della <span class="oro">toelettatura professionale</span>.</h1>
+      <p class="sotto">Meno tempo dedicato alla gestione. Più tempo per prendersi cura degli animali.</p>
+      <div class="azioni">
+        <a class="bottone" href="#contatti">Prenota una dimostrazione</a>
+        <a class="bottone vuoto" href="#funzioni">Scopri le funzioni</a>
+      </div>
+      <div class="palco"><div class="schermo" id="schermoHero"><img src="img/dashboard.jpg" alt="Dashboard di P.S.A. con gli appuntamenti del giorno, gli animali nel salone e gli incassi"></div></div>
+    </div>
+  </section>
+
+  <section class="intro">
+    <div class="contenitore">
+      <div class="eti appare">Cos'è P.S.A.</div>
+      <h2 class="appare d1" style="margin-top:16px">Un'unica piattaforma per tutto il salone</h2>
+      <p class="appare d2">P.S.A. – Pet System Atelier è un software gestionale progettato per semplificare, organizzare e digitalizzare le attività quotidiane dei centri di toelettatura per animali.
+        Riunisce appuntamenti, clienti, animali, trattamenti, magazzino e incassi, offrendo una visione completa dell'attività attraverso un'interfaccia moderna, elegante e intuitiva.</p>
+      <div class="motto appare d3">«La tecnologia al servizio di chi si prende cura di loro.»</div>
+    </div>
+  </section>
+
+  <section id="funzioni">
+    <div class="contenitore">
+      <div class="funzione">
+        <div class="testo appare">
+          <div class="numero">01 · AGENDA INTELLIGENTE</div>
+          <h2>Ogni appuntamento al suo posto</h2>
+          <p>Organizza gli appuntamenti con visualizzazioni giornaliere, settimanali e mensili.</p>
+          <ul class="punti"><li>Operatori e postazioni</li><li>Disponibilità e durata dei trattamenti</li><li>Controllo dei conflitti di prenotazione</li></ul>
+        </div>
+        <div class="appare d1"><div class="schermo inclina"><img src="img/agenda.jpg" alt="Agenda giornaliera con tre postazioni" data-lente></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="contenitore">
+      <div class="funzione giro">
+        <div class="testo appare">
+          <div class="numero">02 · CLIENTI E ANIMALI</div>
+          <h2>Conosci ogni amico a quattro zampe</h2>
+          <p>Tieni organizzate le anagrafiche dei clienti e dei loro animali, con le informazioni utili per offrire un servizio personalizzato e professionale.</p>
+        </div>
+        <div class="doppia appare d1">
+          <div class="schermo inclina"><img src="img/clienti.jpg" alt="Elenco clienti con animali e prossimi appuntamenti" data-lente></div>
+          <div class="schermo inclina"><img src="img/animali.jpg" alt="Schede degli animali con razza, età e peso" data-lente></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="contenitore">
+      <div class="funzione">
+        <div class="testo appare">
+          <div class="numero">03 · TRATTAMENTI E SERVIZI</div>
+          <h2>Il tuo listino, sempre sotto controllo</h2>
+          <p>Gestisci i servizi di toelettatura, monitora lo stato dei trattamenti e registra i prodotti consumati durante le lavorazioni.</p>
+        </div>
+        <div class="appare d1"><div class="schermo inclina"><img src="img/servizi.jpg" alt="Catalogo dei servizi con durata e prezzi" data-lente></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="contenitore">
+      <div class="funzione giro">
+        <div class="testo appare">
+          <div class="numero">04 · MAGAZZINO E PRODOTTI</div>
+          <h2>Giacenze precise, senza fatica</h2>
+          <p>Controlla le giacenze, registra carichi e scarichi, gestisci fornitori, varianti, prezzi e soglie minime.</p>
+          <ul class="punti"><li>Lettura dei codici a barre con lo scanner</li><li>…oppure con la fotocamera dello smartphone</li></ul>
+        </div>
+        <div class="appare d1">
+          <div class="scanner" aria-hidden="true">
+            <div class="codice" id="codice"></div><div class="laser"></div>
+            <div class="soglia">⚠ Shampoo neutro: sotto la soglia minima</div>
+            <div class="scheda"><b>Carico registrato</b><span class="ok">✓</span> +12 pezzi · giacenza aggiornata</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="contenitore">
+      <div class="funzione">
+        <div class="testo appare">
+          <div class="numero">05 · CASSA, INCASSI E CARRELLI SOSPESI</div>
+          <h2>I conti del giorno, chiari</h2>
+          <p>Registra vendite di prodotti e servizi, pagamenti, acconti e saldi. Consulta lo storico e monitora gli importi incassati e quelli ancora da riscuotere.</p>
+          <ul class="punti"><li>Prepara una vendita, sospendila e riprendila dopo, con prodotti e quantità</li><li>Le bozze non generano pagamenti né movimenti di magazzino</li></ul>
+        </div>
+        <div class="appare d1"><div class="schermo inclina"><img src="img/cassa.jpg" alt="Cassa con incassi, crediti e carrelli sospesi" data-lente></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="contenitore">
+      <div class="funzione giro">
+        <div class="testo appare">
+          <div class="numero">06 · OVUNQUE TU SIA</div>
+          <h2>Computer, tablet e smartphone</h2>
+          <p>Grazie alla tecnologia PWA, P.S.A. offre un'interfaccia che si adatta a ogni dispositivo, senza dover passare dagli store.</p>
+        </div>
+        <div class="dispositivi appare d1">
+          <div class="schermo pc"><img src="img/dashboard.jpg" alt="P.S.A. sul computer"></div>
+          <div class="schermo tablet"><img src="img/agenda.jpg" alt="P.S.A. sul tablet"></div>
+          <div class="schermo tel"><img src="img/animali.jpg" alt="P.S.A. sullo smartphone"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="contenitore" style="text-align:center">
+      <div class="eti appare">Uno sguardo dentro</div>
+      <h2 class="appare d1" style="margin-top:16px">Ogni schermata, curata come il tuo salone</h2>
+      <div class="galleria">
+        <button class="appare" data-src="img/dashboard.jpg"><img src="img/dashboard.jpg" alt="" loading="lazy"><span>Dashboard</span></button>
+        <button class="appare d1" data-src="img/agenda.jpg"><img src="img/agenda.jpg" alt="" loading="lazy"><span>Agenda</span></button>
+        <button class="appare d2" data-src="img/clienti.jpg"><img src="img/clienti.jpg" alt="" loading="lazy"><span>Clienti</span></button>
+        <button class="appare" data-src="img/animali.jpg"><img src="img/animali.jpg" alt="" loading="lazy"><span>Animali</span></button>
+        <button class="appare d1" data-src="img/servizi.jpg"><img src="img/servizi.jpg" alt="" loading="lazy"><span>Servizi</span></button>
+        <button class="appare d2" data-src="img/prima-dopo.jpg"><img src="img/prima-dopo.jpg" alt="" loading="lazy"><span>Prima &amp; Dopo</span></button>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="contenitore">
+      <div class="filosofia">
+        <div class="appare">
+          <div class="eti">Un software pensato per il tuo salone</div>
+          <p class="citazione" style="margin-top:22px">La tecnologia deve adattarsi al lavoro delle persone, non complicarlo.</p>
+          <p style="color:#ddd0ba;margin-top:22px">P.S.A. combina strumenti gestionali avanzati con un'esperienza d'uso semplice e una veste grafica premium, nei toni del nero e dell'oro.</p>
+        </div>
+        <div class="vantaggi">
+          <div class="vantaggio appare d1"><i>◆</i><div><b>Infrastruttura locale</b><span>Funziona nel tuo salone, con un database dedicato.</span></div></div>
+          <div class="vantaggio appare d2"><i>◆</i><div><b>Nessun abbonamento SaaS mensile</b><span>Non dipende da un canone mensile per funzionare.</span></div></div>
+          <div class="vantaggio appare d3"><i>◆</i><div><b>Personalizzato</b><span>Costruito intorno alle esigenze operative del salone.</span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="contenitore" style="text-align:center">
+      <div class="eti appare">Perché scegliere P.S.A.</div>
+      <h2 class="appare d1" style="margin-top:16px">Meno gestione, più cura</h2>
+      <div class="perche" style="text-align:left">
+        <div class="carta appare"><div class="icona">⌂</div><p>Centralizza le informazioni del salone.</p></div>
+        <div class="carta appare d1"><div class="icona">↻</div><p>Riduce le operazioni manuali e ripetitive.</p></div>
+        <div class="carta appare d2"><div class="icona">◷</div><p>Aiuta a prevenire sovrapposizioni negli appuntamenti.</p></div>
+        <div class="carta appare"><div class="icona">▤</div><p>Migliora il controllo di prodotti, consumi e giacenze.</p></div>
+        <div class="carta appare d1"><div class="icona">€</div><p>Rende più chiara la gestione economica quotidiana.</p></div>
+        <div class="carta appare d2"><div class="icona">▯</div><p>Offre un'esperienza moderna anche su dispositivi mobili.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="chiusura" id="contatti">
+    <div class="contenitore">
+      <div class="riquadro appare">
+        <img class="logo" src="img/logo.jpg" alt="">
+        <h2>Vediamolo insieme, <span class="oro">nel tuo salone</span></h2>
+        <p class="sotto">Una dimostrazione gratuita e senza impegno: ti mostriamo P.S.A. al lavoro sulle tue giornate tipo.</p>
+        <div class="azioni">
+          <a class="bottone" href="mailto:cybernetlab24@gmail.com?subject=Demo%20P.S.A.%20%E2%80%93%20Pet%20System%20Atelier&amp;body=Buongiorno%2C%20vorrei%20vedere%20una%20dimostrazione%20di%20P.S.A.%20per%20il%20mio%20salone.%0A%0ANome%20del%20salone%3A%20%0AComune%3A%20%0ATelefono%3A%20">Richiedi la demo gratuita</a>
+        </div>
+        <p class="firma">Powered by <b>CYBERNET<span>LAB</span></b></p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="contenitore"><b>P.S.A. – Pet System Atelier</b>La tecnologia al servizio di chi si prende cura di loro. · Sviluppato da CybernetLab</div>
+</footer>
+
+<div class="lente" id="lente"><img alt=""><p>Tocca per chiudere</p></div>
+
+<script>
+(function () {
+  'use strict';
+  // barra che si riempie scorrendo
+  var barra = document.getElementById('barra');
+  addEventListener('scroll', function () { barra.classList.toggle('piena', scrollY > 30); }, { passive: true });
+
+  // comparsa delle sezioni
+  var os = new IntersectionObserver(function (v) { v.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('vista'); os.unobserve(e.target); } }); }, { threshold: .15 });
+  document.querySelectorAll('.appare').forEach(function (el) { os.observe(el); });
+
+  // schermo della copertina che si raddrizza scorrendo
+  var hero = document.getElementById('schermoHero'), ridotto = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function raddrizza() { if (ridotto) return; var p = Math.min(1, scrollY / (innerHeight * .7)); hero.style.transform = 'rotateX(' + (22 - 22 * p) + 'deg) scale(' + (.94 + .06 * p) + ')'; }
+  addEventListener('scroll', raddrizza, { passive: true }); raddrizza();
+
+  // leggera inclinazione 3D seguendo il mouse
+  if (!ridotto && matchMedia('(hover: hover)').matches) document.querySelectorAll('.inclina').forEach(function (s) {
+    s.addEventListener('mousemove', function (e) { var r = s.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+      s.style.transform = 'rotateY(' + (x * 8) + 'deg) rotateX(' + (-y * 8) + 'deg) translateZ(0)'; });
+    s.addEventListener('mouseleave', function () { s.style.transform = ''; });
+    s.style.transition = 'transform .25s ease-out';
+  });
+
+  // riflesso dorato che segue il mouse sulle carte
+  document.querySelectorAll('.carta').forEach(function (c) { c.addEventListener('mousemove', function (e) { var r = c.getBoundingClientRect(); c.style.setProperty('--x', (e.clientX - r.left) + 'px'); c.style.setProperty('--y', (e.clientY - r.top) + 'px'); }); });
+
+  // codice a barre del magazzino
+  var cod = document.getElementById('codice'), larghe = [3, 1, 2, 1, 4, 1, 1, 3, 2, 1, 1, 4, 2, 1, 3, 1, 2, 2, 1, 4, 1, 3, 1, 2, 1, 1, 3, 2];
+  larghe.forEach(function (w) { var i = document.createElement('i'); i.style.setProperty('--w', (w * 3) + 'px'); cod.appendChild(i); });
+
+  // ingrandimento delle schermate
+  var lente = document.getElementById('lente'), lImg = lente.querySelector('img');
+  function apri(src, alt) { lImg.src = src; lImg.alt = alt || ''; lente.classList.add('aperta'); }
+  document.querySelectorAll('[data-lente]').forEach(function (im) { im.style.cursor = 'zoom-in'; im.addEventListener('click', function () { apri(im.src, im.alt); }); });
+  document.querySelectorAll('.galleria button').forEach(function (b) { b.addEventListener('click', function () { apri(b.dataset.src, b.textContent); }); });
+  lente.addEventListener('click', function () { lente.classList.remove('aperta'); });
+  addEventListener('keydown', function (e) { if (e.key === 'Escape') lente.classList.remove('aperta'); });
+
+  // polvere d'oro
+  var cv = document.getElementById('polvere'), cx = cv.getContext('2d'), P = [], W, H, dpr = Math.min(2, devicePixelRatio || 1);
+  function misura() { W = cv.width = innerWidth * dpr; H = cv.height = innerHeight * dpr; P = []; var n = Math.round(Math.min(90, innerWidth * innerHeight / 16000));
+    for (var i = 0; i < n; i++) P.push({ x: Math.random() * W, y: Math.random() * H, r: (Math.random() * 1.6 + .4) * dpr, v: (Math.random() * .25 + .05) * dpr, f: Math.random() * 6.28 }); }
+  addEventListener('resize', misura); misura();
+  (function giro(t) { cx.clearRect(0, 0, W, H);
+    P.forEach(function (p) { p.y -= p.v; p.x += Math.sin(t / 2000 + p.f) * .2 * dpr; if (p.y < -5) { p.y = H + 5; p.x = Math.random() * W; }
+      var a = .35 + .35 * Math.sin(t / 900 + p.f); cx.fillStyle = 'rgba(247,217,150,' + a + ')'; cx.beginPath(); cx.arc(p.x, p.y, p.r, 0, 6.283); cx.fill(); });
+    if (!ridotto) requestAnimationFrame(giro); })(0);
+})();
+</script>
+</body>
+</html>
