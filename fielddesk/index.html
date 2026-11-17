@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FieldDesk AI · Il gestionale per le aziende che lavorano sul campo</title>
+<meta name="description" content="FieldDesk AI: clienti, interventi, tecnici, rapportini digitali, magazzino e report in un'unica piattaforma, per elettricisti, idraulici, antennisti, installatori e manutentori. Sviluppato da CybernetLab.">
+<meta property="og:title" content="FieldDesk AI – Il controllo della tua azienda. Ovunque ti trovi.">
+<meta property="og:description" content="Meno burocrazia. Più organizzazione. Più produttività. Il gestionale per chi lavora sul campo, sviluppato da CybernetLab.">
+<meta property="og:image" content="img/dashboard.jpg">
+<meta name="theme-color" content="#0b1220">
+<style>
+:root{--arancio:#f97316;--arancio2:#fb923c;--arancio3:#ea580c;--notte:#0b1220;--notte2:#111a2e;--riga:rgba(148,163,184,.18);--ink:#0f172a;--grigio:#64748b;--chiaro:#f5f7fb;--bianco:#fff;
+  --font:"Inter","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font:16px/1.65 var(--font);color:var(--ink);background:var(--chiaro);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{max-width:100%;display:block}
+a{color:inherit}
+.contenitore{width:min(1200px,92vw);margin:0 auto}
+
+/* logo disegnato (pulito, si adatta a sfondi chiari e scuri) */
+.logo{display:inline-flex;align-items:center;gap:10px;text-decoration:none;font-weight:800;letter-spacing:-.02em;font-size:22px}
+.logo svg{width:38px;height:38px;flex:none;filter:drop-shadow(0 6px 14px rgba(249,115,22,.35))}
+.logo b{color:var(--arancio)}
+.logo.grande{font-size:clamp(34px,5vw,54px);gap:16px}
+.logo.grande svg{width:clamp(56px,7vw,76px);height:clamp(56px,7vw,76px)}
+
+/* barra */
+.barra{position:fixed;top:0;left:0;right:0;z-index:30;transition:background .35s,box-shadow .35s}
+.barra .contenitore{display:flex;align-items:center;justify-content:space-between;height:70px}
+.barra .logo{color:#fff}
+.barra.piena{background:rgba(11,18,32,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 1px 0 var(--riga)}
+.azioni-barra{display:flex;gap:10px}
+.bottone{display:inline-flex;align-items:center;gap:10px;padding:14px 24px;border-radius:12px;font-weight:700;font-size:15px;text-decoration:none;border:0;cursor:pointer;
+  color:#fff;background:linear-gradient(135deg,var(--arancio2),var(--arancio3));box-shadow:0 10px 26px rgba(234,88,12,.35);transition:transform .2s,box-shadow .2s,filter .2s}
+.bottone:hover{transform:translateY(-2px);box-shadow:0 16px 34px rgba(234,88,12,.45);filter:saturate(1.1)}
+.bottone.vetro{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.22);box-shadow:none;backdrop-filter:blur(6px)}
+.bottone.vetro:hover{background:rgba(255,255,255,.16)}
+.bottone.bordo{background:#fff;color:var(--ink);border:1px solid #e2e8f0;box-shadow:0 6px 16px rgba(15,23,42,.06)}
+.barra .bottone{padding:10px 16px;font-size:13px;border-radius:10px}
+
+/* hero scuro */
+.hero{position:relative;background:radial-gradient(1000px 520px at 75% -10%,rgba(249,115,22,.30),transparent 60%),radial-gradient(800px 500px at 0% 30%,rgba(59,130,246,.16),transparent 60%),linear-gradient(180deg,#0b1220,#0f172a 70%,#0b1220);
+  color:#fff;padding:130px 0 0;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:56px 56px;
+  -webkit-mask-image:radial-gradient(ellipse at 50% 30%,#000 30%,transparent 75%);mask-image:radial-gradient(ellipse at 50% 30%,#000 30%,transparent 75%)}
+.hero .contenitore{position:relative;text-align:center}
+.pastiglia{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;background:rgba(249,115,22,.14);border:1px solid rgba(249,115,22,.4);color:#fed7aa;font-size:13px;font-weight:600}
+.pastiglia i{width:8px;height:8px;border-radius:50%;background:var(--arancio);box-shadow:0 0 0 0 rgba(249,115,22,.7);animation:pulsa 2s infinite}
+@keyframes pulsa{70%{box-shadow:0 0 0 10px rgba(249,115,22,0)}100%{box-shadow:0 0 0 0 rgba(249,115,22,0)}}
+h1{font-size:clamp(36px,5.8vw,74px);line-height:1.04;letter-spacing:-.035em;font-weight:800;margin:22px auto 18px;max-width:15ch}
+h1 span{background:linear-gradient(100deg,#fdba74,var(--arancio) 50%,#fb7185);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sotto{font-size:clamp(17px,1.7vw,21px);color:#cbd5e1;max-width:720px;margin:0 auto}
+.mestieri{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:26px}
+.mestieri span{padding:6px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);font-size:13px;color:#e2e8f0}
+.azioni{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:32px}
+.palco{perspective:1800px;margin-top:60px}
+.cornice{position:relative;border-radius:16px;padding:8px;background:linear-gradient(160deg,#1e293b,#0b1220);border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 40px 100px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.04) inset}
+.cornice img{border-radius:10px;width:100%}
+.hero .cornice{transform:rotateX(24deg) scale(.92);transform-origin:50% 0;margin-bottom:-14%;transition:transform .15s linear}
+.hero .cornice::after{content:"";position:absolute;left:10%;right:10%;bottom:-40px;height:80px;background:radial-gradient(ellipse,rgba(249,115,22,.45),transparent 70%);filter:blur(20px);z-index:-1}
+
+/* sezioni chiare */
+section{padding:clamp(70px,9vw,120px) 0}
+.primo{padding-top:clamp(140px,18vw,240px)}
+.titoletto{font-size:13px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--arancio3)}
+h2{font-size:clamp(28px,3.6vw,46px);line-height:1.12;letter-spacing:-.025em;font-weight:800;margin:12px 0 16px}
+.centro{text-align:center}
+.centro p.guida{max-width:720px;margin:0 auto;color:var(--grigio);font-size:18px}
+
+/* problema → soluzione */
+.caos{position:relative;height:clamp(300px,36vw,420px);margin-top:46px;border-radius:24px;background:#fff;border:1px solid #e2e8f0;overflow:hidden;box-shadow:0 20px 60px rgba(15,23,42,.06)}
+.pezzo{position:absolute;padding:10px 14px;border-radius:12px;background:#fff;border:1px solid #e2e8f0;box-shadow:0 8px 20px rgba(15,23,42,.08);font-size:14px;font-weight:600;color:#334155;
+  transition:transform 1.6s cubic-bezier(.65,0,.35,1),opacity 1.2s,left 1.6s cubic-bezier(.65,0,.35,1),top 1.6s cubic-bezier(.65,0,.35,1);white-space:nowrap}
+.pezzo small{display:block;font-weight:500;color:var(--grigio);font-size:12px}
+.centrale{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.6);opacity:0;transition:all 1s cubic-bezier(.2,.8,.2,1) .9s;text-align:center}
+.centrale .logo{font-size:30px;color:var(--ink)}
+.centrale p{color:var(--grigio);font-size:14px;margin-top:6px}
+.caos.ordinato .pezzo{left:50%!important;top:50%!important;transform:translate(-50%,-50%) scale(.3);opacity:0}
+.caos.ordinato .centrale{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.anello{position:absolute;left:50%;top:50%;width:240px;height:240px;margin:-120px 0 0 -120px;border-radius:50%;border:2px dashed rgba(249,115,22,.35);opacity:0;transition:opacity 1s 1.2s;animation:gira 30s linear infinite}
+.caos.ordinato .anello{opacity:1}
+@keyframes gira{to{transform:rotate(360deg)}}
+.didascalia{margin-top:18px;display:flex;justify-content:center;gap:10px;align-items:center;color:var(--grigio);font-size:14px}
+
+/* funzioni */
+.funzione{display:grid;grid-template-columns:1fr 1.35fr;gap:clamp(30px,5vw,64px);align-items:center}
+.funzione.giro{grid-template-columns:1.35fr 1fr}
+.funzione.giro .testo{order:2}
+.funzione p{color:#334155;font-size:17px}
+.numero{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#fff7ed,#ffedd5);color:var(--arancio3);font-weight:800;border:1px solid #fed7aa;margin-bottom:8px}
+.punti{list-style:none;margin-top:18px;display:grid;gap:10px}
+.punti li{position:relative;padding-left:30px;color:#1e293b}
+.punti li::before{content:"";position:absolute;left:0;top:.35em;width:18px;height:18px;border-radius:6px;background:var(--arancio) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5L20 7'/%3E%3C/svg%3E") center/12px no-repeat}
+.foto{position:relative;border-radius:16px;overflow:hidden;background:#fff;border:1px solid #e2e8f0;box-shadow:0 30px 70px rgba(15,23,42,.14);transition:transform .4s,box-shadow .4s;cursor:zoom-in}
+.foto:hover{transform:translateY(-4px);box-shadow:0 40px 90px rgba(15,23,42,.18)}
+.foto img{width:100%}
+.etichetta{position:absolute;right:14px;bottom:14px;padding:8px 12px;border-radius:10px;background:rgba(15,23,42,.88);color:#fff;font-size:13px;font-weight:600;backdrop-filter:blur(6px)}
+.etichetta b{color:var(--arancio2)}
+.alterna{background:#fff}
+
+/* ufficio ↔ cantiere */
+.connesso{background:linear-gradient(180deg,#0b1220,#111a2e);color:#fff}
+.connesso p.guida{color:#cbd5e1}
+.rotta{position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-top:50px;align-items:center}
+.nodo{text-align:center;padding:26px 18px;border-radius:18px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);position:relative;z-index:1}
+.nodo .ico{font-size:34px;line-height:1;margin-bottom:10px}
+.nodo b{display:block;font-size:17px}.nodo span{color:#94a3b8;font-size:14px}
+.filo{position:absolute;left:16%;right:16%;top:50%;height:2px;background:linear-gradient(90deg,transparent,rgba(249,115,22,.6),transparent);z-index:0}
+.filo i{position:absolute;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--arancio);box-shadow:0 0 14px var(--arancio);animation:corre 3.2s linear infinite}
+.filo i:nth-child(2){animation-delay:-1.6s;animation-direction:reverse}
+@keyframes corre{from{left:0}to{left:100%}}
+.dispositivi{position:relative;height:clamp(280px,40vw,500px);margin-top:60px}
+.dispositivi .pc{position:absolute;left:0;top:0;width:76%}
+.dispositivi .tab{position:absolute;right:0;bottom:0;width:40%;border-radius:20px;padding:8px}
+.dispositivi .tab img{aspect-ratio:4/3;object-fit:cover;object-position:28% 30%;border-radius:12px}
+
+/* perché */
+.carte{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px}
+.carta{padding:26px;border-radius:18px;background:#fff;border:1px solid #e2e8f0;transition:transform .3s,box-shadow .3s,border-color .3s}
+.carta:hover{transform:translateY(-4px);box-shadow:0 20px 40px rgba(15,23,42,.08);border-color:#fed7aa}
+.carta .ico{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:#fff7ed;border:1px solid #fed7aa;font-size:22px;margin-bottom:14px}
+.carta b{display:block;font-size:17px;margin-bottom:6px}
+.carta p{color:var(--grigio);font-size:15px}
+
+/* chiusura */
+.chiusura{padding-top:0}
+.riquadro{position:relative;overflow:hidden;border-radius:28px;padding:clamp(44px,6vw,80px) clamp(24px,5vw,70px);text-align:center;color:#fff;
+  background:radial-gradient(700px 300px at 50% 0%,rgba(249,115,22,.4),transparent 70%),linear-gradient(160deg,#0f172a,#0b1220)}
+.riquadro h2{font-size:clamp(30px,4.4vw,56px)}
+.riquadro p{color:#cbd5e1;max-width:640px;margin:0 auto}
+.motto{margin-top:28px;font-weight:800;letter-spacing:.02em;font-size:clamp(18px,2vw,24px)}
+.motto span{color:var(--arancio2)}
+footer{padding:36px 0 50px;text-align:center;color:var(--grigio);font-size:14px}
+footer b{color:var(--ink)}
+
+/* comparsa */
+.appare{opacity:0;transform:translateY(36px);transition:opacity .9s cubic-bezier(.2,.8,.2,1),transform .9s cubic-bezier(.2,.8,.2,1)}
+.appare.vista{opacity:1;transform:none}
+.d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}
+
+/* lente */
+.lente{position:fixed;inset:0;z-index:60;background:rgba(2,6,23,.9);display:grid;place-items:center;padding:3vw;opacity:0;pointer-events:none;transition:opacity .3s;cursor:zoom-out}
+.lente.aperta{opacity:1;pointer-events:auto}
+.lente img{max-height:90vh;border-radius:12px;box-shadow:0 30px 100px #000}
+
+@media (max-width:860px){
+  .funzione,.funzione.giro{grid-template-columns:1fr}.funzione.giro .testo{order:0}
+  .carte{grid-template-columns:1fr 1fr}.rotta{grid-template-columns:1fr}.filo{display:none}
+  .azioni-barra .bottone.vetro{display:none}
+}
+@media (max-width:540px){.carte{grid-template-columns:1fr}.pezzo{font-size:12px;padding:8px 10px;white-space:normal;max-width:50%}.pezzo:nth-child(2){left:4%!important;top:6%!important}.pezzo:nth-child(3){left:48%!important;top:4%!important}.pezzo:nth-child(4){left:46%!important;top:66%!important}.pezzo:nth-child(5){left:4%!important;top:70%!important}.pezzo:nth-child(6){left:22%!important;top:36%!important}.pezzo:nth-child(7){left:4%!important;top:40%!important;display:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.appare{opacity:1;transform:none}.hero .cornice{transform:none;margin-bottom:0}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="gArancio" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fb923c"/><stop offset="1" stop-color="#ea580c"/></linearGradient>
+    <symbol id="icona" viewBox="0 0 64 64">
+      <rect width="64" height="64" rx="15" fill="url(#gArancio)"/>
+      <path d="M14 39a18 18 0 0 1 36 0z" fill="#fff"/>
+      <rect x="28.5" y="15" width="7" height="10" rx="2" fill="#fff"/>
+      <path d="M24 39a8 8 0 0 1 16 0" fill="none" stroke="#f97316" stroke-width="3.2" stroke-linecap="round"/>
+      <rect x="31" y="27" width="2.6" height="7" rx="1.3" fill="#f97316"/>
+      <rect x="10" y="42" width="44" height="6" rx="3" fill="#fff"/>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="barra" id="barra">
+  <div class="contenitore">
+    <a class="logo" href="#inizio" aria-label="FieldDesk AI"><svg><use href="#icona"/></svg>FieldDesk <b>AI</b></a>
+    <div class="azioni-barra">
+      <a class="bottone vetro" href="https://app.fielddesk.it" target="_blank" rel="noopener">Accedi</a>
+      <a class="bottone" href="#contatti">Richiedi una demo</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="hero" id="inizio">
+    <div class="contenitore">
+      <div class="pastiglia"><i></i>Il gestionale intelligente di CybernetLab</div>
+      <h1>Il controllo della tua azienda. <span>Ovunque ti trovi.</span></h1>
+      <p class="sotto">Meno burocrazia. Più organizzazione. Più produttività.<br>Clienti, interventi, tecnici, rapportini, magazzino e report in un'unica piattaforma.</p>
+      <div class="mestieri"><span>Elettricisti</span><span>Idraulici</span><span>Antennisti</span><span>Installatori</span><span>Manutentori</span><span>Servizi tecnici</span></div>
+      <div class="azioni">
+        <a class="bottone" href="#contatti">Prenota una demo</a>
+        <a class="bottone vetro" href="#funzioni">Guarda le funzioni ↓</a>
+      </div>
+      <div class="palco"><div class="cornice" id="schermoHero"><img src="img/dashboard.jpg" alt="Dashboard di FieldDesk AI: interventi totali, completati, in corso, tecnici operativi e mappa degli interventi"></div></div>
+    </div>
+  </section>
+
+  <section class="primo centro">
+    <div class="contenitore">
+      <div class="titoletto appare">Il problema</div>
+      <h2 class="appare d1">Excel, WhatsApp, telefonate e fogli di carta</h2>
+      <p class="guida appare d2">Troppe aziende gestiscono ancora interventi, appuntamenti e comunicazioni così. Il risultato? Informazioni disperse, tempo perso e difficoltà nel coordinare il lavoro.
+        FieldDesk AI centralizza tutto e rende ogni attività più semplice da organizzare, eseguire e controllare.</p>
+      <div class="caos appare" id="caos" aria-hidden="true">
+        <div class="anello"></div>
+        <div class="pezzo" style="left:8%;top:14%;transform:rotate(-6deg)">📊 Foglio Excel <small>interventi_v3_DEF(2).xlsx</small></div>
+        <div class="pezzo" style="left:58%;top:10%;transform:rotate(5deg)">💬 WhatsApp <small>«Domani chi va da Rossi?»</small></div>
+        <div class="pezzo" style="left:70%;top:58%;transform:rotate(-4deg)">📞 Telefonata persa <small>cliente: «È ancora rotto»</small></div>
+        <div class="pezzo" style="left:12%;top:64%;transform:rotate(4deg)">📝 Rapportino di carta <small>firma illeggibile</small></div>
+        <div class="pezzo" style="left:38%;top:36%;transform:rotate(-2deg)">📦 «Abbiamo ancora il cavo?» <small>nessuno lo sa</small></div>
+        <div class="pezzo" style="left:40%;top:78%;transform:rotate(3deg)">🗓️ Agenda sul frigo <small>appuntamento doppio</small></div>
+        <div class="centrale"><span class="logo"><svg><use href="#icona"/></svg>FieldDesk <b>AI</b></span><p>Tutto in un unico posto, sempre aggiornato.</p></div>
+      </div>
+      <div class="didascalia"><button class="bottone bordo" id="rimescola" type="button">↻ Guarda di nuovo</button></div>
+    </div>
+  </section>
+
+  <section class="alterna" id="funzioni">
+    <div class="contenitore">
+      <div class="funzione">
+        <div class="testo appare">
+          <div class="numero">01</div><div class="titoletto">Clienti e interventi</div>
+          <h2>Ogni richiesta, ogni lavoro, tutto lo storico</h2>
+          <p>Organizza le richieste, consulta lo storico delle attività e tieni sotto controllo ogni lavoro.</p>
+          <ul class="punti"><li>Rubrica clienti con aziende e privati</li><li>Interventi collegati a ogni cliente</li></ul>
+        </div>
+        <div class="foto appare d1" data-lente><img src="img/clienti.jpg" alt="Rubrica clienti di FieldDesk AI"><div class="etichetta">Clienti</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="contenitore">
+      <div class="funzione giro">
+        <div class="testo appare">
+          <div class="numero">02</div><div class="titoletto">Tecnici e squadre</div>
+          <h2>Coordina i tecnici, senza telefonate</h2>
+          <p>Assegna gli interventi, monitora gli stati di avanzamento e organizza le squadre operative.</p>
+          <ul class="punti"><li>Squadre, competenze e disponibilità</li><li>Prossima assegnazione di ogni tecnico a colpo d'occhio</li></ul>
+        </div>
+        <div class="foto appare d1" data-lente><img src="img/tecnici.jpg" alt="Tecnici e squadre in FieldDesk AI"><div class="etichetta">Tecnici e squadre</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="alterna">
+    <div class="contenitore">
+      <div class="funzione">
+        <div class="testo appare">
+          <div class="numero">03</div><div class="titoletto">Pianificazione</div>
+          <h2>Calendario, liste, Kanban e mappe</h2>
+          <p>Visualizza gli interventi nel modo che preferisci e pianifica le giornate della squadra.</p>
+          <ul class="punti"><li>Elenco filtrabile per stato, priorità, tecnico e squadra</li><li>Calendario giornaliero, settimanale e mensile</li><li>Bacheca Kanban e mappa degli interventi</li></ul>
+        </div>
+        <div class="foto appare d1" data-lente><img src="img/interventi.jpg" alt="Elenco interventi e calendario settimanale"><div class="etichetta">Interventi · <b>Calendario</b></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="contenitore">
+      <div class="funzione giro">
+        <div class="testo appare">
+          <div class="numero">04</div><div class="titoletto">Rapportini digitali</div>
+          <h2>Il rapportino si compila sul posto</h2>
+          <p>I tecnici compilano i rapporti direttamente dal cliente, con i materiali utilizzati e la firma del cliente.</p>
+          <ul class="punti"><li>Materiali e costi dell'intervento</li><li>Firma del cliente</li><li>Stampa ed esportazione in PDF</li></ul>
+        </div>
+        <div class="foto appare d1" data-lente><img src="img/rapportino.jpg" alt="Dettaglio di un intervento completato con materiali e firma del cliente"><div class="etichetta">Intervento <b>completato</b> e firmato</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="alterna">
+    <div class="contenitore">
+      <div class="funzione">
+        <div class="testo appare">
+          <div class="numero">05</div><div class="titoletto">Magazzino</div>
+          <h2>Sai sempre cosa c'è in magazzino</h2>
+          <p>Gestisci materiali, disponibilità e movimenti.</p>
+          <ul class="punti"><li>Giacenze e articoli sotto scorta</li><li>Carichi, scarichi e fornitori</li></ul>
+        </div>
+        <div class="foto appare d1" data-lente><img src="img/magazzino.jpg" alt="Magazzino con giacenze, articoli sotto scorta e movimenti"><div class="etichetta">Magazzino</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="contenitore">
+      <div class="funzione giro">
+        <div class="testo appare">
+          <div class="numero">06</div><div class="titoletto">Controllo dell'azienda</div>
+          <h2>I numeri della tua attività, sotto controllo</h2>
+          <p>Consulta report, indicatori operativi e andamento degli interventi.</p>
+          <ul class="punti"><li>Interventi completati, in corso e da programmare</li><li>Andamento e tipologie di intervento</li></ul>
+        </div>
+        <div class="foto appare d1" data-lente><img src="img/dashboard.jpg" alt="Dashboard con indicatori e andamento degli interventi"><div class="etichetta">Dashboard</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="connesso centro">
+    <div class="contenitore">
+      <div class="titoletto appare" style="color:var(--arancio2)">07 · Lavora ovunque</div>
+      <h2 class="appare d1">Dall'ufficio al cantiere, tutto è connesso</h2>
+      <p class="guida appare d2">Accedi alla piattaforma da computer, tablet e smartphone, con un'interfaccia dedicata ai tecnici.</p>
+      <div class="rotta appare d2">
+        <div class="filo"><i></i><i></i></div>
+        <div class="nodo"><div class="ico">🏢</div><b>Ufficio</b><span>pianifica e assegna</span></div>
+        <div class="nodo"><div class="ico">🚐</div><b>Tecnico</b><span>riceve il lavoro sul telefono</span></div>
+        <div class="nodo"><div class="ico">🛠️</div><b>Cantiere</b><span>rapportino e firma sul posto</span></div>
+      </div>
+      <div class="dispositivi appare d3">
+        <div class="cornice pc"><img src="img/interventi.jpg" alt="FieldDesk AI sul computer"></div>
+        <div class="cornice tab"><img src="img/rapportino.jpg" alt="FieldDesk AI sul tablet"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="centro">
+    <div class="contenitore">
+      <div class="titoletto appare">Progettato per chi lavora davvero sul campo</div>
+      <h2 class="appare d1">La tecnologia si adatta alla tua azienda, non il contrario</h2>
+      <div class="carte" style="text-align:left">
+        <div class="carta appare"><div class="ico">🧩</div><b>Un unico gestionale</b><p>Tutta la tua attività in una piattaforma: niente più informazioni sparse.</p></div>
+        <div class="carta appare d1"><div class="ico">⏱️</div><b>Meno burocrazia</b><p>Rapportini, materiali e firme digitali, direttamente sul posto.</p></div>
+        <div class="carta appare d2"><div class="ico">📈</div><b>Più produttività</b><p>Interventi, squadre e stati di avanzamento sempre sotto controllo.</p></div>
+        <div class="carta appare"><div class="ico">👷</div><b>Per piccole e grandi</b><p>Diversi piani di abbonamento, dalle piccole attività alle aziende con più tecnici e squadre.</p></div>
+        <div class="carta appare d1"><div class="ico">📱</div><b>Ovunque</b><p>Computer, tablet e smartphone, con un'interfaccia pensata per i tecnici.</p></div>
+        <div class="carta appare d2"><div class="ico">🚀</div><b>Cresce con te</b><p>Un sistema moderno e accessibile, progettato per crescere insieme alla tua impresa.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="chiusura" id="contatti">
+    <div class="contenitore">
+      <div class="riquadro appare">
+        <span class="logo grande" style="color:#fff"><svg><use href="#icona"/></svg>FieldDesk <b>AI</b></span>
+        <h2 style="margin-top:20px">Vediamolo sul lavoro della tua azienda</h2>
+        <p>Una dimostrazione gratuita e senza impegno: ti mostriamo come organizzare interventi, tecnici e rapportini con FieldDesk AI.</p>
+        <div class="azioni">
+          <a class="bottone" href="mailto:cybernetlab24@gmail.com?subject=Demo%20FieldDesk%20AI&amp;body=Buongiorno%2C%20vorrei%20vedere%20una%20dimostrazione%20di%20FieldDesk%20AI.%0A%0AAzienda%3A%20%0ASettore%3A%20%0ANumero%20di%20tecnici%3A%20%0ATelefono%3A%20">Richiedi la demo gratuita</a>
+          <a class="bottone vetro" href="https://app.fielddesk.it" target="_blank" rel="noopener">Scopri FieldDesk AI →</a>
+        </div>
+        <div class="motto">Organizza. Coordina. <span>Cresci.</span></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer><div class="contenitore"><b>FieldDesk AI</b> — una soluzione software sviluppata da <b>CybernetLab</b></div></footer>
+<div class="lente" id="lente"><img alt=""></div>
+
+<script>
+(function () {
+  'use strict';
+  var ridotto = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var barra = document.getElementById('barra');
+  addEventListener('scroll', function () { barra.classList.toggle('piena', scrollY > 20); }, { passive: true });
+
+  var os = new IntersectionObserver(function (v) { v.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('vista'); os.unobserve(e.target); } }); }, { threshold: .15 });
+  document.querySelectorAll('.appare').forEach(function (el) { os.observe(el); });
+
+  var hero = document.getElementById('schermoHero');
+  function raddrizza() { if (ridotto) return; var p = Math.min(1, scrollY / (innerHeight * .6)); hero.style.transform = 'rotateX(' + (24 - 24 * p) + 'deg) scale(' + (.92 + .08 * p) + ')'; }
+  addEventListener('scroll', raddrizza, { passive: true }); raddrizza();
+
+  // il caos che si ordina in FieldDesk AI
+  var caos = document.getElementById('caos'), visto = false;
+  new IntersectionObserver(function (v) { v.forEach(function (e) { if (e.isIntersecting && !visto) { visto = true; setTimeout(function () { caos.classList.add('ordinato'); }, 1600); } }); }, { threshold: .5 }).observe(caos);
+  document.getElementById('rimescola').onclick = function () { caos.classList.remove('ordinato'); setTimeout(function () { caos.classList.add('ordinato'); }, 1800); };
+
+  var lente = document.getElementById('lente'), li = lente.querySelector('img');
+  document.querySelectorAll('[data-lente]').forEach(function (f) { f.addEventListener('click', function () { var im = f.querySelector('img'); li.src = im.src; li.alt = im.alt; lente.classList.add('aperta'); }); });
+  lente.addEventListener('click', function () { lente.classList.remove('aperta'); });
+  addEventListener('keydown', function (e) { if (e.key === 'Escape') lente.classList.remove('aperta'); });
+})();
+</script>
+</body>
+</html>
