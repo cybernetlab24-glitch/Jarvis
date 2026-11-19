@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>A.R.G.U.S. · Pipeline clienti</title>
+<style>
+:root{--oro:#20d9ff;--oro2:#b5f4ff;--vi:#a16cff;--verde:#55e8b2;--scuro:#030711;--testo:#e8f7ff;--grigio:#8da9c1;--linea:rgba(32,217,255,.26)}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:radial-gradient(1100px 600px at 85% -10%,rgba(161,108,255,.16),transparent),radial-gradient(900px 500px at -10% 0%,rgba(32,217,255,.12),transparent),var(--scuro);color:var(--testo);font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+header{position:sticky;top:0;z-index:3;padding:14px clamp(14px,3vw,36px);display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;background:linear-gradient(180deg,rgba(3,7,17,.95),rgba(3,7,17,.75));backdrop-filter:blur(8px);border-bottom:1px solid var(--linea)}
+.eti{font-size:11.5px;letter-spacing:.34em;color:var(--oro);text-transform:uppercase}
+h1{margin:3px 0 0;font-size:clamp(18px,2.4vw,26px);letter-spacing:.18em}h1 span{color:var(--oro2)}
+.azioni{display:flex;gap:8px;flex-wrap:wrap}
+button,a.btn{font:inherit;font-size:14px;cursor:pointer;color:var(--oro2);background:rgba(32,217,255,.08);border:1px solid rgba(32,217,255,.42);border-radius:10px;padding:8px 13px;text-decoration:none}
+button:hover,a.btn:hover{background:rgba(32,217,255,.18);box-shadow:0 0 16px rgba(32,217,255,.28)}
+main{padding:18px clamp(14px,3vw,36px) 40px}
+.riassunto{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:18px}
+.box{border:1px solid var(--linea);border-radius:14px;padding:14px 16px;background:rgba(8,14,28,.75)}
+.box h3{margin:0 0 8px;font-size:12px;letter-spacing:.22em;color:var(--oro);text-transform:uppercase}
+.box .big{font-size:26px;font-weight:700}.box p{margin:4px 0;color:#b9d8ed;font-size:14px}
+.box a{color:var(--oro2)}
+.colonne{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(230px,1fr);gap:12px;overflow-x:auto;padding-bottom:10px}
+.col{border:1px solid var(--linea);border-radius:14px;background:rgba(8,14,28,.6);display:flex;flex-direction:column;min-height:240px}
+.col h2{margin:0;padding:12px 14px;font-size:14px;letter-spacing:.12em;text-transform:uppercase;display:flex;justify-content:space-between;border-bottom:1px solid var(--linea)}
+.col h2 b{color:var(--oro)}
+.lista{padding:10px;display:flex;flex-direction:column;gap:8px;max-height:65vh;overflow-y:auto}
+.scheda{border:1px solid rgba(32,217,255,.18);border-radius:10px;padding:10px 11px;background:rgba(3,7,17,.85)}
+.scheda .id{font:700 11px ui-monospace,Consolas,monospace;letter-spacing:.2em;color:var(--oro)}
+.scheda .n{font-weight:600;margin:3px 0}.scheda .m{font-size:12.5px;color:var(--grigio)}
+.scheda .st{display:inline-block;margin-top:6px;font-size:11.5px;padding:2px 8px;border-radius:999px;border:1px solid rgba(161,108,255,.5);color:#d8c7ff}
+.col.caldo{border-color:rgba(161,108,255,.55);box-shadow:0 0 24px rgba(161,108,255,.12)}
+.col.vinto{border-color:rgba(85,232,178,.55)}
+.vuoto{color:var(--grigio);font-size:13px;padding:8px}
+.stato{color:var(--grigio);text-align:center;padding:40px 10px}.stato.err{color:#ffb4a8}
+</style>
+</head>
+<body>
+<header>
+  <div><div class="eti">A.R.G.U.S. · CybernetLab</div><h1>PIPELINE <span>CLIENTI</span></h1></div>
+  <div class="azioni"><button id="copia">🔗 Copia link demo</button><button id="ricarica">↻ Aggiorna</button><a class="btn" href="./">← ARGUS</a></div>
+</header>
+<main>
+  <div class="riassunto" id="riassunto"></div>
+  <div class="colonne" id="colonne"></div>
+  <div class="stato" id="stato">Carico…</div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+let CFG = {}; try { CFG = JSON.parse(localStorage.getItem('jarvis_cfg')) || {}; } catch (e) {}
+let LINK = '';
+function el(tag, cls, txt) { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+function stato(t, err) { $('stato').textContent = t || ''; $('stato').className = 'stato' + (err ? ' err' : ''); $('stato').hidden = !t; }
+function carica() {
+  if (!CFG.url) { stato('Apri ARGUS su questo dispositivo, collega Apps Script dalle impostazioni ⚙ e torna qui.', true); return; }
+  stato('Carico la pipeline…');
+  fetch(CFG.url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, redirect: 'follow', body: JSON.stringify({ azione: 'pipeline', codice: CFG.codice }) })
+    .then(r => r.json()).then(j => { if (!j.ok) throw new Error(j.errore || 'richiesta non riuscita'); disegna(j.pipeline); stato(''); })
+    .catch(e => stato('Non riesco a leggere la pipeline: ' + e.message, true));
+}
+function disegna(p) {
+  LINK = p.link_prenotazione || '';
+  const r = $('riassunto'); r.replaceChildren();
+  const tot = p.fasi.reduce((s, f) => s + f.schede.length, 0);
+  const b1 = el('div', 'box'); b1.append(el('h3', '', 'In pipeline'), el('div', 'big', String(tot)), el('p', '', p.fasi.map(f => f.icona + ' ' + f.schede.length).join('  ·  ')));
+  const b2 = el('div', 'box'); b2.append(el('h3', '', 'Prossime demo'));
+  if (!p.demo.length) b2.append(el('p', '', 'Nessuna demo in calendario.'));
+  p.demo.slice(0, 4).forEach(d => { const q = el('p'); q.append(el('b', '', d.quando), document.createTextNode(' – ' + d.attivita + (d.prodotto ? ' (' + d.prodotto + ')' : '') + ' ')); if (d.meet) { const a = el('a', '', 'Meet'); a.href = d.meet; a.target = '_blank'; a.rel = 'noopener'; q.append(a); } b2.append(q); });
+  const b3 = el('div', 'box'); b3.append(el('h3', '', 'Preventivi aperti'), el('div', 'big', String(p.preventivi_aperti.quanti)), el('p', '', p.preventivi_aperti.totale));
+  r.append(b1, b2, b3);
+  const c = $('colonne'); c.replaceChildren();
+  p.fasi.forEach((f, i) => {
+    const col = el('section', 'col' + (i === 2 || i === 4 ? ' caldo' : i === 5 ? ' vinto' : ''));
+    const h = el('h2'); h.append(document.createTextNode(f.icona + ' ' + f.nome), el('b', '', String(f.schede.length)));
+    const l = el('div', 'lista');
+    if (!f.schede.length) l.append(el('div', 'vuoto', '—'));
+    f.schede.forEach(s => {
+      const k = el('div', 'scheda');
+      k.append(el('div', 'id', s.id), el('div', 'n', s.nome), el('div', 'm', [s.settore, s.citta].filter(Boolean).join(' · ') + (s.ultimo ? ' · ' + s.ultimo : '')), el('span', 'st', s.stato));
+      l.append(k);
+    });
+    col.append(h, l); c.append(col);
+  });
+}
+$('ricarica').onclick = carica;
+$('copia').onclick = () => { if (!LINK) return; navigator.clipboard.writeText(LINK).then(() => { $('copia').textContent = '✅ Copiato'; setTimeout(() => $('copia').textContent = '🔗 Copia link demo', 1800); }); };
+carica();
+</script>
+</body>
+</html>
