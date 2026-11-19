@@ -4,7 +4,7 @@
 <meta name="theme-color" content="#030711">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>A.R.G.U.S.</title>
+<title>SUPER A.R.G.U.S.</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -293,6 +293,10 @@ body.solo-volto #argus3DLabel{display:none}
 .mw .mini{margin:4px 0 0;padding-left:0;list-style:none}.mw .mini li{display:flex;gap:6px;align-items:baseline}.mw .mini li b{color:var(--cyan);font-weight:600;flex:none}
 /* Fold aperto (e tablet): ARGUS a sinistra, widget in colonna a destra */
 @media(max-width:620px){.chip.sal span{display:none}.chip.sal{padding:8px 10px}#cervBtn{padding:8px 10px}}
+.logo .super{font-size:.62em;letter-spacing:.3em;vertical-align:.18em;margin-right:.25em;background:linear-gradient(90deg,#20d9ff,#a16cff);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none}
+.mw.brief{box-shadow:0 0 0 2px #ffc94d,0 0 34px rgba(255,201,77,.45)!important;border-top-color:#ffc94d!important;transform:scale(1.015);transition:transform .25s,box-shadow .25s}
+#briefBtn.on{color:#fff;background:rgba(255,201,77,.25);border-color:#ffc94d}
+@media(max-width:620px){#briefBtn span{display:none}}
 body.fold .side{display:none}
 body.fold .bottom{margin:0;max-width:calc(56vw - 20px)}
 body.fold .stato{left:28vw}
@@ -310,12 +314,12 @@ body.fold #argus3DLabel{left:28vw}
 <div class="hud">
   <div class="top">
     <div>
-      <div class="logo" data-t="A.R.G.U.S.">A.R.G.U.S.</div>
-      <div class="sub" id="sub">CYBERNETLAB · VOLTO · v2.8.0</div>
+      <div class="logo" data-t="SUPER A.R.G.U.S."><span class="super">SUPER</span> A.R.G.U.S.</div>
+      <div class="sub" id="sub">CYBERNETLAB · VOLTO · v3.0</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
-      <div class="topbtns"><button class="chip sal" id="salBtn" type="button" aria-label="Salute di ARGUS" title="Salute di ARGUS"><i></i><span id="salT">ARGUS</span></button><button class="chip" id="cervBtn" type="button" aria-label="Apri il secondo cervello" title="Secondo cervello">🧠</button><button class="chip" id="stazBtn" type="button" aria-pressed="false">SEMPRE ATTIVO</button><button class="chip" id="voceBtn" type="button" aria-pressed="true">VOCE ON</button><button class="chip" id="gestiBtn" type="button" aria-pressed="false" aria-label="Comandi con i gesti">GESTI</button><button class="chip" id="wdgBtn" type="button" aria-label="Mostra o nascondi i widget" aria-pressed="true">WIDGET<span class="n" id="wdgN" hidden></span></button><button class="chip" id="cfgBtn" type="button" aria-label="Impostazioni di collegamento">⚙</button></div>
+      <div class="topbtns"><button class="chip sal" id="salBtn" type="button" aria-label="Salute di ARGUS" title="Salute di ARGUS"><i></i><span id="salT">ARGUS</span></button><button class="chip" id="briefBtn" type="button" aria-label="Briefing a voce" title="Briefing: cosa conta oggi">☀️<span> BRIEFING</span></button><button class="chip" id="cervBtn" type="button" aria-label="Apri il secondo cervello" title="Secondo cervello">🧠</button><button class="chip" id="stazBtn" type="button" aria-pressed="false">SEMPRE ATTIVO</button><button class="chip" id="voceBtn" type="button" aria-pressed="true">VOCE ON</button><button class="chip" id="gestiBtn" type="button" aria-pressed="false" aria-label="Comandi con i gesti">GESTI</button><button class="chip" id="wdgBtn" type="button" aria-label="Mostra o nascondi i widget" aria-pressed="true">WIDGET<span class="n" id="wdgN" hidden></span></button><button class="chip" id="cfgBtn" type="button" aria-label="Impostazioni di collegamento">⚙</button></div>
     </div>
   </div>
 
@@ -770,6 +774,7 @@ body.fold #argus3DLabel{left:28vw}
     else if(/(non restare|smetti di restare|non rimanere) in ascolto|conversazione (spenta|off|disattivata)|disattiva (la )?conversazione/.test(t)){CONVERSA=false;msg='Fatto: dopo ogni risposta torno ad aspettare «Hey Jarvis».';}
     else if(/(resta|rimani) (sempre )?in ascolto|conversazione (accesa|on|attiva)|attiva (la )?conversazione/.test(t)){CONVERSA=true;msg='Fatto: dopo le mie risposte resto in ascolto qualche secondo.';}
     else if(/(aspetto|look|tema)\b.{0,20}\b(oro|dorat|nero e oro|sfera)/.test(t)||/(sfera dorata|sfera olografica|nero e oro)/.test(t)){VOLTO='oro';msg='Ecco la sfera olografica.';}
+    else if(/\b(briefing|punto della situazione|fammi il punto|com'?è (messa )?la giornata|cosa conta oggi)\b/.test(t)||/^(buongiorno|buon giorno)( argus| jarvis)?[\s.!]*$/.test(t)){riga('tu',testo);avviaBriefing(/aggiorna|rifai|di nuovo/.test(t));return true;}
     else if(/(mostra|apri|fammi vedere|fai vedere|portami|entra)\b.{0,18}\b(cervello|second brain|memoria|mente|neuroni)\b/.test(t)){msg='Ecco il mio secondo cervello, signore.';setTimeout(apriCervello,600);}
     else if(/(chiudi|esci da)\b.{0,12}\b(cervello|memoria|neuroni)\b/.test(t)){msg='Chiudo il cervello.';chiudiCervello();}
     else if(/(mostra|apri|fammi vedere|fai vedere|portami)\b.{0,15}\bgarage\b/.test(t)){msg='Apro il Garage, signore.';apriPagina('garage.html','Apri il CybernetLab Garage');}
@@ -846,6 +851,42 @@ body.fold #argus3DLabel{left:28vw}
   ['pointercancel','pointerleave'].forEach(function(t){cv.addEventListener(t,function(){clearTimeout(lpT);lpT=null;lpDa=0;});});
   cv.addEventListener('contextmenu',function(e){e.preventDefault();});
   cv.addEventListener('click',function(){if(lpFatto){lpFatto=false;return;}premiMic();});
+  /* ===== BRIEFING A VOCE: ARGUS dice cosa conta oggi e accende i widget di cui parla ===== */
+  var BRIEF={attivo:false,stop:false};
+  function oggiChiave(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+  function evidenzia(id){[].forEach.call(document.querySelectorAll('.mw.brief'),function(x){x.classList.remove('brief');if(x.dataset.eraCompatto){x.classList.add('compatto');delete x.dataset.eraCompatto;}});
+    var el=id&&$('w_'+id);if(!el)return;if(el.classList.contains('compatto')){el.dataset.eraCompatto='1';el.classList.remove('compatto');}
+    el.classList.add('brief');try{el.scrollIntoView({block:'nearest',behavior:'smooth'});}catch(e){}}
+  /** Aspetta che ARGUS cominci e poi finisca di parlare (anche con la voce di Gemini, che prima va scaricata). */
+  function dopoVoce(fn){var partito=false,t0=Date.now(),iv=setInterval(function(){
+    if(BRIEF.stop){clearInterval(iv);return fn();}
+    if(speaking||stato==='parla')partito=true;
+    if((partito&&!speaking&&stato!=='parla')||(!partito&&Date.now()-t0>9000)||Date.now()-t0>45000){clearInterval(iv);setTimeout(fn,250);}},150);}
+  function fineBriefing(){BRIEF.attivo=false;$('briefBtn').classList.remove('on');evidenzia(null);}
+  function fermaBriefing(){if(!BRIEF.attivo)return;BRIEF.stop=true;stopVoce();fineBriefing();setStato('attesa');}
+  function avviaBriefing(forza){
+    if(BRIEF.attivo)return fermaBriefing();
+    if(!CFG.url){riga('jv','Prima colleghi ARGUS con ⚙.');return;}
+    BRIEF.attivo=true;BRIEF.stop=false;$('briefBtn').classList.add('on');$('briefBtn').classList.remove('blink');
+    try{localStorage.setItem('argus_brief_giorno',oggiChiave());}catch(e){}
+    if(!WST.visibili){WST.visibili=true;salvaW();mostraLayer();caricaWidget();}
+    stopVoce();setStato('pensa','Preparo il briefing…');hint.textContent='';
+    api({azione:'briefing',forza:!!forza}).then(function(j){
+      var b=j.briefing||{},seq=[{w:'',f:b.saluto}].concat((b.punti||[]).map(function(p){return {w:p.widget,f:p.frase};})).concat([{w:'',f:b.domanda,ultima:true}]);
+      (function passo(i){
+        if(BRIEF.stop||i>=seq.length)return fineBriefing();
+        var p=seq[i];if(!p.f)return passo(i+1);
+        evidenzia(p.w);riga('jv',p.f);ultimaVoce=!!p.ultima;parla(p.f);
+        if(p.ultima){fineBriefing();return;}          // dopo la domanda ARGUS resta in ascolto (conversazione)
+        dopoVoce(function(){passo(i+1);});
+      })(0);
+    },function(e){fineBriefing();setStato('attesa');riga('jv','Non riesco a preparare il briefing: '+e.message);});
+  }
+  $('briefBtn').onclick=function(){avviaBriefing(false);};
+  $('mic').addEventListener('click',function(){if(BRIEF.attivo)fermaBriefing();},true);
+  /* la mattina il pulsante lampeggia finché non ascolti il briefing del giorno */
+  (function(){var h=new Date().getHours(),fatto='';try{fatto=localStorage.getItem('argus_brief_giorno')||'';}catch(e){}
+    if(h>=5&&h<13&&fatto!==oggiChiave()&&CFG.url){$('briefBtn').classList.add('blink');setTimeout(function(){if(!BRIEF.attivo&&$('briefBtn').classList.contains('blink'))hint.textContent='☀️ Buongiorno: tocca BRIEFING per il punto del mattino.';},2500);}})();
 
   /* ================= DATI REALI ================= */
   function mostraInfo(inf){
@@ -1297,7 +1338,7 @@ body.fold #argus3DLabel{left:28vw}
   (function(){var im=new Image();im.onload=function(){var n=im.naturalWidth,c=document.createElement('canvas');c.width=c.height=n;var g=c.getContext('2d');
     g.drawImage(im,0,0,n,n);try{var dd=g.getImageData(0,0,n,n),px=dd.data;for(var q=0;q<px.length;q+=4){var r=px[q],gg=px[q+1],bb=px[q+2];if(r>70&&r>gg*1.35&&r>bb*1.35){var k=(r-Math.max(gg,bb))/r;px[q]=Math.round(r*(1-k*.38));px[q+1]=Math.round(gg+(r*.42-gg)*k);px[q+2]=Math.round(bb+(r-bb)*k);}}g.putImageData(dd,0,0);}catch(e){}g.globalCompositeOperation='destination-in';var gr=g.createRadialGradient(n/2,n/2,n*.30,n/2,n/2,n*.5);
     gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.75,'rgba(0,0,0,.85)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,n,n);faccia=c;};im.src=VOLTO_SRC;})();
-  function mostraVolto(){document.body.classList.remove('tema-oro');$('sub').textContent='CYBERNETLAB · '+(VOLTO==='robot'?'VOLTO':VOLTO==='oro'?'SFERA':'NUCLEO NEURALE')+' · v2.8.0';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
+  function mostraVolto(){document.body.classList.remove('tema-oro');$('sub').textContent='CYBERNETLAB · '+(VOLTO==='robot'?'VOLTO':VOLTO==='oro'?'SFERA':'NUCLEO NEURALE')+' · v3.0';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
 
   /* ================= ANIMAZIONE ================= */
   var t0=performance.now(),last=t0,rotY=0,arrivi=0,ipsT=0,spawnAcc=0,C1=[32,217,255],C2=[161,108,255];
