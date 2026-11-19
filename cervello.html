@@ -41,6 +41,12 @@ button:hover{background:rgba(32,217,255,.18)}
 .vicini a{display:flex;gap:8px;align-items:center;padding:7px 0;color:var(--tx);text-decoration:none;border-bottom:1px solid rgba(32,217,255,.08);cursor:pointer}
 .vicini a i{width:8px;height:8px;border-radius:50%;flex:none;background:currentColor;box-shadow:0 0 6px currentColor}
 .vicini a span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.intu{position:fixed;z-index:4;left:14px;top:74px;width:min(380px,calc(100vw - 28px));max-height:calc(100vh - 150px);overflow-y:auto;background:var(--panel);border:1px solid rgba(255,159,67,.5);border-top:2px solid #ff9f43;border-radius:16px;padding:12px 14px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.intu[hidden]{display:none}.intu h3{margin:0 0 6px;font-size:12px;letter-spacing:.24em;color:#ffc58a}
+.intu .it{padding:9px 10px;margin:8px 0;border:1px solid rgba(255,159,67,.25);border-radius:12px;cursor:pointer;background:rgba(255,159,67,.05)}.intu .it:hover,.intu .it.on{background:rgba(255,159,67,.14);border-color:#ff9f43}
+.intu .it b{display:block}.intu .it p{margin:4px 0 0;color:#c4dcee;font-size:13px}.intu .it i{display:block;margin-top:4px;color:#ffd8a8;font-size:13px;font-style:normal}
+@media(max-width:700px){.intu{top:112px}}
+#intBtn{position:relative}#intBtn.nuovo::after{content:"";position:absolute;right:2px;top:2px;width:9px;height:9px;border-radius:50%;background:#ff9f43;box-shadow:0 0 8px #ff9f43}
 .stato{position:fixed;inset:0;z-index:1;display:grid;place-items:center;pointer-events:none;color:var(--mu);text-align:center;padding:20px}
 .stato.err{color:#ffb4a8;pointer-events:auto}
 </style>
@@ -51,8 +57,9 @@ button:hover{background:rgba(32,217,255,.18)}
   <button class="x" id="chiudi" aria-label="Chiudi il cervello">✕</button>
   <div class="tit"><small>A.R.G.U.S.</small><b>SECONDO CERVELLO</b></div>
   <form class="cerca" id="cerca"><input id="q" placeholder="Cerca un ricordo…" autocomplete="off" aria-label="Cerca nel secondo cervello"><button type="submit">Cerca</button></form>
-  <button class="x" id="agg" aria-label="Aggiorna la mappa" title="Aggiorna">↻</button>
+  <button class="x" id="intBtn" aria-label="Intuizioni del cervello" title="Cosa nota il cervello" hidden>💡</button><button class="x" id="agg" aria-label="Aggiorna la mappa" title="Aggiorna">↻</button>
 </div>
+<div class="intu" id="intu" hidden></div>
 <div class="leg" id="leg"></div>
 <div class="info" id="info"></div>
 <div class="etichetta" id="eti" hidden></div>
@@ -73,7 +80,8 @@ const TIPI = {
   'documento':{ col: '#ffc94d', nome: 'Documenti',    r: 1.2 },
   'da fare':  { col: '#ff7ba6', nome: 'Da fare',      r: 1.05 },
   'lavoro':   { col: '#55e8b2', nome: 'Lavori',       r: 1.0 },
-  'prodotto': { col: '#ffffff', nome: 'Prodotti',     r: 1.9 }
+  'prodotto': { col: '#ffffff', nome: 'Prodotti',     r: 1.9 },
+  'garage':   { col: '#ff9f43', nome: 'Garage',       r: 1.5 }
 };
 const nascosti = new Set();
 function stato(t, err) { $('stato').textContent = t || ''; $('stato').className = 'stato' + (err ? ' err' : ''); $('stato').hidden = !t; }
@@ -275,9 +283,32 @@ $('cerca').addEventListener('submit', ev => { ev.preventDefault(); const q = $('
 function centra() { const l = N.filter(n => evidenziati.has(n.id)); if (!l.length) return; const c = new THREE.Vector3(); l.forEach(n => c.add(n.p)); c.divideScalar(l.length); vola(c, mobile ? 120 : 95); }
 
 /* ---------------- carica ---------------- */
+/* ---------------- intuizioni ---------------- */
+let INTU = null;
+function mostraIntuizioni(r) {
+  INTU = r; $('intBtn').hidden = false;
+  const lista = r && r.intuizioni && r.intuizioni.length ? r.intuizioni.map((x, i) => '<div class="it" data-i="' + i + '"><b>' + esc(x.titolo) + '</b><p>' + esc(x.perche) + '</p>' + (x.azione ? '<i>👉 ' + esc(x.azione) + '</i>' : '') + '</div>').join('')
+    : '<p style="color:#8da9c1">Ancora niente da segnalare. Il cervello pensa da solo ogni venerdì.</p>';
+  $('intu').innerHTML = '<h3>💡 COSA NOTA IL CERVELLO' + (r && r.creata ? ' · ' + esc(r.creata) : '') + '</h3>' + lista + '<button id="pensa" style="margin-top:6px;width:100%">🧠 Pensa adesso</button>';
+}
+$('intBtn').onclick = () => { $('intu').hidden = !$('intu').hidden; $('intBtn').classList.remove('nuovo'); };
+$('intu').addEventListener('click', ev => {
+  if (ev.target.id === 'pensa') { ev.target.textContent = 'Sto pensando… (può volerci un minuto)'; ev.target.disabled = true;
+    api({ azione: 'cervello_pensa' }).then(j => mostraIntuizioni(j.intuizioni), e => { ev.target.textContent = '⚠️ ' + e.message; }); return; }
+  const it = ev.target.closest('.it'); if (!it || !INTU) return;
+  document.querySelectorAll('.intu .it').forEach(x => x.classList.toggle('on', x === it));
+  accendi(INTU.intuizioni[Number(it.dataset.i)].neuroni || []);
+});
+function accendi(ids) { chiudiScheda(); evidenziati = new Set(ids.filter(id => idx[id])); aggiornaColori(); centra(); controls.autoRotate = false;
+  ids.forEach(id => { if (idx[id]) for (let k = 0; k < 4; k++) nuovoImpulso(idx[id]); }); }
+
 function carica(forza) {
   stato(forza ? 'Ricostruisco la mappa…' : 'Accendo i neuroni…');
-  api({ azione: 'cervello', forza: !!forza }).then(j => { if (!j.mappa.neuroni.length) return stato('Il secondo cervello è ancora vuoto: dì ad ARGUS «ricordati che…» e torna qui.', true); costruisci(j.mappa); stato(''); },
+  api({ azione: 'cervello', forza: !!forza }).then(j => { if (!j.mappa.neuroni.length) return stato('Il secondo cervello è ancora vuoto: dì ad ARGUS «ricordati che…» e torna qui.', true); costruisci(j.mappa); stato('');
+    mostraIntuizioni(j.mappa.intuizioni);
+    if (j.mappa.intuizioni && j.mappa.intuizioni.intuizioni && j.mappa.intuizioni.intuizioni.length) $('intBtn').classList.add('nuovo');
+    const acc = new URLSearchParams(location.search).get('accendi');
+    if (acc && !forza) setTimeout(() => { accendi(acc.split(',')); if (INTU && INTU.intuizioni) { const i = INTU.intuizioni.findIndex(x => (x.neuroni || []).join(',') === acc); if (i >= 0) { $('intu').hidden = false; const el = document.querySelectorAll('.intu .it')[i]; if (el) el.classList.add('on'); } } }, 2500); },
     e => stato('Non riesco a leggere il cervello: ' + e.message, true));
 }
 $('agg').onclick = () => { chiudiScheda(); evidenziati.clear(); carica(true); };
