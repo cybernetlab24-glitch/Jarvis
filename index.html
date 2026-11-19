@@ -281,6 +281,22 @@ body.solo-volto #argus3DLabel{display:none}
 @media(max-width:620px){.top{padding:8px}.sub{font-size:9px;letter-spacing:.15em}.stato{bottom:8%}#argus3DLabel{top:19%;font-size:8px;letter-spacing:.15em}}
 @media(prefers-reduced-motion:reduce){.chip:hover{transform:none}}
 
+/* ===== v2.8: cervello, salute, Fold ===== */
+#cervelloOv{position:fixed;inset:0;z-index:60;background:#030711;clip-path:circle(0% at var(--cx,50%) var(--cy,45%));transition:clip-path .75s cubic-bezier(.65,0,.25,1)}
+#cervelloOv.su{clip-path:circle(150% at var(--cx,50%) var(--cy,45%))}
+#cervelloOv[hidden]{display:none}
+#cervelloOv iframe{width:100%;height:100%;border:0;display:block;background:#030711}
+.chip.sal{display:inline-flex;align-items:center;gap:6px}.chip.sal i{width:8px;height:8px;border-radius:50%;background:#55e8b2;box-shadow:0 0 8px #55e8b2}
+.chip.sal.giallo i{background:#ffc94d;box-shadow:0 0 8px #ffc94d}.chip.sal.giallo{color:#ffe3a1;border-color:rgba(255,201,77,.6)}
+.chip.sal.rosso i{background:#ff5f7e;box-shadow:0 0 10px #ff5f7e;animation:pul 1.2s infinite}.chip.sal.rosso{color:#ffc2cd;border-color:rgba(255,95,126,.7)}
+.mw .fasi{display:flex;gap:4px;flex-wrap:wrap;font-size:.66rem;color:var(--muted)}.mw .fasi span{padding:2px 6px;border:1px solid var(--line);border-radius:999px}.mw .fasi b{color:var(--ink);margin-left:3px}
+.mw .mini{margin:4px 0 0;padding-left:0;list-style:none}.mw .mini li{display:flex;gap:6px;align-items:baseline}.mw .mini li b{color:var(--cyan);font-weight:600;flex:none}
+/* Fold aperto (e tablet): ARGUS a sinistra, widget in colonna a destra */
+@media(max-width:620px){.chip.sal span{display:none}.chip.sal{padding:8px 10px}#cervBtn{padding:8px 10px}}
+body.fold .side{display:none}
+body.fold .bottom{margin:0;max-width:calc(56vw - 20px)}
+body.fold .stato{left:28vw}
+body.fold #argus3DLabel{left:28vw}
 </style>
 </head>
 <body>
@@ -295,11 +311,11 @@ body.solo-volto #argus3DLabel{display:none}
   <div class="top">
     <div>
       <div class="logo" data-t="A.R.G.U.S.">A.R.G.U.S.</div>
-      <div class="sub" id="sub">CYBERNETLAB · VOLTO · v2.7.8</div>
+      <div class="sub" id="sub">CYBERNETLAB · VOLTO · v2.8.0</div>
     </div>
     <div class="right">
       <div class="clock"><b id="ora">--:--:--</b><span id="data">---</span></div>
-      <div class="topbtns"><button class="chip" id="stazBtn" type="button" aria-pressed="false">SEMPRE ATTIVO</button><button class="chip" id="voceBtn" type="button" aria-pressed="true">VOCE ON</button><button class="chip" id="gestiBtn" type="button" aria-pressed="false" aria-label="Comandi con i gesti">GESTI</button><button class="chip" id="wdgBtn" type="button" aria-label="Mostra o nascondi i widget" aria-pressed="true">WIDGET<span class="n" id="wdgN" hidden></span></button><button class="chip" id="cfgBtn" type="button" aria-label="Impostazioni di collegamento">⚙</button></div>
+      <div class="topbtns"><button class="chip sal" id="salBtn" type="button" aria-label="Salute di ARGUS" title="Salute di ARGUS"><i></i><span id="salT">ARGUS</span></button><button class="chip" id="cervBtn" type="button" aria-label="Apri il secondo cervello" title="Secondo cervello">🧠</button><button class="chip" id="stazBtn" type="button" aria-pressed="false">SEMPRE ATTIVO</button><button class="chip" id="voceBtn" type="button" aria-pressed="true">VOCE ON</button><button class="chip" id="gestiBtn" type="button" aria-pressed="false" aria-label="Comandi con i gesti">GESTI</button><button class="chip" id="wdgBtn" type="button" aria-label="Mostra o nascondi i widget" aria-pressed="true">WIDGET<span class="n" id="wdgN" hidden></span></button><button class="chip" id="cfgBtn" type="button" aria-label="Impostazioni di collegamento">⚙</button></div>
     </div>
   </div>
 
@@ -340,7 +356,7 @@ body.solo-volto #argus3DLabel{display:none}
         <button type="submit">INVIA</button>
       </form>
     </div>
-    <div class="hint" id="hint">Tocca il microfono o il nucleo e parla.</div>
+    <div class="hint" id="hint">Tocca il microfono o il nucleo e parla. Tieni premuto il nucleo per aprire il cervello.</div>
   </div>
 </div>
 
@@ -349,6 +365,7 @@ body.solo-volto #argus3DLabel{display:none}
 <video id="gvid" playsinline muted autoplay style="position:fixed;left:0;top:0;width:160px;height:120px;opacity:0.01;pointer-events:none;z-index:-1"></video>
 <div class="gprev" id="gprev" hidden title="Tocca per nascondere l'anteprima"><canvas id="gcan"></canvas><span id="gprevT">GESTI</span></div>
 <div class="fin" id="fin" hidden role="dialog" aria-label="Finestra del widget"></div>
+<div id="cervelloOv" hidden role="dialog" aria-label="Secondo cervello"><iframe id="cervelloF" title="Secondo cervello di ARGUS" allow="clipboard-write"></iframe></div>
 
 <div class="ov" id="ov" hidden>
   <form class="box" id="cfgForm">
@@ -753,6 +770,8 @@ body.solo-volto #argus3DLabel{display:none}
     else if(/(non restare|smetti di restare|non rimanere) in ascolto|conversazione (spenta|off|disattivata)|disattiva (la )?conversazione/.test(t)){CONVERSA=false;msg='Fatto: dopo ogni risposta torno ad aspettare «Hey Jarvis».';}
     else if(/(resta|rimani) (sempre )?in ascolto|conversazione (accesa|on|attiva)|attiva (la )?conversazione/.test(t)){CONVERSA=true;msg='Fatto: dopo le mie risposte resto in ascolto qualche secondo.';}
     else if(/(aspetto|look|tema)\b.{0,20}\b(oro|dorat|nero e oro|sfera)/.test(t)||/(sfera dorata|sfera olografica|nero e oro)/.test(t)){VOLTO='oro';msg='Ecco la sfera olografica.';}
+    else if(/(mostra|apri|fammi vedere|fai vedere|portami|entra)\b.{0,18}\b(cervello|second brain|memoria|mente|neuroni)\b/.test(t)){msg='Ecco il mio secondo cervello, signore.';setTimeout(apriCervello,600);}
+    else if(/(chiudi|esci da)\b.{0,12}\b(cervello|memoria|neuroni)\b/.test(t)){msg='Chiudo il cervello.';chiudiCervello();}
     else if(/(mostra|apri|fammi vedere|fai vedere|portami)\b.{0,15}\bgarage\b/.test(t)){msg='Apro il Garage, signore.';apriPagina('garage.html','Apri il CybernetLab Garage');}
     else if(/(mostra|apri|fammi vedere|fai vedere)\b.{0,15}\bfiliera/.test(t)){msg='Ecco la filiera di CybernetLab.';var uF=new URL('filiera.html',location.href).href,wF=null;try{wF=window.open(uF,'_blank');}catch(e){}
       if(!wF){msg='Ecco la filiera: tocchi il collegamento qui sotto per aprirla.';setTimeout(function(){var a=document.createElement('a');a.href=uF;a.target='_blank';a.rel='noopener';a.textContent='▶ Apri la filiera di CybernetLab';a.style.cssText='display:block;color:#e3b54a;margin:6px 0;font-weight:600';$('subs').appendChild(a);$('subs').scrollTop=1e6;if(DESK&&DESK.modo!=='mondo')finestra('mondo');},50);}}
@@ -807,7 +826,26 @@ body.solo-volto #argus3DLabel{display:none}
   }
   function premiMic(){if(staz&&WW.attivo&&!ascolta){fermaMic();setTimeout(avviaAscolto,300);}else avviaAscolto();}
   $('mic').addEventListener('click',premiMic);
-  cv.addEventListener('click',premiMic);
+  /* ===== SECONDO CERVELLO: si apre dal nucleo (tieni premuto), dal pulsante 🧠 o a voce ===== */
+  var CERV=false,lpT=null,lpFatto=false,lpX=0,lpY=0;
+  function apriCervello(){
+    var ov=$('cervelloOv'),f=$('cervelloF');if(CERV)return;CERV=true;
+    var cx=FOLD()?28:50,cy=W<620?42:45;ov.style.setProperty('--cx',cx+'%');ov.style.setProperty('--cy',cy+'%');
+    if(!f.getAttribute('src'))f.src='cervello.html';
+    ov.hidden=false;void ov.offsetWidth;ov.classList.add('su');kick=1;
+    if(typeof logReg==='function')logReg('Apro il secondo cervello');
+    if(DESK&&DESK.modo!=='mondo')finestra('mondo');
+  }
+  function chiudiCervello(){var ov=$('cervelloOv');if(!CERV)return;ov.classList.remove('su');setTimeout(function(){if(!ov.classList.contains('su'))ov.hidden=true;CERV=false;},760);}
+  window.addEventListener('message',function(e){if(e.data&&e.data.argus==='chiudiCervello')chiudiCervello();});
+  $('cervBtn').onclick=apriCervello;
+  var lpDa=0;
+  cv.addEventListener('pointerdown',function(e){lpFatto=false;lpX=e.clientX;lpY=e.clientY;lpDa=Date.now();clearTimeout(lpT);lpT=setTimeout(function(){lpT=null;lpFatto=true;apriCervello();},650);});
+  cv.addEventListener('pointermove',function(e){if(lpT&&Math.hypot(e.clientX-lpX,e.clientY-lpY)>12){clearTimeout(lpT);lpT=null;lpDa=0;}});
+  cv.addEventListener('pointerup',function(){if(lpT&&lpDa&&Date.now()-lpDa>=650){lpFatto=true;apriCervello();}clearTimeout(lpT);lpT=null;});   // telefoni lenti: conta il tempo tenuto premuto
+  ['pointercancel','pointerleave'].forEach(function(t){cv.addEventListener(t,function(){clearTimeout(lpT);lpT=null;lpDa=0;});});
+  cv.addEventListener('contextmenu',function(e){e.preventDefault();});
+  cv.addEventListener('click',function(){if(lpFatto){lpFatto=false;return;}premiMic();});
 
   /* ================= DATI REALI ================= */
   function mostraInfo(inf){
@@ -827,12 +865,14 @@ body.solo-volto #argus3DLabel{display:none}
   try{var _w=JSON.parse(localStorage.getItem('argus_widget'));if(_w)WST=Object.assign(WST,_w);}catch(e){}
   function salvaW(){try{localStorage.setItem('argus_widget',JSON.stringify(WST));}catch(e){}}
   function formato(){return innerWidth<700?'stretto':'largo';}
-  var BASE=['prossimo','oggi','soldi','preventivi','siti','scadenze','argus'];
+  var BASE=['clienti','prossimo','oggi','soldi','preventivi','salute','siti','scadenze','argus'];
   var EXTRA=['domani','meteo','settimana','incassi','social','sistemi','squadra','registro'];
-  var DEF_COL={2:[['oggi','prossimo','domani','meteo','settimana','registro'],['squadra','sistemi','argus','soldi','incassi','preventivi','scadenze','siti','social']],
-    4:[['oggi','prossimo','settimana'],['domani','meteo','registro'],['squadra','sistemi','incassi','social'],['argus','soldi','preventivi','scadenze','siti']]};
+  var DEF_COL={1:[['clienti','oggi','salute','prossimo','soldi','preventivi','domani','meteo','settimana','squadra','argus','scadenze','siti','incassi','social','sistemi','registro']],
+    2:[['clienti','oggi','prossimo','domani','meteo','settimana','registro'],['salute','squadra','sistemi','argus','soldi','incassi','preventivi','scadenze','siti','social']],
+    4:[['clienti','oggi','prossimo','settimana'],['domani','meteo','registro'],['salute','squadra','sistemi','incassi','social'],['argus','soldi','preventivi','scadenze','siti']]};
   var ORDINE=BASE;
-  function autoMode(){return innerWidth>=1240&&innerHeight>=560;}
+  function FOLD(){return innerWidth>=700&&innerWidth<1240&&innerHeight>=560&&!DESK;}
+  function autoMode(){return (innerWidth>=1240&&innerHeight>=560)||FOLD();}
   function ordine(){return autoMode()?BASE.concat(EXTRA):BASE;}
   /* --- registro attività (live, su questo dispositivo) --- */
   var REG=[];
@@ -887,9 +927,27 @@ body.solo-volto #argus3DLabel{display:none}
         az:[{t:'ELENCO',q:'Quali scadenze dei clienti ho nei prossimi 30 giorni?'}]},
       argus:{t:'DA CONFERMARE',cls:y.bozze?'w':'',big:(y.bozze||0)+' email · '+(y.lavori||0)+' lavori',
         d:'<p>'+(y.lavoro_in_corso?'In corso: '+escH(y.lavoro_in_corso):(y.bozze?'Bozze in attesa di ✅ Invia su Telegram.':'Tutto in ordine.'))+'</p>',az:[]},
+      clienti:wClienti(c),salute:wSalute(c),
       domani:wDomani(c),meteo:wMeteo(c),settimana:wSettimana(c),incassi:wIncassi(c),social:wSocial(c),sistemi:wSistemi(c),squadra:wSquadra(c),registro:wRegistro()
     };
   }
+  function wClienti(c){var k=c.clienti;if(!k)return {t:'CLIENTI',big:'—',d:'<p>Pipeline non disponibile.</p>',az:[]};
+    var oggi=k.demo_oggi||[],caldi=k.caldi||[],pv=k.preventivi||{};
+    var fasi='<div class="fasi">'+(k.fasi||[]).map(function(f){return '<span>'+escH(f.icona+' '+f.nome)+'<b>'+f.n+'</b></span>';}).join('')+'</div>';
+    var dem=oggi.length?'<ul class="mini">'+oggi.map(function(d){return '<li><b>'+escH(d.ora)+'</b>'+(d.meet?'<a href="'+escH(d.meet)+'" target="_blank" rel="noopener" style="color:var(--ink)">'+escH(d.attivita)+' ↗</a>':escH(d.attivita))+'</li>';}).join('')+'</ul>':
+      ((k.prossime||[]).length?'<p>Prossima demo: '+escH(k.prossime[0].quando+' · '+k.prossime[0].attivita)+'</p>':'<p>Nessuna demo in calendario.</p>');
+    return {t:'CLIENTI · DEMO E TRATTATIVE',cls:oggi.length?'r':'',big:oggi.length?(oggi.length===1?'1 demo oggi':oggi.length+' demo oggi'):(caldi.length?caldi.length+' da seguire':'Pipeline'),
+      d:dem+(caldi.length?'<p style="margin-top:4px">🔥 '+caldi.map(function(x){return escH(x.nome);}).join(' · ')+'</p>':'')+(pv.quanti?'<p>🧾 Preventivi aperti: '+pv.quanti+' ('+escH(pv.totale)+')</p>':'')+fasi,
+      az:[{t:'PIPELINE',href:'pipeline.html'},{t:'LINK DEMO',q:'Dammi il link per prenotare una demo'}]};}
+  var SALUTE='';
+  function wSalute(c){var s=c.salute;if(!s)return {t:'SALUTE DI ARGUS',big:'—',d:'<p>Controllo non disponibile.</p>',az:[]};
+    var pul=function(x){return escH(String(x).replace(/^[^\wÀ-ÿ]+/,''));},lista=(s.guasti||[]).concat(s.attenzione||[]);
+    return {t:'SALUTE DI ARGUS',cls:s.livello==='rosso'?'r':s.livello==='giallo'?'w':'',big:s.livello==='verde'?'Tutto in ordine':s.livello==='rosso'?(s.guasti.length===1?'1 problema':s.guasti.length+' problemi'):(s.attenzione.length===1?'1 cosa da sistemare':s.attenzione.length+' cose da sistemare'),
+      d:(lista.length?'<ul>'+lista.slice(0,5).map(function(x){return '<li>'+pul(x)+'</li>';}).join('')+'</ul>':'<p>'+(s.ok||0)+' controlli superati.</p>')+'<p>Controllo delle '+escH(s.ora||'')+'</p>',
+      az:[{t:'CONTROLLO COMPLETO',q:'Controlla come stai: funziona tutto? ci sono errori?'}]};}
+  function mostraSalute(s){SALUTE=s&&s.livello||'';var b=$('salBtn');b.className='chip sal'+(SALUTE==='giallo'?' giallo':SALUTE==='rosso'?' rosso':'');
+    $('salT').textContent=SALUTE==='rosso'?'GUASTO':SALUTE==='giallo'?'ATTENZIONE':'ARGUS OK';}
+  $('salBtn').onclick=function(){if(ULTIMO&&ULTIMO.salute)apriFinestra('salute');else chiedi('Controlla come stai: funziona tutto? ci sono errori?');};
   function wDomani(c){var d=c.domani||{},iv=d.interventi||[],ap=(d.appuntamenti||[]),tappe=iv.map(function(x){return x.luogo||x.comune;}).concat(ap.filter(function(a){return a.luogo;}).map(function(a){return a.luogo;}));
     var lista=iv.map(function(x){return '<li>'+escH(x.ora+' '+x.comune+(x.cliente?' · '+x.cliente:''))+'</li>';}).concat(ap.map(function(a){return '<li>'+escH(a.ora+' '+a.titolo)+'</li>';}));
     var url=tappe.length?'https://www.google.com/maps/dir/?api=1&travelmode=driving&destination='+encodeURIComponent(tappe[tappe.length-1])+(tappe.length>1?'&waypoints='+encodeURIComponent(tappe.slice(0,-1).join('|')):''):'';
@@ -958,8 +1016,12 @@ body.solo-volto #argus3DLabel{display:none}
   /* posizioni: quelle salvate da te; gli altri in colonna lungo i bordi, sotto la barra in alto e sopra il microfono */
   function rotaie(){
     var L=$('wlayer'),vecchie=[].slice.call(L.querySelectorAll('.rail'));
+    document.body.classList.toggle('fold',FOLD());
     if(!autoMode()){vecchie.forEach(function(x){while(x.firstChild)L.appendChild(x.firstChild);x.remove();});return 0;}
-    var alto=Math.round(document.querySelector('.top').getBoundingClientRect().bottom)+10,centro=Math.min(760,Math.max(690,innerWidth*.36));
+    var alto=Math.round(document.querySelector('.top').getBoundingClientRect().bottom)+10;
+    if(FOLD()){if(vecchie.length!==1){vecchie.forEach(function(x){while(x.firstChild)L.appendChild(x.firstChild);x.remove();});var d1=document.createElement('div');d1.className='rail';d1.id='rail0';L.appendChild(d1);}
+      var r0=$('rail0');r0.style.top=alto+'px';r0.style.bottom='0';r0.style.width=Math.floor(innerWidth*.42)+'px';r0.style.right='12px';r0.style.left='';return 1;}
+    var centro=Math.min(760,Math.max(690,innerWidth*.36));
     var lato=Math.floor((innerWidth-centro)/2)-12,perLato=lato>=600?2:1,n=perLato*2,cw=Math.floor((lato-12*(perLato-1))/perLato);
     if(vecchie.length!==n){vecchie.forEach(function(x){while(x.firstChild)L.appendChild(x.firstChild);x.remove();});
       for(var i=0;i<n;i++){var d=document.createElement('div');d.className='rail';d.id='rail'+i;L.appendChild(d);}}
@@ -1067,13 +1129,13 @@ body.solo-volto #argus3DLabel{display:none}
       if(!WST.nascosti.domani)disegnaMappa(c);
       var p=(c.interventi||{}).prossimo;caricaMeteo(p&&p.comune||'Varazze').then(function(){aggiornaUno('meteo');},function(e){logReg('Meteo non disponibile');});
     }
-    var s=c.soldi||{},y=c.sistemi||{},n=(s.n_scaduti||0)+(y.siti_giu||[]).length+(y.bozze||0);$('wdgN').hidden=!n;$('wdgN').textContent=n;
+    var s=c.soldi||{},y=c.sistemi||{},n=(s.n_scaduti||0)+(y.siti_giu||[]).length+(y.bozze||0)+((c.salute&&c.salute.guasti)||[]).length;$('wdgN').hidden=!n;$('wdgN').textContent=n;
   }
   function mostraLayer(){var on=!!WST.visibili;$('wlayer').hidden=!on;$('wlayer').classList.toggle('on',on);$('wdgBtn').setAttribute('aria-pressed',on?'true':'false');}
   var ultimoWidget=0,widgetInCorso=false;
   /** Aggiorna i widget se sono visibili: subito se forza, altrimenti solo se l'ultimo aggiornamento è vecchio. */
   function rinfrescaWidget(forza){if(!WST.visibili||widgetInCorso)return;if(forza||Date.now()-ultimoWidget>100000)caricaWidget();}
-  function caricaWidget(){if(!CFG.url)return;widgetInCorso=true;ultimoWidget=Date.now();setTimeout(function(){widgetInCorso=false;},4000);var t0=performance.now();api({azione:'cruscotto'}).then(function(j){LAT=Math.round(performance.now()-t0);if(j.cruscotto){j.cruscotto.squadra=j.squadra||null;disegnaWidget(j.cruscotto);logReg('Cruscotto aggiornato · '+LAT+' ms');}},function(e){logReg('Cruscotto non raggiungibile','tu');console.log('Widget: '+(e&&e.message));});}
+  function caricaWidget(){if(!CFG.url)return;widgetInCorso=true;ultimoWidget=Date.now();setTimeout(function(){widgetInCorso=false;},4000);var t0=performance.now();api({azione:'cruscotto'}).then(function(j){LAT=Math.round(performance.now()-t0);if(j.cruscotto){j.cruscotto.squadra=j.squadra||null;j.cruscotto.clienti=j.clienti||null;j.cruscotto.salute=j.salute||null;mostraSalute(j.salute);disegnaWidget(j.cruscotto);logReg('Cruscotto aggiornato · '+LAT+' ms');}},function(e){logReg('Cruscotto non raggiungibile','tu');console.log('Widget: '+(e&&e.message));});}
   $('wdgBtn').onclick=function(){WST.visibili=!WST.visibili;salvaW();mostraLayer();if(WST.visibili)caricaWidget();};
   $('cWdgReset').onclick=function(){if(MAPPA){try{MAPPA.remove();}catch(e){}MAPPA=null;}WST={visibili:true,pos:{},compatti:{},nascosti:{}};salvaW();$('wlayer').innerHTML='';mostraLayer();if(ULTIMO)disegnaWidget(ULTIMO);else caricaWidget();};
   var rsz;addEventListener('resize',function(){clearTimeout(rsz);rsz=setTimeout(function(){if(MAPPA){try{MAPPA.remove();}catch(e){}MAPPA=null;}$('wlayer').innerHTML='';if(ULTIMO)disegnaWidget(ULTIMO);},250);});
@@ -1235,7 +1297,7 @@ body.solo-volto #argus3DLabel{display:none}
   (function(){var im=new Image();im.onload=function(){var n=im.naturalWidth,c=document.createElement('canvas');c.width=c.height=n;var g=c.getContext('2d');
     g.drawImage(im,0,0,n,n);try{var dd=g.getImageData(0,0,n,n),px=dd.data;for(var q=0;q<px.length;q+=4){var r=px[q],gg=px[q+1],bb=px[q+2];if(r>70&&r>gg*1.35&&r>bb*1.35){var k=(r-Math.max(gg,bb))/r;px[q]=Math.round(r*(1-k*.38));px[q+1]=Math.round(gg+(r*.42-gg)*k);px[q+2]=Math.round(bb+(r-bb)*k);}}g.putImageData(dd,0,0);}catch(e){}g.globalCompositeOperation='destination-in';var gr=g.createRadialGradient(n/2,n/2,n*.30,n/2,n/2,n*.5);
     gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.75,'rgba(0,0,0,.85)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,n,n);faccia=c;};im.src=VOLTO_SRC;})();
-  function mostraVolto(){document.body.classList.remove('tema-oro');$('sub').textContent='CYBERNETLAB · '+(VOLTO==='robot'?'VOLTO':VOLTO==='oro'?'SFERA':'NUCLEO NEURALE')+' · v2.7.8';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
+  function mostraVolto(){document.body.classList.remove('tema-oro');$('sub').textContent='CYBERNETLAB · '+(VOLTO==='robot'?'VOLTO':VOLTO==='oro'?'SFERA':'NUCLEO NEURALE')+' · v2.8.0';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
 
   /* ================= ANIMAZIONE ================= */
   var t0=performance.now(),last=t0,rotY=0,arrivi=0,ipsT=0,spawnAcc=0,C1=[32,217,255],C2=[161,108,255];
@@ -1371,6 +1433,7 @@ body.solo-volto #argus3DLabel{display:none}
     ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
   }
   function frame(now){
+    if(CERV&&$('cervelloOv').classList.contains('su')&&!$('cervelloOv').hidden){last=now;requestAnimationFrame(frame);return;}   // il cervello copre tutto: risparmio batteria
     var dt=Math.min(.05,(now-last)/1000);last=now;var t=(now-t0)/1000,S=STATI[stato],p,e,A,B,n,mx,my,a;
     var la=speaking?livelloAudio():-1;
     if(la>=0){levelT=Math.max(levelT*.82,Math.min(1,la*1.1),kick*.5);}
@@ -1390,7 +1453,7 @@ body.solo-volto #argus3DLabel{display:none}
       if(p.p>=1){var to=p.dir>0?p.e.b:p.e.a;nodes[to].act=1;arrivi++;if(p.depth<3&&Math.random()<.35+level*.4)spawn(to,p.depth+1);pulses.splice(i,1);}}
     if(pulses.length>500)pulses.splice(0,pulses.length-500);
 
-    var cx=W/2,cy=H*(W<620?.42:.45),base=Math.min(W,H)*(W<620?.27:.21)*cur.scale;
+    var cx=FOLD()?W*.28:W/2,cy=H*(W<620?.42:.45),base=Math.min(FOLD()?W*.56:W,H)*(W<620?.27:.21)*cur.scale;
     if(DESK&&DESK.modo==='volto'){cy=H*.36;base=Math.min(W,H*.72)*.3*cur.scale;}
     var cY=Math.cos(rotY),sY=Math.sin(rotY),tilt=.35+Math.sin(t*.23)*.12,cX=Math.cos(tilt),sX=Math.sin(tilt);
     for(i=0;i<nodes.length;i++){n=nodes[i];var wob=1+.025*Math.sin(t*1.3+n.ph)+level*.16*Math.sin(n.ph*3+t*9);
@@ -1407,7 +1470,8 @@ body.solo-volto #argus3DLabel{display:none}
     ctx.beginPath();var RR=base*1.32;
     for(a=0;a<=128;a++){var ang=a/128*Math.PI*2,amp=level*base*.13*(Math.sin(ang*6+t*7)*.5+Math.sin(ang*13-t*11)*.35+Math.sin(ang*3+t*3)*.3);
       var px=cx+Math.cos(ang)*(RR+amp),py=cy+Math.sin(ang)*(RR+amp);a?ctx.lineTo(px,py):ctx.moveTo(px,py);}
-    ctx.strokeStyle=mixA(C1,C2,cur.tint,.25+level*.6);ctx.lineWidth=1.2+level*1.5;ctx.stroke();
+    var SAL=SALUTE==='rosso'?[255,95,126]:SALUTE==='giallo'?[255,201,77]:null;
+    ctx.strokeStyle=SAL?mixA(SAL,C2,.15,.45+level*.5+.2*Math.sin(t*(SALUTE==='rosso'?5:2))):mixA(C1,C2,cur.tint,.25+level*.6);ctx.lineWidth=(SAL?1.8:1.2)+level*1.5;ctx.stroke();
     ctx.save();ctx.translate(cx,cy);ctx.rotate(-t*.08);ctx.strokeStyle='rgba(32,217,255,.22)';ctx.lineWidth=1;
     for(a=0;a<72;a++){var L=a%6===0?10:4,a2=a/72*Math.PI*2,r0=base*1.48;ctx.beginPath();ctx.moveTo(Math.cos(a2)*r0,Math.sin(a2)*r0);ctx.lineTo(Math.cos(a2)*(r0+L),Math.sin(a2)*(r0+L));ctx.stroke();}
     ctx.rotate(t*.2);ctx.strokeStyle='rgba(161,108,255,.28)';ctx.lineWidth=2;
