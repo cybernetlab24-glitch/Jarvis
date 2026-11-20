@@ -906,11 +906,11 @@ body.fold #argus3DLabel{left:28vw}
   try{var _w=JSON.parse(localStorage.getItem('argus_widget'));if(_w)WST=Object.assign(WST,_w);}catch(e){}
   function salvaW(){try{localStorage.setItem('argus_widget',JSON.stringify(WST));}catch(e){}}
   function formato(){return innerWidth<700?'stretto':'largo';}
-  var BASE=['clienti','prossimo','oggi','soldi','preventivi','salute','siti','scadenze','argus'];
+  var BASE=['clienti','prossimo','oggi','soldi','cassa','preventivi','salute','siti','scadenze','argus'];
   var EXTRA=['domani','meteo','settimana','incassi','social','sistemi','squadra','registro'];
-  var DEF_COL={1:[['clienti','oggi','salute','prossimo','soldi','preventivi','domani','meteo','settimana','squadra','argus','scadenze','siti','incassi','social','sistemi','registro']],
-    2:[['clienti','oggi','prossimo','domani','meteo','settimana','registro'],['salute','squadra','sistemi','argus','soldi','incassi','preventivi','scadenze','siti','social']],
-    4:[['clienti','oggi','prossimo','settimana'],['domani','meteo','registro'],['salute','squadra','sistemi','incassi','social'],['argus','soldi','preventivi','scadenze','siti']]};
+  var DEF_COL={1:[['clienti','oggi','salute','prossimo','soldi','cassa','preventivi','domani','meteo','settimana','squadra','argus','scadenze','siti','incassi','social','sistemi','registro']],
+    2:[['clienti','oggi','prossimo','domani','meteo','settimana','registro'],['salute','cassa','squadra','sistemi','argus','soldi','incassi','preventivi','scadenze','siti','social']],
+    4:[['clienti','oggi','prossimo','settimana'],['domani','meteo','registro'],['salute','cassa','squadra','sistemi','incassi','social'],['argus','soldi','preventivi','scadenze','siti']]};
   var ORDINE=BASE;
   function FOLD(){return innerWidth>=700&&innerWidth<1240&&innerHeight>=560&&!DESK;}
   function autoMode(){return (innerWidth>=1240&&innerHeight>=560)||FOLD();}
@@ -968,7 +968,7 @@ body.fold #argus3DLabel{left:28vw}
         az:[{t:'ELENCO',q:'Quali scadenze dei clienti ho nei prossimi 30 giorni?'}]},
       argus:{t:'DA CONFERMARE',cls:y.bozze?'w':'',big:(y.bozze||0)+' email · '+(y.lavori||0)+' lavori',
         d:'<p>'+(y.lavoro_in_corso?'In corso: '+escH(y.lavoro_in_corso):(y.bozze?'Bozze in attesa di ✅ Invia su Telegram.':'Tutto in ordine.'))+'</p>',az:[]},
-      clienti:wClienti(c),salute:wSalute(c),
+      clienti:wClienti(c),salute:wSalute(c),cassa:wCassa(c),
       domani:wDomani(c),meteo:wMeteo(c),settimana:wSettimana(c),incassi:wIncassi(c),social:wSocial(c),sistemi:wSistemi(c),squadra:wSquadra(c),registro:wRegistro()
     };
   }
@@ -980,6 +980,13 @@ body.fold #argus3DLabel{left:28vw}
     return {t:'CLIENTI · DEMO E TRATTATIVE',cls:oggi.length?'r':'',big:oggi.length?(oggi.length===1?'1 demo oggi':oggi.length+' demo oggi'):(caldi.length?caldi.length+' da seguire':'Pipeline'),
       d:dem+(caldi.length?'<p style="margin-top:4px">🔥 '+caldi.map(function(x){return escH(x.nome);}).join(' · ')+'</p>':'')+(pv.quanti?'<p>🧾 Preventivi aperti: '+pv.quanti+' ('+escH(pv.totale)+')</p>':'')+fasi,
       az:[{t:'PIPELINE',href:'pipeline.html'},{t:'LINK DEMO',q:'Dammi il link per prenotare una demo'}]};}
+  function wCassa(c){var k=c.cassa;if(!k||!k.mesi)return {t:'PREVISIONE SOLDI',big:'—',d:'<p>Previsione non disponibile.</p>',az:[]};
+    var m0=k.mesi[0]||{},neg=k.mesi.some(function(m){return m.saldo<0;});
+    return {t:'PREVISIONE · 3 MESI',cls:neg?'r':(k.avvisi&&k.avvisi.length?'w':''),big:euro(m0.certo+m0.probabile)+' in entrata a '+escH(String(m0.mese||'').split(' ')[0].toLowerCase()),
+      d:barre(k.mesi.map(function(m){return {etichetta:String(m.mese).slice(0,3),e:m.certo+m.probabile,u:m.uscite};}),['e','u'],['#20d9ff','#ff7ba6'],kEuro)+
+      '<div class="leg"><span><i style="background:#20d9ff"></i>entrate</span><span><i style="background:#ff7ba6"></i>uscite</span></div>'+
+      (k.avvisi&&k.avvisi.length?'<p>⚠️ '+escH(k.avvisi[0])+'</p>':'')+(m0.possibile?'<p>+ '+euro(m0.possibile)+' possibili dai preventivi</p>':''),
+      az:[{t:'DETTAGLIO',q:'Fammi la previsione dei soldi dei prossimi 3 mesi'}]};}
   var SALUTE='';
   function wSalute(c){var s=c.salute;if(!s)return {t:'SALUTE DI ARGUS',big:'—',d:'<p>Controllo non disponibile.</p>',az:[]};
     var pul=function(x){return escH(String(x).replace(/^[^\wÀ-ÿ]+/,''));},lista=(s.guasti||[]).concat(s.attenzione||[]);
@@ -1176,7 +1183,7 @@ body.fold #argus3DLabel{left:28vw}
   var ultimoWidget=0,widgetInCorso=false;
   /** Aggiorna i widget se sono visibili: subito se forza, altrimenti solo se l'ultimo aggiornamento è vecchio. */
   function rinfrescaWidget(forza){if(!WST.visibili||widgetInCorso)return;if(forza||Date.now()-ultimoWidget>100000)caricaWidget();}
-  function caricaWidget(){if(!CFG.url)return;widgetInCorso=true;ultimoWidget=Date.now();setTimeout(function(){widgetInCorso=false;},4000);var t0=performance.now();api({azione:'cruscotto'}).then(function(j){LAT=Math.round(performance.now()-t0);if(j.cruscotto){j.cruscotto.squadra=j.squadra||null;j.cruscotto.clienti=j.clienti||null;j.cruscotto.salute=j.salute||null;mostraSalute(j.salute);disegnaWidget(j.cruscotto);logReg('Cruscotto aggiornato · '+LAT+' ms');}},function(e){logReg('Cruscotto non raggiungibile','tu');console.log('Widget: '+(e&&e.message));});}
+  function caricaWidget(){if(!CFG.url)return;widgetInCorso=true;ultimoWidget=Date.now();setTimeout(function(){widgetInCorso=false;},4000);var t0=performance.now();api({azione:'cruscotto'}).then(function(j){LAT=Math.round(performance.now()-t0);if(j.cruscotto){j.cruscotto.squadra=j.squadra||null;j.cruscotto.clienti=j.clienti||null;j.cruscotto.salute=j.salute||null;j.cruscotto.cassa=j.cassa||null;mostraSalute(j.salute);disegnaWidget(j.cruscotto);logReg('Cruscotto aggiornato · '+LAT+' ms');}},function(e){logReg('Cruscotto non raggiungibile','tu');console.log('Widget: '+(e&&e.message));});}
   $('wdgBtn').onclick=function(){WST.visibili=!WST.visibili;salvaW();mostraLayer();if(WST.visibili)caricaWidget();};
   $('cWdgReset').onclick=function(){if(MAPPA){try{MAPPA.remove();}catch(e){}MAPPA=null;}WST={visibili:true,pos:{},compatti:{},nascosti:{}};salvaW();$('wlayer').innerHTML='';mostraLayer();if(ULTIMO)disegnaWidget(ULTIMO);else caricaWidget();};
   var rsz;addEventListener('resize',function(){clearTimeout(rsz);rsz=setTimeout(function(){if(MAPPA){try{MAPPA.remove();}catch(e){}MAPPA=null;}$('wlayer').innerHTML='';if(ULTIMO)disegnaWidget(ULTIMO);},250);});
