@@ -437,10 +437,19 @@ body.fold #argus3DLabel{left:28vw}
     if(!w)setTimeout(function(){var a=document.createElement('a');a.href=u;a.target='_blank';a.rel='noopener';a.textContent='▶ '+etichetta;a.style.cssText='display:block;color:#e3b54a;margin:6px 0;font-weight:600';$('subs').appendChild(a);$('subs').scrollTop=1e6;if(DESK&&DESK.modo!=='mondo')finestra('mondo');},50);}
   function statoVolto(s){if(!DESK)return;try{fetch('http://127.0.0.1:'+DESK.porta+'/faccia?s='+s+'&t='+encodeURIComponent(DESK.t),{mode:'no-cors',cache:'no-store'}).catch(function(){});}catch(e){}}
   /* clic sul volto del PC (finestra di Windows): ArgusDesktop ce lo passa come «evento» */
-  if(DESK)setInterval(function(){if(DESK.modo==='mondo')return;
+  if(DESK)setInterval(function(){
     fetch('http://127.0.0.1:'+DESK.porta+'/eventi?t='+encodeURIComponent(DESK.t),{cache:'no-store'}).then(function(r){return r.ok?r.text():'';}).then(function(t){
-      (t||'').split(',').forEach(function(e){if(e==='mondo')finestra('mondo');else if(e==='ascolta'&&!occupato){if(typeof logReg==='function')logReg('Clic sul volto: ti ascolto');premiMic();}});
-    },function(){});},1000);
+      (t||'').split(',').forEach(function(e){
+        if(e==='mondo')finestra('mondo');
+        else if(e==='volto')finestra('volto');
+        else if((e==='ascolta'||e==='parla')&&!occupato){
+          if(e==='parla'&&DESK.modo!=='volto'&&DESK.modo!=='mondo')finestra('volto');
+          if(typeof logReg==='function')logReg(e==='parla'?'Tasto rapido: ti ascolto':'Clic sul volto: ti ascolto');
+          if(!ascolta)premiMic();
+        }
+        else if(e==='ricarica')location.reload();
+      });
+    },function(){});},350);
   function quandoZitto(fn){var n=0,iv=setInterval(function(){if((!speaking&&stato!=='parla')||++n>150){clearInterval(iv);fn();}},200);}
   /** Comandi della finestra: li esegue il PC subito, senza passare da Gemini. */
   function comandoFinestra(testo){
@@ -732,6 +741,7 @@ body.fold #argus3DLabel{left:28vw}
       if(j.immagine){var im=document.createElement('img');im.src=j.immagine;im.alt='Immagine creata da ARGUS';
         im.onclick=function(){im.classList.toggle('grande');};$('subs').appendChild(im);$('subs').scrollTop=1e6;}
       var tm=j.tempi||{},sec=function(ms){return (ms/1000).toFixed(1).replace('.',',')+' s';};
+      if(DESK&&window.mandaLogPC)mandaLogPC('Tempi: risposta '+sec(Date.now()-t0)+' · AI '+sec(tm.ai||0)+(tm.gmail?' · Gmail '+sec(tm.gmail):'')+(tm.modello?' · '+tm.modello:'')+(tm.voce?' · voce '+sec(tm.voce):''));
       hint.textContent='⏱ risposta in '+sec(Date.now()-t0)+' · AI '+sec(tm.ai||0)+(tm.gmail?' · Gmail '+sec(tm.gmail):'')+(tm.modello?' · '+tm.modello:'')+(tm.voce?' · voce '+sec(tm.voce):'');
       setTimeout(caricaInfo,1500);
     },errore);
@@ -1187,7 +1197,7 @@ body.fold #argus3DLabel{left:28vw}
   $('wdgBtn').onclick=function(){WST.visibili=!WST.visibili;salvaW();mostraLayer();if(WST.visibili)caricaWidget();};
   $('cWdgReset').onclick=function(){if(MAPPA){try{MAPPA.remove();}catch(e){}MAPPA=null;}WST={visibili:true,pos:{},compatti:{},nascosti:{}};salvaW();$('wlayer').innerHTML='';mostraLayer();if(ULTIMO)disegnaWidget(ULTIMO);else caricaWidget();};
   var rsz;addEventListener('resize',function(){clearTimeout(rsz);rsz=setTimeout(function(){if(MAPPA){try{MAPPA.remove();}catch(e){}MAPPA=null;}$('wlayer').innerHTML='';if(ULTIMO)disegnaWidget(ULTIMO);},250);});
-  mostraLayer();caricaWidget();setInterval(function(){rinfrescaWidget(false);},2*60*1000);
+  mostraLayer();if(!DESK)caricaWidget();setInterval(function(){if(DESK&&DESK.modo!=='mondo')return;rinfrescaWidget(false);},2*60*1000);
   document.addEventListener('visibilitychange',function(){if(!document.hidden)rinfrescaWidget(false);});
   addEventListener('focus',function(){rinfrescaWidget(false);});
 
@@ -1596,10 +1606,32 @@ body.fold #argus3DLabel{left:28vw}
   }
   function concat(a,b){var c=new Float32Array(a.length+b.length);c.set(a,0);c.set(b,a.length);return c;}
   function resetBuffer(){WW.hist=new Float32Array(0);WW.pend=new Float32Array(0);WW.mel=[];WW.feat=[];WW.coda=[];WW.pred=0;}
+  /* Microfono: se quello scelto da Windows è muto (0% per 10 secondi) provo da solo gli altri e ricordo quello che funziona. */
+  var MIC={id:'',nome:'',provati:[],avvisato:0};try{MIC.id=localStorage.getItem('argus_mic')||'';}catch(e){}
+  function apriMicrofono(){
+    var base={echoCancellation:true,noiseSuppression:false,autoGainControl:true,channelCount:1};
+    if(!MIC.id)return navigator.mediaDevices.getUserMedia({audio:base});
+    var v=Object.assign({},base,{deviceId:{exact:MIC.id}});
+    return navigator.mediaDevices.getUserMedia({audio:v}).catch(function(){MIC.id='';try{localStorage.removeItem('argus_mic');}catch(e){}return navigator.mediaDevices.getUserMedia({audio:base});});
+  }
+  function cambiaMic(){
+    if(!navigator.mediaDevices.enumerateDevices)return;
+    navigator.mediaDevices.enumerateDevices().then(function(l){
+      var mic=l.filter(function(d){return d.kind==='audioinput'&&d.deviceId&&d.deviceId!=='default'&&d.deviceId!=='communications';});
+      if(MIC.provati.indexOf(MIC.id||'predefinito')<0)MIC.provati.push(MIC.id||'predefinito');
+      var prossimo=mic.filter(function(d){return MIC.provati.indexOf(d.deviceId)<0;})[0];
+      if(prossimo){MIC.id=prossimo.deviceId;logReg('Microfono muto: provo «'+(prossimo.label||'un altro microfono')+'»');fermaMic();return;}
+      if(Date.now()-MIC.avvisato>3600000){MIC.avvisato=Date.now();
+        logReg('AVVISO: tutti i microfoni sono muti per ARGUS ('+mic.map(function(d){return d.label||'?';}).join(', ')+'). Windows: Impostazioni → Privacy e sicurezza → Microfono → attiva «Consenti alle app desktop di accedere al microfono».');}
+      MIC.provati=[];MIC.id='';
+    }).catch(function(){});
+  }
   function avviaMic(){
     if(WW.attivo)return Promise.resolve();
-    return navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:false,autoGainControl:true,channelCount:1}}).then(function(stream){
-      WW.stream=stream;resetBuffer();
+    return apriMicrofono().then(function(stream){
+      WW.stream=stream;resetBuffer();WW.sentito=false;WW.micDa=Date.now();
+      try{var tr=stream.getAudioTracks()[0],st=tr.getSettings?tr.getSettings():{};MIC.nome=tr.label||'';if(st.deviceId&&MIC.id)MIC.id=st.deviceId;
+        if(MIC.nome!==MIC.ultimoNome){MIC.ultimoNome=MIC.nome;logReg('Microfono in uso: '+(MIC.nome||'predefinito'));}}catch(e){}
       var AC=window.AudioContext||window.webkitAudioContext,ctx;
       try{ctx=new AC({sampleRate:16000});}catch(e){ctx=new AC();}
       WW.ctx=ctx;WW.sr=ctx.sampleRate;var rapporto=ctx.sampleRate/16000;
@@ -1616,6 +1648,7 @@ body.fold #argus3DLabel{left:28vw}
           var x=sm/(a1-a0);en+=x*x;out[k]=Math.max(-1,Math.min(1,x))*32767;
         }
         WW.livello=Math.min(1,Math.sqrt(en/Math.max(1,n))*8);
+        if(en>1e-9&&!WW.sentito){WW.sentito=true;MIC.provati=[];if(MIC.id){try{localStorage.setItem('argus_mic',MIC.id);}catch(x){}}}
         WW.pend=concat(WW.pend,out);
         while(WW.pend.length>=1280){WW.coda.push(WW.pend.slice(0,1280));WW.pend=WW.pend.slice(1280);}
         if(WW.coda.length>6)WW.coda.splice(0,WW.coda.length-6);
@@ -1698,6 +1731,7 @@ body.fold #argus3DLabel{left:28vw}
     // microfono acceso ma muto (dispositivo cambiato, audio di Windows riavviato…): lo riavvio
     if(WW.attivo&&WW.ctx&&WW.ctx.state==='suspended'){try{WW.ctx.resume();}catch(e){}}
     else if(WW.attivo&&(ora-(WW.ultimoAudio||ora)>6000||(WW.ctx&&WW.ctx.state==='closed'))){ripristina('microfono muto, lo riavvio');fermaMic();}
+    else if(WW.attivo&&!WW.sentito&&WW.micDa&&ora-WW.micDa>10000){WW.micDa=ora;cambiaMic();}
     if(annunci.length&&!ascolta&&!occupato&&!speaking){prossimoAnnuncio();return;}
     if(!WW.attivo&&!ascolta&&!occupato&&!speaking)riprendiWW();
   },3000);
@@ -1715,7 +1749,7 @@ body.fold #argus3DLabel{left:28vw}
       mandaLogPC('Battito: staz='+staz+' orecchie='+(WW.attivo?'accese':'spente')+' audio='+(WW.ctx?WW.ctx.state:'-')+
         ' ultimoAudio='+(WW.ultimoAudio?Math.round((Date.now()-WW.ultimoAudio)/1000)+'s fa':'mai')+' voceMax='+Math.round(maxLiv*100)+'% somiglMax='+maxSc.toFixed(2)+
         ' soglia='+SOGLIA+' pagina='+document.visibilityState+' modo='+DESK.modo+' stato='+stato+' parla='+speaking+' occupato='+occupato+' ascolta='+ascolta+
-        ' annunci='+annunci.length+' audioVoce='+(AUD?'si':'no')+' voce='+VOCE_AI);
+        ' annunci='+annunci.length+' audioVoce='+(AUD?'si':'no')+' voce='+VOCE_AI+' mic='+(MIC.nome||'-'));
       maxLiv=0;maxSc=0;
     },20000);
   }
