@@ -930,8 +930,13 @@ body.fold #argus3DLabel{left:28vw}
     if(h>=5&&h<13&&fatto!==oggiChiave()&&CFG.url){$('briefBtn').classList.add('blink');setTimeout(function(){if(!BRIEF.attivo&&$('briefBtn').classList.contains('blink'))hint.textContent='☀️ Buongiorno: tocca BRIEFING per il punto del mattino.';},2500);}})();
 
   /* ================= DATI REALI ================= */
+  /* marchio e «signore/signora» della copia (cliente o Marco): ricordati dall'ultima volta, così non lampeggiano */
+  function applicaUI(u){try{if(!u)return;if($('argus3DLabel'))$('argus3DLabel').textContent=(u.marchio?String(u.marchio).toUpperCase()+' // ':'')+'NEURAL COMMAND CHAMBER';
+    if(u.signora){STATI.attesa.s=STATI.attesa.s.replace('signore','signora');if($('statoS'))$('statoS').textContent=$('statoS').textContent.replace('signore','signora');}}catch(e){}}
+  try{applicaUI(JSON.parse(localStorage.getItem('argus_info_ui')||'null'));}catch(e){}
   function mostraInfo(inf){
     if(!inf)return;
+    if(inf.marchio!==undefined){applicaUI({marchio:inf.marchio,signora:!!inf.signora});try{localStorage.setItem('argus_info_ui',JSON.stringify({marchio:inf.marchio,signora:!!inf.signora}));}catch(e){}}
     ['rP','mP'].forEach(function(id){$(id).textContent=inf.oggi;});
     ['rX','mX'].forEach(function(id){$(id).textContent=inf.richieste;});
     ['rU','mU'].forEach(function(id){$(id).textContent=inf.prossimo||'nessuno';});
