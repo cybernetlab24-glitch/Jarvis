@@ -301,6 +301,23 @@ body.fold .side{display:none}
 body.fold .bottom{margin:0;max-width:calc(56vw - 20px)}
 body.fold .stato{left:28vw}
 body.fold #argus3DLabel{left:28vw}
+/* ===== telefono: intestazione compatta su una riga e chat più bassa, così il volto/sfera resta libero ===== */
+@media(max-width:620px){
+  .top{flex-wrap:wrap;align-items:center;gap:6px 10px;padding:7px 9px}
+  .top>div:first-child{flex:1 1 auto;min-width:0}
+  .sub{display:none}
+  .logo{font-size:17px;letter-spacing:.16em;margin-top:0}
+  .right{display:contents}
+  .clock{order:2;text-align:right}.clock b{font-size:18px}.clock span{font-size:9px}
+  .topbtns{order:3;flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;gap:5px;padding-bottom:2px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .topbtns::-webkit-scrollbar{display:none}
+  .topbtns .chip{flex:0 0 auto;font-size:10px;letter-spacing:.06em;padding:6px 9px;white-space:nowrap}
+  .subs{max-height:21vh;font-size:.8rem;padding:8px 10px;background:linear-gradient(180deg,rgba(11,23,42,.78),rgba(6,10,18,.82))}
+  .subs img{max-height:16vh}
+  .stato{bottom:4%}
+}
+.subs a{color:var(--cyan);word-break:break-all}
+.subs strong{color:var(--ink)}
 </style>
 </head>
 <body>
@@ -512,7 +529,14 @@ body.fold #argus3DLabel{left:28vw}
   function setStato(s,sub){if(s!==stato&&typeof logReg==='function'&&s!=='attesa')logReg('Stato: '+STATI[s].t.toLowerCase(),'tu');if(s!==stato){statoDal=Date.now();if(DESK&&DESK.modo==='volto'){try{statoVolto(s);}catch(e){}}}if(s==='parla')parlaDal=Date.now();stato=s;$('statoT').textContent=STATI[s].t;$('statoS').textContent=sub||STATI[s].s;}
 
   /* ================= SOTTOTITOLI ================= */
-  function riga(cls,testo){logReg((cls==='tu'?'Tu: ':'ARGUS: ')+testo,cls==='tu'?'tu':'');var p=document.createElement('p');p.className=cls;p.textContent=testo;$('subs').appendChild(p);
+  function formattaRisposta(t){
+    var e=String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    e=e.replace(/\[([^\]]{1,120})\]\((https?:\/\/[^\s)]+)\)/g,function(m,a,u){return '<a href="'+u+'" target="_blank" rel="noopener">'+a+'</a>';});
+    e=e.replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g,function(m,a,u){return a+'<a href="'+u+'" target="_blank" rel="noopener">'+(u.length>45?u.slice(0,42)+'…':u)+'</a>';});
+    e=e.replace(/\*\*([^*]{1,200})\*\*/g,'<strong>$1</strong>').replace(/(^|\s)[*•]\s/g,'$1• ').replace(/\s(\d+)\.\s(?=\S)/g,'<br>$1. ');
+    return e;
+  }
+  function riga(cls,testo){logReg((cls==='tu'?'Tu: ':'ARGUS: ')+testo,cls==='tu'?'tu':'');var p=document.createElement('p');p.className=cls;if(cls==='jv')p.innerHTML=formattaRisposta(testo);else p.textContent=testo;$('subs').appendChild(p);
     while($('subs').children.length>6)$('subs').removeChild($('subs').firstChild);$('subs').scrollTop=1e6;return p;}
   var hint=$('hint');
 
