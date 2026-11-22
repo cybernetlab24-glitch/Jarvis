@@ -812,6 +812,8 @@ body.fold #argus3DLabel{left:28vw}
     if(/(aspetta|attendi|ascoltami|lasciami parlare).{0,25}(di più|più a lungo|più tempo)|più tempo per (parlare|rispondere)/.test(t)){PAUSA=Math.min(4000,PAUSA+600);msg='D\'accordo: ora aspetto '+(PAUSA/1000).toFixed(1).replace('.',',')+' secondi di silenzio prima di rispondere.';}
     else if(/(regola|tara|taratura|prova|calibra)\b.{0,25}\b(parola|sensibilit|hey argus|hey jarvis|attivazione)/.test(t)){riga('tu',testo);setTimeout(avviaTaratura,200);return true;}
     else if(/(rispondi|rispondimi|sii) più (in fretta|veloce|rapido)|aspetta (di )?meno/.test(t)){PAUSA=Math.max(1000,PAUSA-400);msg='Va bene: ora rispondo dopo '+(PAUSA/1000).toFixed(1).replace('.',',')+' secondi di silenzio.';}
+    else if(/(spegni|disattiva|togli).{0,20}\b(live|voce veloce|conversazione veloce)\b/.test(t)){LIVE.on=false;try{localStorage.setItem('argus_live','0');}catch(e){}msg='Fatto: torno all\'ascolto classico.';}
+    else if(/(accendi|attiva|riattiva).{0,20}\b(live|voce veloce|conversazione veloce)\b/.test(t)){LIVE.on=true;LIVE.rotto=false;try{localStorage.setItem('argus_live','1');}catch(e){}msg='Fatto: la prossima volta parliamo in diretta.';}
     else if(/(non restare|smetti di restare|non rimanere) in ascolto|conversazione (spenta|off|disattivata)|disattiva (la )?conversazione/.test(t)){CONVERSA=false;msg='Fatto: dopo ogni risposta torno ad aspettare «Hey Jarvis».';}
     else if(/(resta|rimani) (sempre )?in ascolto|conversazione (accesa|on|attiva)|attiva (la )?conversazione/.test(t)){CONVERSA=true;msg='Fatto: dopo le mie risposte resto in ascolto qualche secondo.';}
     else if(/(aspetto|look|tema)\b.{0,20}\b(oro|dorat|nero e oro|sfera)/.test(t)||/(sfera dorata|sfera olografica|nero e oro)/.test(t)){VOLTO='oro';msg='Ecco la sfera olografica.';}
@@ -828,8 +830,120 @@ body.fold #argus3DLabel{left:28vw}
     try{localStorage.setItem('argus_pausa',String(PAUSA));localStorage.setItem('argus_conversa',CONVERSA?'1':'0');}catch(e){}
     riga('tu',testo);riga('jv',msg);parla(msg);return true;
   }
+  /* ================= CONVERSAZIONE LIVE (Gemini Live: voce di Google, risposta immediata, si può interrompere) =================
+     La chiave non passa mai di qui: ARGUS (server) dà un token usa-e-getta. Le domande su dati e azioni passano allo strumento «argus»
+     (il cervello completo di sempre). Se Live non funziona, si torna da soli all'ascolto classico. */
+  var LIVE={on:true,ws:null,attivo:false,pronto:false,rotto:false,mic:null,cin:null,proc:null,cout:null,fonti:[],t:0,ultimo:0,inAttesa:0,chiudiDopo:false,turni:[],tu:null,jv:null,tuTxt:'',jvTxt:'',timer:null,inizio:0,cfg:null};
+  try{LIVE.on=localStorage.getItem('argus_live')!=='0';}catch(e){}
+  function liveDisponibile(){return LIVE.on&&!LIVE.rotto&&CFG.url&&window.WebSocket&&navigator.mediaDevices&&voceOn;}
+  function b64DaPcm(f32,rapporto){var n=Math.floor(f32.length/rapporto),buf=new ArrayBuffer(n*2),v=new DataView(buf),en=0;
+    for(var k=0;k<n;k++){var a0=Math.floor(k*rapporto),a1=Math.max(a0+1,Math.floor((k+1)*rapporto)),sm=0;for(var q=a0;q<a1&&q<f32.length;q++)sm+=f32[q];var x=Math.max(-1,Math.min(1,sm/(a1-a0)));en+=x*x;v.setInt16(k*2,x*32767,true);}
+    var u=new Uint8Array(buf),s='';for(var i=0;i<u.length;i+=8192)s+=String.fromCharCode.apply(null,u.subarray(i,i+8192));return {b64:btoa(s),liv:Math.sqrt(en/Math.max(1,n))};}
+  function suonaPcm(b64){
+    if(!LIVE.cout)return;var bin=atob(b64),n=bin.length>>1,f=new Float32Array(n);
+    for(var i=0;i<n;i++){var x=bin.charCodeAt(2*i)|(bin.charCodeAt(2*i+1)<<8);if(x>32767)x-=65536;f[i]=x/32768;}
+    var b=LIVE.cout.createBuffer(1,n,24000);b.copyToChannel?b.copyToChannel(f,0):b.getChannelData(0).set(f);
+    var s=LIVE.cout.createBufferSource();s.buffer=b;s.connect(AN||LIVE.cout.destination);
+    var ora=LIVE.cout.currentTime;if(LIVE.t<ora+0.03)LIVE.t=ora+0.03;s.start(LIVE.t);LIVE.t+=b.duration;LIVE.fonti.push(s);
+    speaking=true;if(stato!=='parla')setStato('parla');
+    s.onended=function(){LIVE.fonti=LIVE.fonti.filter(function(x){return x!==s;});if(!LIVE.fonti.length){speaking=false;LIVE.ultimo=Date.now();
+      if(LIVE.chiudiDopo)return chiudiLive();if(LIVE.attivo&&!LIVE.inAttesa)setStato('ascolto');}};
+  }
+  function zittisciLive(){LIVE.fonti.forEach(function(s){try{s.stop();}catch(e){}});LIVE.fonti=[];LIVE.t=0;speaking=false;}
+  function righeLive(chi,txt){
+    if(chi==='tu'){LIVE.tuTxt+=txt;if(!LIVE.tu)LIVE.tu=riga('tu',LIVE.tuTxt.trim());else LIVE.tu.textContent=LIVE.tuTxt.trim();}
+    else{LIVE.jvTxt+=txt;if(!LIVE.jv)LIVE.jv=riga('jv',LIVE.jvTxt.trim());else LIVE.jv.innerHTML=formattaRisposta(LIVE.jvTxt.trim());}
+    $('subs').scrollTop=1e6;
+  }
+  function chiudiTurno(){
+    if(LIVE.tuTxt.trim())LIVE.turni.push({chi:'tu',testo:LIVE.tuTxt.trim()});if(LIVE.jvTxt.trim()){LIVE.turni.push({chi:'argus',testo:LIVE.jvTxt.trim()});ultimoDetto=LIVE.jvTxt.trim();}
+    LIVE.tu=LIVE.jv=null;LIVE.tuTxt=LIVE.jvTxt='';
+  }
+  function mandaLive(o){try{if(LIVE.ws&&LIVE.ws.readyState===1)LIVE.ws.send(JSON.stringify(o));}catch(e){}}
+  function strumentoLive(fc){
+    var rispondi=function(r){mandaLive({toolResponse:{functionResponses:[{id:fc.id,name:fc.name,response:r}]}});};
+    var a=fc.args||{};
+    if(fc.name==='fine_conversazione'){rispondi({ok:true});LIVE.chiudiDopo=true;if(!LIVE.fonti.length)setTimeout(chiudiLive,1200);return;}
+    if(fc.name==='schermo'){if(/chiudi/.test(a.azione||''))chiudiCervello();else apriCervello();rispondi({ok:true});return;}
+    if(fc.name!=='argus'){rispondi({errore:'strumento sconosciuto'});return;}
+    LIVE.inAttesa++;setStato('pensa','Ci penso…');var t0=Date.now();
+    if(typeof logReg==='function')logReg('Live → argus: '+String(a.richiesta||'').slice(0,160));
+    api({azione:'chiedi',testo:String(a.richiesta||''),voce:true,live:true}).then(function(j){
+      LIVE.inAttesa--;LIVE.ultimo=Date.now();
+      if(j.link&&j.link.length)mostraLink(j.link);
+      if(j.immagine){var im=document.createElement('img');im.src=j.immagine;im.alt='Immagine creata da ARGUS';im.onclick=function(){im.classList.toggle('grande');};$('subs').appendChild(im);$('subs').scrollTop=1e6;}
+      var tm=j.tempi||{};if(window.mandaLogPC)mandaLogPC('Tempi Live: argus '+((Date.now()-t0)/1000).toFixed(1)+' s · AI '+((tm.ai||0)/1000).toFixed(1)+' s');
+      rispondi({risposta:j.risposta||''});setTimeout(rinfrescaWidget,1500,true);
+    },function(e){LIVE.inAttesa--;rispondi({errore:(e&&e.message)||'non raggiungibile'});});
+  }
+  function messaggioLive(m){
+    if(m.setupComplete){LIVE.pronto=true;LIVE.ultimo=Date.now();setStato('ascolto');hint.textContent='Parli pure, la ascolto. (dica «grazie, basta così» per chiudere)';if(typeof logReg==='function')logReg('Live: collegato ('+LIVE.modello+', '+((Date.now()-LIVE.inizio)/1000).toFixed(1)+' s)');return;}
+    if(m.toolCall&&m.toolCall.functionCalls){m.toolCall.functionCalls.forEach(strumentoLive);return;}
+    if(m.goAway){if(typeof logReg==='function')logReg('Live: il server chiude tra poco');return;}
+    var c=m.serverContent;if(!c)return;
+    if(c.interrupted){zittisciLive();chiudiTurno();setStato('ascolto');}
+    if(c.inputTranscription&&c.inputTranscription.text){LIVE.ultimo=Date.now();if(LIVE.jvTxt)chiudiTurno();righeLive('tu',c.inputTranscription.text);kick=1;}
+    if(c.outputTranscription&&c.outputTranscription.text)righeLive('jv',c.outputTranscription.text);
+    if(c.modelTurn&&c.modelTurn.parts)c.modelTurn.parts.forEach(function(p){if(p.inlineData&&p.inlineData.data)suonaPcm(p.inlineData.data);});
+    if(c.turnComplete){chiudiTurno();LIVE.ultimo=Date.now();}
+  }
+  function avviaLive(){
+    if(LIVE.attivo)return;
+    LIVE.attivo=true;ascolta=true;LIVE.pronto=false;LIVE.chiudiDopo=false;LIVE.turni=[];LIVE.inAttesa=0;LIVE.inizio=Date.now();
+    stopVoce();$('mic').classList.add('on');setStato('pensa','Mi collego…');
+    var fallito=function(motivo){if(typeof logReg==='function')logReg('Live non disponibile ('+motivo+'): uso l\'ascolto classico');LIVE.rotto=true;chiudiLive(true);setTimeout(function(){avviaAscolto();},200);};
+    Promise.all([api({azione:'live',voce:/^[A-Z][a-z]+$/.test(VOCE_AI)?VOCE_AI:''}),apriMicrofono()]).then(function(r){
+      var j=r[0],stream=r[1];if(!LIVE.attivo){stream.getTracks().forEach(function(t){t.stop();});return;}
+      LIVE.cfg=j;LIVE.mic=stream;
+      var ACx=window.AudioContext||window.webkitAudioContext;
+      try{LIVE.cout=new ACx({sampleRate:24000});}catch(e){LIVE.cout=new ACx();}
+      if(LIVE.cout.state==='suspended')LIVE.cout.resume();
+      try{AN=LIVE.cout.createAnalyser();AN.fftSize=512;ABUF=new Uint8Array(AN.fftSize);AN.connect(LIVE.cout.destination);}catch(e){AN=null;}
+      try{LIVE.cin=new ACx({sampleRate:16000});}catch(e){LIVE.cin=new ACx();}
+      var rapporto=LIVE.cin.sampleRate/16000,src=LIVE.cin.createMediaStreamSource(stream),proc=LIVE.cin.createScriptProcessor(2048,1,1);
+      proc.onaudioprocess=function(e){if(!LIVE.pronto)return;var p=b64DaPcm(e.inputBuffer.getChannelData(0),rapporto);userTalk=p.liv>0.02?1:0;
+        if(speaking&&p.liv<0.06)return;   // mentre parla manda solo la voce forte (per interromperlo), non l'eco delle casse
+        mandaLive({realtimeInput:{audio:{data:p.b64,mimeType:'audio/pcm;rate=16000'}}});};
+      src.connect(proc);proc.connect(LIVE.cin.destination);LIVE.proc=proc;if(LIVE.cin.state==='suspended')LIVE.cin.resume();
+      var tentativi=[];(j.modelli||[]).forEach(function(mo){['v1alpha','v1beta'].forEach(function(ve){tentativi.push({m:mo,v:ve});});});
+      var prova=function(i){
+        if(!LIVE.attivo)return;if(i>=tentativi.length)return fallito('nessun modello Live accettato');
+        var tv=tentativi[i],ws;LIVE.modello=tv.m;
+        try{ws=new WebSocket('wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.'+tv.v+'.GenerativeService.BidiGenerateContentConstrained?access_token='+encodeURIComponent(j.token));}catch(e){return prova(i+1);}
+        ws.binaryType='arraybuffer';LIVE.ws=ws;
+        ws.onopen=function(){ws.send(JSON.stringify({setup:{model:'models/'+tv.m,
+          generationConfig:{responseModalities:['AUDIO'],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:j.voce||'Charon'}}}},
+          systemInstruction:{parts:[{text:j.istruzioni}]},tools:j.strumenti,inputAudioTranscription:{},outputAudioTranscription:{}}}));};
+        ws.onmessage=function(ev){var t=ev.data;if(typeof t!=='string')t=new TextDecoder().decode(t);var m;try{m=JSON.parse(t);}catch(e){return;}messaggioLive(m);};
+        ws.onclose=function(ev){if(LIVE.ws!==ws)return;if(typeof logReg==='function')logReg('Live: chiuso ('+ev.code+(ev.reason?' '+ev.reason.slice(0,120):'')+')');
+          if(!LIVE.pronto&&LIVE.attivo)return prova(i+1);chiudiLive();};
+        ws.onerror=function(){};
+      };
+      prova(0);
+      clearInterval(LIVE.timer);
+      LIVE.timer=setInterval(function(){   // chiude da solo dopo 25 s di silenzio (o 12 minuti in tutto)
+        if(!LIVE.attivo)return clearInterval(LIVE.timer);
+        if(LIVE.pronto&&!speaking&&!LIVE.inAttesa&&!userTalk&&Date.now()-LIVE.ultimo>25000)chiudiLive();
+        if(Date.now()-LIVE.inizio>12*60000)chiudiLive();
+        if(!LIVE.pronto&&Date.now()-LIVE.inizio>12000)fallito('tempo scaduto');
+      },1000);
+    },function(e){fallito((e&&e.message)||'errore');});
+  }
+  function chiudiLive(silenzioso){
+    if(!LIVE.attivo)return;
+    LIVE.attivo=false;LIVE.pronto=false;clearInterval(LIVE.timer);chiudiTurno();
+    var ws=LIVE.ws;LIVE.ws=null;try{ws&&ws.close();}catch(e){}
+    try{LIVE.proc&&LIVE.proc.disconnect();}catch(e){}try{LIVE.mic&&LIVE.mic.getTracks().forEach(function(t){t.stop();});}catch(e){}
+    try{LIVE.cin&&LIVE.cin.close();}catch(e){}
+    var co=LIVE.cout;setTimeout(function(){try{co&&co.close();}catch(e){}},300);zittisciLive();LIVE.cout=null;AN=null;
+    ascolta=false;userTalk=0;$('mic').classList.remove('on');setStato('attesa');if(!silenzioso)hint.textContent='';
+    if(LIVE.turni.length&&CFG.url)api({azione:'live_fine',turni:LIVE.turni}).then(function(){},function(){});
+    LIVE.turni=[];ultimaVoce=false;dopoInterazione();
+  }
   function avviaAscolto(opz){
     opz=(opz&&opz.seguito)?opz:{};
+    if(LIVE.attivo){chiudiLive();return;}
+    if(!opz.classico&&!occupato&&liveDisponibile()){avviaLive();return;}
     if(!SR||occupato)return;
     if(ascolta){try{rec.stop();}catch(e){}return;}
     stopVoce();finale='';
