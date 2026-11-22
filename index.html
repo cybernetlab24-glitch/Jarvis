@@ -285,7 +285,10 @@ body.solo-volto #argus3DLabel{display:none}
 #cervelloOv{position:fixed;inset:0;z-index:60;background:#030711;clip-path:circle(0% at var(--cx,50%) var(--cy,45%));transition:clip-path .75s cubic-bezier(.65,0,.25,1)}
 #cervelloOv.su{clip-path:circle(150% at var(--cx,50%) var(--cy,45%))}
 #cervelloOv[hidden]{display:none}
-#cervelloOv iframe{width:100%;height:100%;border:0;display:block;background:#030711}
+#cervelloOv iframe,#quartierOv iframe{width:100%;height:100%;border:0;display:block;background:#030711}
+#quartierOv{position:fixed;inset:0;z-index:61;background:#030711;clip-path:circle(0% at 50% 45%);transition:clip-path .75s cubic-bezier(.65,0,.25,1)}
+#quartierOv.su{clip-path:circle(150% at 50% 45%)}
+#quartierOv[hidden]{display:none}
 .chip.sal{display:inline-flex;align-items:center;gap:6px}.chip.sal i{width:8px;height:8px;border-radius:50%;background:#55e8b2;box-shadow:0 0 8px #55e8b2}
 .chip.sal.giallo i{background:#ffc94d;box-shadow:0 0 8px #ffc94d}.chip.sal.giallo{color:#ffe3a1;border-color:rgba(255,201,77,.6)}
 .chip.sal.rosso i{background:#ff5f7e;box-shadow:0 0 10px #ff5f7e;animation:pul 1.2s infinite}.chip.sal.rosso{color:#ffc2cd;border-color:rgba(255,95,126,.7)}
@@ -387,6 +390,7 @@ body.fold #argus3DLabel{left:28vw}
 <div class="gprev" id="gprev" hidden title="Tocca per nascondere l'anteprima"><canvas id="gcan"></canvas><span id="gprevT">GESTI</span></div>
 <div class="fin" id="fin" hidden role="dialog" aria-label="Finestra del widget"></div>
 <div id="cervelloOv" hidden role="dialog" aria-label="Secondo cervello"><iframe id="cervelloF" title="Secondo cervello di ARGUS" allow="clipboard-write"></iframe></div>
+<div id="quartierOv" hidden role="dialog" aria-label="Quartier generale"><iframe id="quartierF" title="Quartier generale della squadra di ARGUS"></iframe></div>
 
 <div class="ov" id="ov" hidden>
   <form class="box" id="cfgForm">
@@ -458,6 +462,7 @@ body.fold #argus3DLabel{left:28vw}
     fetch('http://127.0.0.1:'+DESK.porta+'/eventi?t='+encodeURIComponent(DESK.t),{cache:'no-store'}).then(function(r){return r.ok?r.text():'';}).then(function(t){
       (t||'').split(',').forEach(function(e){
         if(e==='mondo')finestra('mondo');
+        else if(e==='squadra'){DESK.modo='mondo';document.body.classList.remove('solo-volto');apriQuartier(true);}
         else if(e==='tv'){DESK.modo='mondo';document.body.classList.remove('solo-volto');apriCervello();if(typeof logReg==='function')logReg('Cervello sulla TV');}
         else if(e==='volto')finestra('volto');
         else if((e==='ascolta'||e==='parla')&&!occupato){
@@ -819,6 +824,8 @@ body.fold #argus3DLabel{left:28vw}
     else if(/(resta|rimani) (sempre )?in ascolto|conversazione (accesa|on|attiva)|attiva (la )?conversazione/.test(t)){CONVERSA=true;msg='Fatto: dopo le mie risposte resto in ascolto qualche secondo.';}
     else if(/(aspetto|look|tema)\b.{0,20}\b(oro|dorat|nero e oro|sfera)/.test(t)||/(sfera dorata|sfera olografica|nero e oro)/.test(t)){VOLTO='oro';msg='Ecco la sfera olografica.';}
     else if(/\b(briefing|punto della situazione|fammi il punto|com'?è (messa )?la giornata|cosa conta oggi)\b/.test(t)||/^(buongiorno|buon giorno)( argus| jarvis)?[\s.!]*$/.test(t)){riga('tu',testo);avviaBriefing(/aggiorna|rifai|di nuovo/.test(t));return true;}
+    else if(/presentami (la )?(squadra|agenti|team)|presenta(mi)? (la tua |i tuoi )?(squadra|agenti)/.test(t)){msg='Con piacere, signore.';setTimeout(function(){apriQuartier(true);},400);}
+    else if(/(mostra|apri|fammi vedere|fai vedere|portami)\b.{0,18}\b(agenti|squadra|quartier generale|team)\b/.test(t)){msg='Ecco la squadra, signore.';setTimeout(function(){apriQuartier(false);},400);}
     else if(/(mostra|apri|fammi vedere|fai vedere|portami|entra)\b.{0,18}\b(cervello|second brain|memoria|mente|neuroni)\b/.test(t)){msg='Ecco il mio secondo cervello, signore.';setTimeout(apriCervello,600);}
     else if(/(chiudi|esci da)\b.{0,12}\b(cervello|memoria|neuroni)\b/.test(t)){msg='Chiudo il cervello.';chiudiCervello();}
     else if(/(mostra|apri|fammi vedere|fai vedere|portami)\b.{0,15}\bgarage\b/.test(t)){msg='Apro il Garage, signore.';apriPagina('garage.html','Apri il CybernetLab Garage');}
@@ -865,6 +872,7 @@ body.fold #argus3DLabel{left:28vw}
     var rispondi=function(r){mandaLive({toolResponse:{functionResponses:[{id:fc.id,name:fc.name,response:r}]}});};
     var a=fc.args||{};
     if(fc.name==='fine_conversazione'){rispondi({ok:true});LIVE.chiudiDopo=true;if(!LIVE.fonti.length)setTimeout(chiudiLive,1200);return;}
+    if(fc.name==='schermo'&&/squadra|agenti/.test(a.azione||'')){rispondi({ok:true});var pr=/presenta/.test(a.azione||'');setTimeout(function(){apriQuartier(pr);},pr?2500:300);return;}
     if(fc.name==='schermo'){if(/chiudi/.test(a.azione||''))chiudiCervello();else{if(/tv/.test(a.azione||'')&&DESK){finestra('tv');DESK.modo='mondo';}apriCervello();}rispondi({ok:true});return;}
     if(fc.name!=='argus'){rispondi({errore:'strumento sconosciuto'});return;}
     LIVE.inAttesa++;setStato('pensa','Ci penso…');var t0=Date.now();
@@ -999,6 +1007,46 @@ body.fold #argus3DLabel{left:28vw}
   }
   function chiudiCervello(){var ov=$('cervelloOv');if(!CERV)return;ov.classList.remove('su');setTimeout(function(){if(!ov.classList.contains('su'))ov.hidden=true;CERV=false;},760);}
   window.addEventListener('message',function(e){if(e.data&&e.data.argus==='chiudiCervello')chiudiCervello();});
+  /* ===== QUARTIER GENERALE DELLA SQUADRA (quartier.html): «mostrami gli agenti», «presentami la squadra» ===== */
+  var QG=false,SEQ=0;
+  function apriQuartier(presenta){
+    var ov=$('quartierOv'),f=$('quartierF');
+    if(LIVE.attivo&&presenta)chiudiLive(true);
+    if(QG){if(presenta)f.contentWindow.postMessage({argus:'presentaSquadra'},'*');return;}
+    QG=true;f.src='quartier.html?'+(presenta?'presenta=1&':'')+'t='+Date.now();
+    ov.hidden=false;void ov.offsetWidth;ov.classList.add('su');kick=1;
+    if(typeof logReg==='function')logReg('Apro il quartier generale'+(presenta?' (presentazione)':''));
+    if(DESK&&DESK.modo!=='mondo')finestra('mondo');
+  }
+  function chiudiQuartier(){var ov=$('quartierOv');if(!QG)return;SEQ++;stopVoce();ov.classList.remove('su');setTimeout(function(){if(!ov.classList.contains('su')){ov.hidden=true;$('quartierF').src='about:blank';}QG=false;},760);setStato('attesa');}
+  function parlaRiga(t,poi){
+    if(!('speechSynthesis' in window)){setTimeout(poi,Math.max(1500,t.split(/\s+/).length*330));return;}
+    try{var u=new SpeechSynthesisUtterance(t);u.lang='it-IT';u.rate=1.02;u.pitch=TONO;if(voce)u.voice=voce;u.onstart=function(){speaking=true;setStato('parla');};u.onend=u.onerror=function(){speaking=false;poi();};speechSynthesis.speak(u);}catch(e){setTimeout(poi,2500);}
+  }
+  /** Più frasi di fila con la voce di ARGUS: la successiva si prepara mentre parla la precedente. */
+  function parlaSequenza(righe,suInizio,allaFine){
+    stopVoce();var g=++SEQ,i=0;
+    var prendi=function(t){
+      if(!voceOn)return Promise.resolve(null);
+      if(eKokoro()&&DESK)return voceKokoro(t).then(function(b){return URL.createObjectURL(b);});
+      if(VOCE_AI&&!eKokoro()&&CFG.url)return api({azione:'voce',testo:String(t).slice(0,900),voceAI:VOCE_AI}).then(function(j){return j.audio||null;});
+      return Promise.resolve(null);
+    };
+    var prossimo=righe.length?prendi(righe[0]):null;
+    var passo=function(){
+      if(g!==SEQ)return;
+      if(i>=righe.length){speaking=false;setStato('attesa');if(allaFine)allaFine();return;}
+      var t=righe[i],idx=i,ora=prossimo;i++;prossimo=i<righe.length?prendi(righe[i]):null;
+      ora.then(function(src){if(g!==SEQ)return;suInizio(idx);if(src)suonaAudio(src,t,passo);else parlaRiga(t,passo);},function(){if(g!==SEQ)return;suInizio(idx);parlaRiga(t,passo);});
+    };
+    passo();
+  }
+  window.addEventListener('message',function(e){var d=e.data||{},f=$('quartierF');
+    if(!f||e.source!==f.contentWindow)return;
+    if(d.argus==='chiudiQuartier')chiudiQuartier();
+    else if(d.argus==='fermaVoce'){SEQ++;stopVoce();setStato('attesa');}
+    else if(d.argus==='parlaSequenza'&&Array.isArray(d.righe))parlaSequenza(d.righe.slice(0,20).map(String),function(i){f.contentWindow.postMessage({argus:'riga',i:i},'*');},function(){f.contentWindow.postMessage({argus:'finePresentazione'},'*');dopoInterazione();});
+  });
   $('cervBtn').onclick=apriCervello;
   var lpDa=0;
   cv.addEventListener('pointerdown',function(e){lpFatto=false;lpX=e.clientX;lpY=e.clientY;lpDa=Date.now();clearTimeout(lpT);lpT=setTimeout(function(){lpT=null;lpFatto=true;apriCervello();},650);});
