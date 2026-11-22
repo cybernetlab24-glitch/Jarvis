@@ -458,6 +458,7 @@ body.fold #argus3DLabel{left:28vw}
     fetch('http://127.0.0.1:'+DESK.porta+'/eventi?t='+encodeURIComponent(DESK.t),{cache:'no-store'}).then(function(r){return r.ok?r.text():'';}).then(function(t){
       (t||'').split(',').forEach(function(e){
         if(e==='mondo')finestra('mondo');
+        else if(e==='tv'){DESK.modo='mondo';document.body.classList.remove('solo-volto');apriCervello();if(typeof logReg==='function')logReg('Cervello sulla TV');}
         else if(e==='volto')finestra('volto');
         else if((e==='ascolta'||e==='parla')&&!occupato){
           if(e==='parla'&&DESK.modo!=='volto'&&DESK.modo!=='mondo')finestra('volto');
@@ -864,7 +865,7 @@ body.fold #argus3DLabel{left:28vw}
     var rispondi=function(r){mandaLive({toolResponse:{functionResponses:[{id:fc.id,name:fc.name,response:r}]}});};
     var a=fc.args||{};
     if(fc.name==='fine_conversazione'){rispondi({ok:true});LIVE.chiudiDopo=true;if(!LIVE.fonti.length)setTimeout(chiudiLive,1200);return;}
-    if(fc.name==='schermo'){if(/chiudi/.test(a.azione||''))chiudiCervello();else apriCervello();rispondi({ok:true});return;}
+    if(fc.name==='schermo'){if(/chiudi/.test(a.azione||''))chiudiCervello();else{if(/tv/.test(a.azione||'')&&DESK){finestra('tv');DESK.modo='mondo';}apriCervello();}rispondi({ok:true});return;}
     if(fc.name!=='argus'){rispondi({errore:'strumento sconosciuto'});return;}
     LIVE.inAttesa++;setStato('pensa','Ci penso…');var t0=Date.now();
     if(typeof logReg==='function')logReg('Live → argus: '+String(a.richiesta||'').slice(0,160));
