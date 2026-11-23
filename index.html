@@ -462,6 +462,7 @@ body.fold #argus3DLabel{left:28vw}
     fetch('http://127.0.0.1:'+DESK.porta+'/eventi?t='+encodeURIComponent(DESK.t),{cache:'no-store'}).then(function(r){return r.ok?r.text():'';}).then(function(t){
       (t||'').split(',').forEach(function(e){
         if(e==='mondo')finestra('mondo');
+        else if(e==='dici'){fetch('http://127.0.0.1:'+DESK.porta+'/frasi?t='+encodeURIComponent(DESK.t),{cache:'no-store'}).then(function(r){return r.ok?r.json():[];}).then(function(l){(l||[]).forEach(function(f){DICI.push(String(f));});diciProssima();}).catch(function(){});}
         else if(e==='squadra'){DESK.modo='mondo';document.body.classList.remove('solo-volto');apriQuartier(true);}
         else if(e==='tv'){DESK.modo='mondo';document.body.classList.remove('solo-volto');apriCervello();if(typeof logReg==='function')logReg('Cervello sulla TV');}
         else if(e==='volto')finestra('volto');
@@ -568,8 +569,14 @@ body.fold #argus3DLabel{left:28vw}
   /* sul PC (ArgusDesktop) la voce si sceglie a parte: di base Kokoro, che gira in locale */
   var CHIAVE_VOCE=DESK?'argus_voce_ai_pc':'argus_voce_ai';
   var VOCE_AI='';try{var vs0=localStorage.getItem(CHIAVE_VOCE);VOCE_AI=vs0===null?(DESK?'kokoro:im_nicola':''):vs0;}catch(e){VOCE_AI=DESK?'kokoro:im_nicola':'';}
-  function eKokoro(){return VOCE_AI.indexOf('kokoro:')===0;}
-  function voceServer(){return voceOn&&!eKokoro()?VOCE_AI:'';}
+  /* Una voce sola: se la conversazione Live è attiva, TUTTO (risposte, avvisi, presentazioni) usa la stessa voce di Google della Live,
+     così non si alternano la voce di Gemini e quella del PC. Con la Live spenta vale la voce scelta nelle impostazioni. */
+  function voceScelta(){
+    try{if(typeof LIVE!=='undefined'&&LIVE&&LIVE.on&&!LIVE.rotto&&CFG.url)return LIVE.voce||localStorage.getItem('argus_live_voce')||'Charon';}catch(e){}
+    return VOCE_AI;
+  }
+  function eKokoro(){return voceScelta().indexOf('kokoro:')===0;}
+  function voceServer(){return voceOn&&!eKokoro()?voceScelta():'';}
   var AUD=null,AC=null,AN=null,ABUF=null;
   function mostraVoceAI(){var s=$('cVoceAI');if(s)s.value=VOCE_AI;var b=$('cVoce');if(b)b.hidden=!!VOCE_AI;var t=$('cTono');if(t){t.disabled=!!VOCE_AI;}}
   function suonaAudio(src,testo,dopo){
@@ -613,9 +620,9 @@ body.fold #argus3DLabel{left:28vw}
     if(!voceOn){animaSolo(testo);return;}
     if(audio){suonaAudio(audio,testo);return;}
     if(eKokoro()){if(DESK){parlaKokoro(testo);return;}parlaBrowser(testo);return;}
-    if(VOCE_AI&&CFG.url){
+    if(voceScelta()&&CFG.url){
       setStato('pensa','Preparo la voce…');
-      api({azione:'voce',testo:String(testo).slice(0,900),voceAI:VOCE_AI}).then(function(j){suonaAudio(j.audio,testo);},function(e){
+      api({azione:'voce',testo:String(testo).slice(0,900),voceAI:voceScelta()}).then(function(j){suonaAudio(j.audio,testo);},function(e){
         if(typeof logReg==='function')logReg('Voce Gemini non disponibile: uso quella del browser');parlaBrowser(testo);});
       return;
     }
@@ -903,7 +910,7 @@ body.fold #argus3DLabel{left:28vw}
     var fallito=function(motivo){if(typeof logReg==='function')logReg('Live non disponibile ('+motivo+'): uso l\'ascolto classico');LIVE.rotto=true;chiudiLive(true);setTimeout(function(){avviaAscolto();},200);};
     Promise.all([api({azione:'live',voce:/^[A-Z][a-z]+$/.test(VOCE_AI)?VOCE_AI:''}),apriMicrofono()]).then(function(r){
       var j=r[0],stream=r[1];if(!LIVE.attivo){stream.getTracks().forEach(function(t){t.stop();});return;}
-      LIVE.cfg=j;LIVE.mic=stream;
+      LIVE.cfg=j;LIVE.mic=stream;if(j.voce){LIVE.voce=j.voce;try{localStorage.setItem('argus_live_voce',j.voce);}catch(e){}}
       var ACx=window.AudioContext||window.webkitAudioContext;
       try{LIVE.cout=new ACx({sampleRate:24000});}catch(e){LIVE.cout=new ACx();}
       if(LIVE.cout.state==='suspended')LIVE.cout.resume();
@@ -1009,6 +1016,14 @@ body.fold #argus3DLabel{left:28vw}
   window.addEventListener('message',function(e){if(e.data&&e.data.argus==='chiudiCervello')chiudiCervello();});
   /* ===== QUARTIER GENERALE DELLA SQUADRA (quartier.html): «mostrami gli agenti», «presentami la squadra» ===== */
   var QG=false,SEQ=0;
+  /* frasi mandate da altri programmi del PC (es. l'operatore che usa il PC): si dicono in fila con la voce di ARGUS */
+  var DICI=[],DICI_ATT=false;
+  function diciProssima(){
+    if(DICI_ATT||!DICI.length)return;
+    if(LIVE.attivo||speaking||occupato){setTimeout(diciProssima,700);return;}
+    var t=DICI.splice(0,3).join(' ');DICI_ATT=true;
+    parlaSequenza([t],function(){},function(){DICI_ATT=false;setTimeout(diciProssima,150);});
+  }
   function apriQuartier(presenta){
     var ov=$('quartierOv'),f=$('quartierF');
     if(LIVE.attivo&&presenta)chiudiLive(true);
@@ -1029,7 +1044,7 @@ body.fold #argus3DLabel{left:28vw}
     var prendi=function(t){
       if(!voceOn)return Promise.resolve(null);
       if(eKokoro()&&DESK)return voceKokoro(t).then(function(b){return URL.createObjectURL(b);});
-      if(VOCE_AI&&!eKokoro()&&CFG.url)return api({azione:'voce',testo:String(t).slice(0,900),voceAI:VOCE_AI}).then(function(j){return j.audio||null;});
+      if(voceScelta()&&!eKokoro()&&CFG.url)return api({azione:'voce',testo:String(t).slice(0,900),voceAI:voceScelta()}).then(function(j){return j.audio||null;});
       return Promise.resolve(null);
     };
     var prossimo=righe.length?prendi(righe[0]):null;
