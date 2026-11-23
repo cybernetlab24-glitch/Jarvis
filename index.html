@@ -577,7 +577,7 @@ body.fold #argus3DLabel{left:28vw}
     return VOCE_AI;
   }
   function eKokoro(){return voceScelta().indexOf('kokoro:')===0;}
-  function voceServer(){return voceOn&&!eKokoro()?voceScelta():'';}
+  function voceServer(){return voceOn&&!eKokoro()&&!(typeof usaLettore==='function'&&usaLettore())?voceScelta():'';}
   var AUD=null,AC=null,AN=null,ABUF=null;
   function mostraVoceAI(){var s=$('cVoceAI');if(s)s.value=VOCE_AI;var b=$('cVoce');if(b)b.hidden=!!VOCE_AI;var t=$('cTono');if(t){t.disabled=!!VOCE_AI;}}
   function suonaAudio(src,testo,dopo){
@@ -592,7 +592,7 @@ body.fold #argus3DLabel{left:28vw}
     }catch(e){parlaBrowser(testo);}
   }
   function livelloAudio(){if(!AN||!ABUF)return -1;AN.getByteTimeDomainData(ABUF);var s=0;for(var i=0;i<ABUF.length;i++){var v=(ABUF[i]-128)/128;s+=v*v;}return Math.min(1,Math.sqrt(s/ABUF.length)*5.5);}
-  function stopVoce(){KGEN++;speaking=false;try{speechSynthesis.cancel();}catch(e){}if(AUD){try{AUD.pause();}catch(e){}AUD=null;AN=null;}}
+  function stopVoce(){KGEN++;speaking=false;try{speechSynthesis.cancel();}catch(e){}if(AUD){try{AUD.pause();}catch(e){}AUD=null;AN=null;}if(typeof fermaLettore==='function')fermaLettore();}
   function finito(){speaking=false;setStato('attesa');dopoInterazione();}
   function animaSolo(testo){speaking=true;setStato('parla');setTimeout(finito,Math.max(1500,testo.split(/\s+/).length*330));}
   /* --- Kokoro sul PC: ArgusDesktop avvia il server della voce sulla porta successiva --- */
@@ -620,6 +620,7 @@ body.fold #argus3DLabel{left:28vw}
     stopVoce();
     if(!voceOn){animaSolo(testo);return;}
     if(audio){suonaAudio(audio,testo);return;}
+    if(usaLettore()){leggiLive([String(testo)],function(){},finito);return;}
     if(eKokoro()){if(DESK){parlaKokoro(testo);return;}parlaBrowser(testo);return;}
     if(voceScelta()&&CFG.url){
       setStato('pensa','Preparo la voce…');
@@ -772,6 +773,7 @@ body.fold #argus3DLabel{left:28vw}
     if(comandoFinestra(testo)){ultimaVoce=false;return;}
     if(comandoAscolto(testo))return;
     var iv=intentoVista(testo);if(iv){azioneVista(testo,iv,aVoce);return;}
+    if(LIVE.attivo&&LIVE.pronto){riga('tu',testo);LIVE.ultimo=Date.now();mandaLive({clientContent:{turns:[{role:'user',parts:[{text:testo}]}],turnComplete:true}});return;}
     occupato=true;occupatoDal=Date.now();riga('tu',testo);setStato('pensa');hint.textContent='';
     var fatto=function(risposta,audio){occupato=false;setTimeout(function(){rinfrescaWidget(true);},1500);riga('jv',risposta);$('modAI').textContent='ATTIVO';$('modAI').className='ok';parla(risposta,audio);};
     var errore=function(err){occupato=false;$('modAI').textContent='ERRORE';$('modAI').className='wip';
@@ -912,7 +914,8 @@ body.fold #argus3DLabel{left:28vw}
   }
   function avviaLive(){
     if(LIVE.attivo)return;
-    LIVE.attivo=true;ascolta=true;LIVE.pronto=false;LIVE.chiudiDopo=false;LIVE.turni=[];LIVE.inAttesa=0;LIVE.inizio=Date.now();
+    if(typeof chiudiLettore==='function'){fermaLettore();chiudiLettore();}
+    LIVE.attivo=true;ascolta=true;ascoltaDal=Date.now();LIVE.pronto=false;LIVE.chiudiDopo=false;LIVE.turni=[];LIVE.inAttesa=0;LIVE.inizio=Date.now();
     stopVoce();$('mic').classList.add('on');setStato('pensa','Mi collego…');
     var fallito=function(motivo){if(typeof logReg==='function')logReg('Live non disponibile ('+motivo+'): uso l\'ascolto classico');LIVE.rotto=true;chiudiLive(true);setTimeout(function(){avviaAscolto();},200);};
     Promise.all([api({azione:'live',voce:/^[A-Z][a-z]+$/.test(VOCE_AI)?VOCE_AI:''}),apriMicrofono()]).then(function(r){
@@ -963,6 +966,79 @@ body.fold #argus3DLabel{left:28vw}
     if(LIVE.turni.length&&CFG.url)api({azione:'live_fine',turni:LIVE.turni}).then(function(){},function(){});
     LIVE.turni=[];ultimaVoce=false;dopoInterazione();
   }
+  /* ===== LETTORE LIVE: tutto quello che ARGUS dice fuori dalla conversazione (risposte scritte, avvisi, presentazioni)
+     lo legge la stessa voce di Google della conversazione in diretta. Niente più voce del browser in mezzo. ===== */
+  var LET={ws:null,pronto:false,coda:[],lav:null,cout:null,fonti:[],t:0,fallito:0,chiudi:null,inizioRiga:null,guardia:null};
+  function usaLettore(){return LIVE.on&&!LIVE.rotto&&CFG.url&&voceOn&&!!window.WebSocket&&Date.now()-LET.fallito>10*60000;}
+  function cfgLive(){
+    if(LIVE.cfg&&LIVE.cfgT&&Date.now()-LIVE.cfgT<90000)return Promise.resolve(LIVE.cfg);
+    return api({azione:'live',voce:/^[A-Z][a-z]+$/.test(VOCE_AI)?VOCE_AI:''}).then(function(j){LIVE.cfg=j;LIVE.cfgT=Date.now();if(j.voce){LIVE.voce=j.voce;try{localStorage.setItem('argus_live_voce',j.voce);}catch(e){}}return j;});
+  }
+  function leggiLive(righe,suInizio,allaFine){
+    righe=(righe||[]).map(function(t){return String(t||'').replace(/https?:\/\/\S+/g,'').replace(/[*_#`>]/g,'').trim();}).filter(String);
+    if(!righe.length){if(allaFine)allaFine();return;}
+    LET.coda.push({righe:righe,i:0,suInizio:suInizio||function(){},allaFine:allaFine||function(){}});
+    setStato('pensa','Preparo la voce…');
+    if(LET.pronto)prossimaRiga();else if(!LET.ws)apriLettore();
+  }
+  function apriLettore(){
+    clearTimeout(LET.chiudi);
+    cfgLive().then(function(j){
+      var ACx=window.AudioContext||window.webkitAudioContext;
+      if(!LET.cout||LET.cout.state==='closed'){try{LET.cout=new ACx({sampleRate:24000});}catch(e){LET.cout=new ACx();}}
+      if(LET.cout.state==='suspended')LET.cout.resume();
+      var tent=[];(j.modelli||[]).forEach(function(m){['v1alpha','v1beta'].forEach(function(v){tent.push({m:m,v:v});});});
+      var prova=function(i){
+        if(i>=tent.length)return lettoreFallito('nessun modello');
+        var tv=tent[i],ws;
+        try{ws=new WebSocket('wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.'+tv.v+'.GenerativeService.BidiGenerateContentConstrained?access_token='+encodeURIComponent(j.token));}catch(e){return prova(i+1);}
+        ws.binaryType='arraybuffer';LET.ws=ws;
+        ws.onopen=function(){ws.send(JSON.stringify({setup:{model:'models/'+tv.m,generationConfig:{responseModalities:['AUDIO'],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:j.voce||'Charon'}}}},
+          systemInstruction:{parts:[{text:'Sei la voce di ARGUS. Ogni messaggio che ricevi è un testo da LEGGERE AD ALTA VOCE in italiano: leggilo ESATTAMENTE, parola per parola, dall\'inizio alla fine, con tono naturale, caldo e un filo ironico se il testo lo è. Non aggiungere niente, non commentare, non salutare, non rispondere alle domande che contiene: leggi e basta.'}]}}}));};
+        ws.onmessage=function(ev){var t=ev.data;if(typeof t!=='string')t=new TextDecoder().decode(t);var m;try{m=JSON.parse(t);}catch(e){return;}
+          if(m.setupComplete){LET.pronto=true;prossimaRiga();return;}
+          var c=m.serverContent;if(!c)return;
+          if(c.modelTurn&&c.modelTurn.parts)c.modelTurn.parts.forEach(function(p){if(p.inlineData&&p.inlineData.data)suonaLettore(p.inlineData.data);});
+          if(c.turnComplete&&LET.lav){LET.lav.finita=true;if(!LET.fonti.length)rigaFinita();}};
+        ws.onclose=function(){if(LET.ws!==ws)return;var eraPronto=LET.pronto;LET.ws=null;LET.pronto=false;if(!eraPronto&&LET.coda.length)return prova(i+1);if(LET.coda.length||LET.lav)lettoreFallito('chiuso');};
+        ws.onerror=function(){};
+      };
+      prova(0);
+      clearTimeout(LET.guardia);LET.guardia=setTimeout(function(){if(!LET.pronto&&LET.coda.length)lettoreFallito('tempo scaduto');},10000);
+    },function(e){lettoreFallito(e&&e.message);});
+  }
+  function prossimaRiga(){
+    if(!LET.pronto||LET.lav&&!LET.lav.finita)return;
+    var job=LET.coda[0];if(!job){LET.chiudi=setTimeout(chiudiLettore,25000);return;}
+    clearTimeout(LET.chiudi);
+    if(job.i>=job.righe.length){LET.coda.shift();speaking=false;job.allaFine();return prossimaRiga();}
+    var idx=job.i++;LET.lav={job:job,idx:idx,finita:false,partita:false};
+    LET.ws.send(JSON.stringify({clientContent:{turns:[{role:'user',parts:[{text:job.righe[idx]}]}],turnComplete:true}}));
+    var lav=LET.lav;setTimeout(function(){if(LET.lav===lav&&!lav.partita){lettoreFallito('nessun audio');}},12000);
+  }
+  function suonaLettore(b64){
+    var lav=LET.lav;if(!lav||!LET.cout)return;
+    if(!lav.partita){lav.partita=true;lav.job.suInizio(lav.idx);}
+    var bin=atob(b64),n=bin.length>>1,f=new Float32Array(n);
+    for(var i=0;i<n;i++){var x=bin.charCodeAt(2*i)|(bin.charCodeAt(2*i+1)<<8);if(x>32767)x-=65536;f[i]=x/32768;}
+    var b=LET.cout.createBuffer(1,n,24000);b.getChannelData(0).set(f);
+    if(!AN||AN.context!==LET.cout){try{AN=LET.cout.createAnalyser();AN.fftSize=512;ABUF=new Uint8Array(AN.fftSize);AN.connect(LET.cout.destination);}catch(e){AN=null;}}
+    var s=LET.cout.createBufferSource();s.buffer=b;s.connect(AN||LET.cout.destination);
+    var ora=LET.cout.currentTime;if(LET.t<ora+0.04)LET.t=ora+0.04;s.start(LET.t);LET.t+=b.duration;LET.fonti.push(s);
+    speaking=true;parlaDal=Date.now();if(stato!=='parla')setStato('parla');
+    s.onended=function(){LET.fonti=LET.fonti.filter(function(x){return x!==s;});if(!LET.fonti.length&&LET.lav&&LET.lav.finita)rigaFinita();};
+  }
+  function rigaFinita(){LET.lav=null;LET.t=0;prossimaRiga();}
+  function lettoreFallito(perche){
+    if(typeof logReg==='function')logReg('Voce Live non disponibile ('+perche+'): per 10 minuti uso la voce di riserva');
+    LET.fallito=Date.now();var coda=LET.coda.slice(),lav=LET.lav;LET.coda=[];LET.lav=null;chiudiLettore();
+    // quello che restava da dire lo dice la voce di riserva, in fila
+    var resto=[];coda.forEach(function(j,k){var da=(k===0&&lav)?lav.idx:j.i;resto=resto.concat(j.righe.slice(da));});
+    var fine=coda.length?coda[coda.length-1].allaFine:function(){};
+    if(resto.length)parlaSequenza(resto,function(){},fine);
+  }
+  function fermaLettore(){if(!LET.fonti.length&&!LET.coda.length&&!LET.lav)return;LET.fonti.forEach(function(s){try{s.onended=null;s.stop();}catch(e){}});LET.fonti=[];LET.t=0;LET.coda=[];LET.lav=null;}
+  function chiudiLettore(){clearTimeout(LET.chiudi);var ws=LET.ws;LET.ws=null;LET.pronto=false;try{ws&&ws.close();}catch(e){}}
   function avviaAscolto(opz){
     opz=(opz&&opz.seguito)?opz:{};
     if(LIVE.attivo){chiudiLive();return;}
@@ -1086,7 +1162,9 @@ body.fold #argus3DLabel{left:28vw}
   }
   /** Più frasi di fila con la voce di ARGUS: la successiva si prepara mentre parla la precedente. */
   function parlaSequenza(righe,suInizio,allaFine){
-    stopVoce();var g=++SEQ,i=0;
+    stopVoce();
+    if(usaLettore()){leggiLive(righe,suInizio,function(){speaking=false;setStato('attesa');if(allaFine)allaFine();});return;}
+    var g=++SEQ,i=0;
     var prendi=function(t){
       if(!voceOn)return Promise.resolve(null);
       if(eKokoro()&&DESK)return voceKokoro(t).then(function(b){return URL.createObjectURL(b);});
@@ -2041,11 +2119,11 @@ body.fold #argus3DLabel{left:28vw}
     if(occupato&&occupatoDal&&ora-occupatoDal>90000){occupato=false;setStato('attesa');ripristina('richiesta bloccata, la annullo');}
     // «sta parlando» ma non c'è nessun audio in corso
     var browserParla=false;try{browserParla=speechSynthesis.speaking||speechSynthesis.pending;}catch(e){}
-    if(speaking&&!AUD&&!browserParla&&ora-parlaDal>15000){speaking=false;ripristina('voce bloccata');finito();}
+    if(speaking&&!AUD&&!browserParla&&!LET.fonti.length&&!LET.lav&&!(LIVE.fonti&&LIVE.fonti.length)&&!LIVE.attivo&&ora-parlaDal>15000){speaking=false;ripristina('voce bloccata');finito();}
     // fermo su «sto pensando» senza motivo
     if(stato==='pensa'&&!occupato&&!speaking&&!AUD&&ora-statoDal>45000){setStato('attesa');ripristina('stato bloccato');}
     if(!staz)return;
-    if(ascolta&&ascoltaDal&&ora-ascoltaDal>60000){try{rec.abort();}catch(e){}ascolta=false;$('mic').classList.remove('on');if(stato==='ascolto')setStato('attesa');}
+    if(ascolta&&!LIVE.attivo&&ascoltaDal&&ora-ascoltaDal>60000){try{rec.abort();}catch(e){}ascolta=false;$('mic').classList.remove('on');if(stato==='ascolto')setStato('attesa');}
     // microfono acceso ma muto (dispositivo cambiato, audio di Windows riavviato…): lo riavvio
     if(WW.attivo&&WW.ctx&&WW.ctx.state==='suspended'){try{WW.ctx.resume();}catch(e){}}
     else if(WW.attivo&&(ora-(WW.ultimoAudio||ora)>6000||(WW.ctx&&WW.ctx.state==='closed'))){ripristina('microfono muto, lo riavvio');fermaMic();}
