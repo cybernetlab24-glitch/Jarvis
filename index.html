@@ -289,6 +289,7 @@ body.solo-volto #argus3DLabel{display:none}
 #quartierOv{position:fixed;inset:0;z-index:61;background:#030711;clip-path:circle(0% at 50% 45%);transition:clip-path .75s cubic-bezier(.65,0,.25,1)}
 #quartierOv.su{clip-path:circle(150% at 50% 45%)}
 #quartierOv[hidden]{display:none}
+#mic.rec{box-shadow:0 0 0 3px #ff3b5c,0 0 22px #ff3b5c}
 .chip.sal{display:inline-flex;align-items:center;gap:6px}.chip.sal i{width:8px;height:8px;border-radius:50%;background:#55e8b2;box-shadow:0 0 8px #55e8b2}
 .chip.sal.giallo i{background:#ffc94d;box-shadow:0 0 8px #ffc94d}.chip.sal.giallo{color:#ffe3a1;border-color:rgba(255,201,77,.6)}
 .chip.sal.rosso i{background:#ff5f7e;box-shadow:0 0 10px #ff5f7e;animation:pul 1.2s infinite}.chip.sal.rosso{color:#ffc2cd;border-color:rgba(255,95,126,.7)}
@@ -417,7 +418,7 @@ body.fold #argus3DLabel{left:28vw}
     <button type="button" class="x" id="cProvaVoce">🔊 PROVA LA VOCE</button>
     <label for="cVolto">ASPETTO DI ARGUS</label>
     <select id="cVolto" style="font:14px var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line);padding:12px;width:100%">
-      <option value="robot">Volto robotico</option><option value="nucleo">Nucleo neurale (globo)</option><option value="oro">Sfera olografica</option>
+      <option value="robot">Volto robotico</option><option value="nucleo">Nucleo neurale (globo)</option><option value="oro">Sfera olografica</option><option value="reattore">Reattore</option><option value="onda">Onda sonora</option>
     </select>
     <label for="cParola">PAROLA DI ATTIVAZIONE</label>
     <select id="cParola" style="font:14px var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line);padding:12px;width:100%">
@@ -831,6 +832,8 @@ body.fold #argus3DLabel{left:28vw}
     else if(/(resta|rimani) (sempre )?in ascolto|conversazione (accesa|on|attiva)|attiva (la )?conversazione/.test(t)){CONVERSA=true;msg='Fatto: dopo le mie risposte resto in ascolto qualche secondo.';}
     else if(/(aspetto|look|tema)\b.{0,20}\b(oro|dorat|nero e oro|sfera)/.test(t)||/(sfera dorata|sfera olografica|nero e oro)/.test(t)){VOLTO='oro';msg='Ecco la sfera olografica.';}
     else if(/\b(briefing|punto della situazione|fammi il punto|com'?è (messa )?la giornata|cosa conta oggi)\b/.test(t)||/^(buongiorno|buon giorno)( argus| jarvis)?[\s.!]*$/.test(t)){riga('tu',testo);avviaBriefing(/aggiorna|rifai|di nuovo/.test(t));return true;}
+    else if(/(registra|inizia a registrare)\b.{0,15}\b(riunione|call|chiamata|videochiamata)/.test(t)){msg='';setTimeout(avviaRegistrazione,200);}
+    else if(/(ferma|termina|stop|chiudi)\b.{0,10}\b(registrazione)/.test(t)){msg='';setTimeout(fermaRegistrazione,100);}
     else if(/presentami (la )?(squadra|agenti|team)|presenta(mi)? (la tua |i tuoi )?(squadra|agenti)/.test(t)){msg='Con piacere, signore.';setTimeout(function(){apriQuartier(true);},400);}
     else if(/(mostra|apri|fammi vedere|fai vedere|portami)\b.{0,18}\b(agenti|squadra|quartier generale|team)\b/.test(t)){msg='Ecco la squadra, signore.';setTimeout(function(){apriQuartier(false);},400);}
     else if(/(mostra|apri|fammi vedere|fai vedere|portami|entra)\b.{0,18}\b(cervello|second brain|memoria|mente|neuroni)\b/.test(t)){msg='Ecco il mio secondo cervello, signore.';setTimeout(apriCervello,600);}
@@ -838,6 +841,9 @@ body.fold #argus3DLabel{left:28vw}
     else if(/(mostra|apri|fammi vedere|fai vedere|portami)\b.{0,15}\bgarage\b/.test(t)){msg='Apro il Garage, signore.';apriPagina('garage.html','Apri il CybernetLab Garage');}
     else if(/(mostra|apri|fammi vedere|fai vedere)\b.{0,15}\bfiliera/.test(t)){msg='Ecco la filiera di CybernetLab.';var uF=new URL('filiera.html',location.href).href,wF=null;try{wF=window.open(uF,'_blank');}catch(e){}
       if(!wF){msg='Ecco la filiera: tocchi il collegamento qui sotto per aprirla.';setTimeout(function(){var a=document.createElement('a');a.href=uF;a.target='_blank';a.rel='noopener';a.textContent='▶ Apri la filiera di CybernetLab';a.style.cssText='display:block;color:#e3b54a;margin:6px 0;font-weight:600';$('subs').appendChild(a);$('subs').scrollTop=1e6;if(DESK&&DESK.modo!=='mondo')finestra('mondo');},50);}}
+    else if(/(aspetto|look|tema|faccia|volto)\b.{0,20}\b(reattore|arc reactor)/.test(t)){VOLTO='reattore';msg='Come desidera: il reattore.';}
+    else if(/(aspetto|look|tema|faccia|volto)\b.{0,20}\b(onda|spettro|equalizzatore)/.test(t)){VOLTO='onda';msg='Come desidera: l\'onda sonora.';}
+    else if(/cambia (faccia|aspetto|volto)/.test(t)){var Vs=['robot','oro','nucleo','reattore','onda'];VOLTO=Vs[(Vs.indexOf(VOLTO)+1)%Vs.length];msg='Come desidera.';}
     else if(/(aspetto|look|tema)\b.{0,20}\b(robot|robotic)/.test(t)){VOLTO='robot';msg='Torno al volto robotico.';}
     else if(/(aspetto|look|tema)\b.{0,20}\b(nucleo|globo|neural)/.test(t)){VOLTO='nucleo';msg='Ecco il nucleo neurale.';}
     if(/^(Come desidera|Torno al volto|Ecco il nucleo)/.test(msg)){try{localStorage.setItem('argus_volto',VOLTO);}catch(e){}$('cVolto').value=VOLTO;mostraVolto();}
@@ -879,6 +885,7 @@ body.fold #argus3DLabel{left:28vw}
     var rispondi=function(r){mandaLive({toolResponse:{functionResponses:[{id:fc.id,name:fc.name,response:r}]}});};
     var a=fc.args||{};
     if(fc.name==='fine_conversazione'){rispondi({ok:true});LIVE.chiudiDopo=true;if(!LIVE.fonti.length)setTimeout(chiudiLive,1200);return;}
+    if(fc.name==='schermo'&&/registr/.test(a.azione||'')){rispondi({ok:true});if(/ferma|stop/.test(a.azione))setTimeout(fermaRegistrazione,300);else setTimeout(function(){chiudiLive(true);avviaRegistrazione();},2000);return;}
     if(fc.name==='schermo'&&/squadra|agenti/.test(a.azione||'')){rispondi({ok:true});var pr=/presenta/.test(a.azione||'');setTimeout(function(){apriQuartier(pr);},pr?2500:300);return;}
     if(fc.name==='schermo'){if(/chiudi/.test(a.azione||''))chiudiCervello();else{if(/tv/.test(a.azione||'')&&DESK){finestra('tv');DESK.modo='mondo';}apriCervello();}rispondi({ok:true});return;}
     if(fc.name!=='argus'){rispondi({errore:'strumento sconosciuto'});return;}
@@ -1015,6 +1022,45 @@ body.fold #argus3DLabel{left:28vw}
   function chiudiCervello(){var ov=$('cervelloOv');if(!CERV)return;ov.classList.remove('su');setTimeout(function(){if(!ov.classList.contains('su'))ov.hidden=true;CERV=false;},760);}
   window.addEventListener('message',function(e){if(e.data&&e.data.argus==='chiudiCervello')chiudiCervello();});
   /* ===== QUARTIER GENERALE DELLA SQUADRA (quartier.html): «mostrami gli agenti», «presentami la squadra» ===== */
+  /* ===== REGISTRA LA RIUNIONE (Meet, Zoom, Teams, WhatsApp desktop…): audio del PC + microfono, qualità telefonica ===== */
+  var REG=null;
+  function intestazioneWav(rate){var b=new ArrayBuffer(44),v=new DataView(b),t=function(o,s){for(var i=0;i<4;i++)v.setUint8(o+i,s.charCodeAt(i));};
+    t(0,'RIFF');v.setUint32(4,0x7FFFFFF0,true);t(8,'WAVE');t(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,rate,true);v.setUint32(28,rate*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);t(36,'data');v.setUint32(40,0x7FFFFFCC,true);return new Uint8Array(b);}
+  function b64Byte(u){var s='';for(var i=0;i<u.length;i+=8192)s+=String.fromCharCode.apply(null,u.subarray(i,i+8192));return btoa(s);}
+  function avviaRegistrazione(){
+    if(REG){hint.textContent='Sto già registrando: dica «ferma la registrazione».';return;}
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia){parla('Da qui non posso registrare l\'audio del computer, signore.');return;}
+    parla('Scelga lo schermo e spunti «condividi l\'audio del sistema». Registro io.');
+    navigator.mediaDevices.getDisplayMedia({video:true,audio:true}).then(function(sch){
+      if(!sch.getAudioTracks().length){sch.getTracks().forEach(function(t){t.stop();});throw new Error('nella finestra di condivisione va spuntato «Condividi l\'audio del sistema»');}
+      return navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}}).catch(function(){return null;}).then(function(mic){
+        var ACx=window.AudioContext||window.webkitAudioContext,ctx;try{ctx=new ACx({sampleRate:8000});}catch(e){ctx=new ACx();}
+        var rate=8000,rapp=ctx.sampleRate/rate,mix=ctx.createGain(),proc=ctx.createScriptProcessor(4096,1,1);
+        ctx.createMediaStreamSource(new MediaStream(sch.getAudioTracks())).connect(mix);if(mic)ctx.createMediaStreamSource(mic).connect(mix);
+        mix.connect(proc);proc.connect(ctx.destination);
+        REG={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),ctx:ctx,proc:proc,sch:sch,mic:mic,buf:[intestazioneWav(rate)],len:44,n:0,coda:Promise.resolve(),inizio:Date.now(),rate:rate,errori:0};
+        proc.onaudioprocess=function(e){if(!REG)return;var d=e.inputBuffer.getChannelData(0),n=Math.floor(d.length/rapp),o=new Int16Array(n);
+          for(var k=0;k<n;k++){var x=d[Math.floor(k*rapp)];o[k]=Math.max(-1,Math.min(1,x))*32767;}
+          var u=new Uint8Array(o.buffer);REG.buf.push(u);REG.len+=u.length;if(REG.len>=1048576)mandaPezzoReg(false);
+          if(Date.now()-REG.inizio>60*60000)fermaRegistrazione();};
+        sch.getTracks().forEach(function(t){t.onended=function(){if(REG)fermaRegistrazione();};});
+        $('mic').classList.add('rec');if(typeof logReg==='function')logReg('Registrazione riunione avviata');
+        REG.timer=setInterval(function(){if(!REG)return;var s=Math.floor((Date.now()-REG.inizio)/1000);hint.textContent='● REC '+Math.floor(s/60)+':'+String(s%60).padStart(2,'0')+' · dica «ferma la registrazione»';},1000);
+      });
+    }).catch(function(e){REG=null;parla('Non riesco a registrare: '+((e&&e.message)||'permesso negato')+'.');});
+  }
+  function mandaPezzoReg(ultimo){
+    if(!REG)return;var tutto=new Uint8Array(REG.len),o=0;REG.buf.forEach(function(u){tutto.set(u,o);o+=u.length;});
+    var taglio=ultimo?tutto.length:1048576,pezzo=tutto.subarray(0,taglio),resto=tutto.slice(taglio);
+    REG.buf=resto.length?[resto]:[];REG.len=resto.length;var n=REG.n++,id=REG.id,dati=b64Byte(pezzo),R=REG;
+    R.coda=R.coda.then(function(){return api({azione:'riunione_pezzo',id:id,n:n,dati:dati});}).catch(function(e){R.errori++;if(typeof logReg==='function')logReg('Pezzo '+n+' della riunione non inviato: '+e.message);});
+  }
+  function fermaRegistrazione(){
+    if(!REG)return;var R=REG;mandaPezzoReg(true);REG=null;clearInterval(R.timer);
+    try{R.proc.disconnect();}catch(e){}try{R.sch.getTracks().forEach(function(t){t.stop();});}catch(e){}try{R.mic&&R.mic.getTracks().forEach(function(t){t.stop();});}catch(e){}try{R.ctx.close();}catch(e){}
+    $('mic').classList.remove('rec');hint.textContent='Invio la registrazione ad ARGUS…';
+    R.coda.then(function(){return api({azione:'riunione_fine',id:R.id,pezzi:R.n,rate:R.rate});}).then(function(){hint.textContent='';parla(R.errori?'Registrazione inviata, ma qualche pezzo si è perso. Le mando comunque il riassunto su Telegram.':'Fatto. Le mando il riassunto della riunione su Telegram.');},function(e){parla('Non sono riuscito a inviare la registrazione: '+e.message);});
+  }
   var QG=false,SEQ=0;
   /* frasi mandate da altri programmi del PC (es. l'operatore che usa il PC): si dicono in fila con la voce di ARGUS */
   var DICI=[],DICI_ATT=false;
@@ -1569,7 +1615,7 @@ body.fold #argus3DLabel{left:28vw}
   (function(){var im=new Image();im.onload=function(){var n=im.naturalWidth,c=document.createElement('canvas');c.width=c.height=n;var g=c.getContext('2d');
     g.drawImage(im,0,0,n,n);try{var dd=g.getImageData(0,0,n,n),px=dd.data;for(var q=0;q<px.length;q+=4){var r=px[q],gg=px[q+1],bb=px[q+2];if(r>70&&r>gg*1.35&&r>bb*1.35){var k=(r-Math.max(gg,bb))/r;px[q]=Math.round(r*(1-k*.38));px[q+1]=Math.round(gg+(r*.42-gg)*k);px[q+2]=Math.round(bb+(r-bb)*k);}}g.putImageData(dd,0,0);}catch(e){}g.globalCompositeOperation='destination-in';var gr=g.createRadialGradient(n/2,n/2,n*.30,n/2,n/2,n*.5);
     gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.75,'rgba(0,0,0,.85)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,n,n);faccia=c;};im.src=VOLTO_SRC;})();
-  function mostraVolto(){document.body.classList.remove('tema-oro');$('sub').textContent='CYBERNETLAB · '+(VOLTO==='robot'?'VOLTO':VOLTO==='oro'?'SFERA':'NUCLEO NEURALE')+' · v3.0';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
+  function mostraVolto(){document.body.classList.remove('tema-oro');$('sub').textContent='CYBERNETLAB · '+(VOLTO==='robot'?'VOLTO':VOLTO==='oro'?'SFERA':VOLTO==='reattore'?'REATTORE':VOLTO==='onda'?'ONDA':'NUCLEO NEURALE')+' · v3.0';$('core').setAttribute('aria-label',VOLTO==='robot'?'Volto di ARGUS':'Nucleo neurale di ARGUS');}
 
   /* ================= ANIMAZIONE ================= */
   var t0=performance.now(),last=t0,rotY=0,arrivi=0,ipsT=0,spawnAcc=0,C1=[32,217,255],C2=[161,108,255];
@@ -1667,6 +1713,31 @@ body.fold #argus3DLabel{left:28vw}
       ctx.drawImage(spG,px-ss*3,py-ss*3,ss*6,ss*6);}
     ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
   }
+  /* Volto «reattore»: anelli concentrici che girano, nucleo che pulsa con la voce. */
+  function disegnaReattore(t,cx,cy,base,lv){
+    var g=ctx.createRadialGradient(cx,cy,0,cx,cy,base*1.5);g.addColorStop(0,'rgba(120,235,255,'+(.35+lv*.4)+')');g.addColorStop(.35,'rgba(32,217,255,.10)');g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g;ctx.fillRect(cx-base*1.6,cy-base*1.6,base*3.2,base*3.2);
+    ctx.save();ctx.translate(cx,cy);ctx.globalCompositeOperation='lighter';
+    var anelli=[[1.25,.06,48,1],[1.02,-.11,12,2.2],[.78,.17,8,3],[.55,-.25,6,2]];
+    anelli.forEach(function(a,k){ctx.save();ctx.rotate(t*a[1]*(1+lv*2));var r=base*a[0]*(1+lv*.05*Math.sin(t*9+k));
+      for(var s=0;s<a[2];s++){var a0=s/a[2]*Math.PI*2,a1=a0+Math.PI*2/a[2]*.72;ctx.beginPath();ctx.arc(0,0,r,a0,a1);ctx.strokeStyle='rgba('+(k%2?'161,108,255':'32,217,255')+','+(.35+lv*.5)+')';ctx.lineWidth=a[3]+lv*2;ctx.stroke();}
+      ctx.restore();});
+    for(var k=0;k<3;k++){ctx.save();ctx.rotate(k*Math.PI*2/3+t*.4);ctx.beginPath();ctx.moveTo(base*.22,0);ctx.lineTo(base*.5,0);ctx.strokeStyle='rgba(181,244,255,.6)';ctx.lineWidth=3;ctx.stroke();ctx.restore();}
+    var nr=base*(.2+lv*.08+.015*Math.sin(t*4)),ng=ctx.createRadialGradient(0,0,0,0,0,nr);ng.addColorStop(0,'#ffffff');ng.addColorStop(.4,'rgba(150,240,255,.95)');ng.addColorStop(1,'rgba(32,217,255,0)');
+    ctx.fillStyle=ng;ctx.beginPath();ctx.arc(0,0,nr*1.6,0,Math.PI*2);ctx.fill();ctx.restore();ctx.globalCompositeOperation='source-over';
+  }
+  /* Volto «onda»: spettro circolare che si muove con la voce. */
+  function disegnaOnda(t,cx,cy,base,lv){
+    ctx.save();ctx.translate(cx,cy);ctx.globalCompositeOperation='lighter';
+    var N=96,r0=base*.9;
+    for(var i=0;i<N;i++){var a=i/N*Math.PI*2,v=.08+.5*lv*(.55+.45*Math.sin(i*.9+t*11)*Math.sin(i*.37-t*5))+.05*Math.sin(t*2+i*.3),L=base*Math.max(.04,v);
+      var c=i/N;ctx.strokeStyle='rgba('+Math.round(32+129*c)+','+Math.round(217-109*c)+',255,'+(.5+lv*.5)+')';ctx.lineWidth=Math.max(1.5,base*.028);ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(Math.cos(a)*r0,Math.sin(a)*r0);ctx.lineTo(Math.cos(a)*(r0+L),Math.sin(a)*(r0+L));ctx.stroke();}
+    ctx.beginPath();for(var j=0;j<=128;j++){var b=j/128*Math.PI*2,rr=r0*.72*(1+lv*.12*Math.sin(b*5+t*8));j?ctx.lineTo(Math.cos(b)*rr,Math.sin(b)*rr):ctx.moveTo(Math.cos(b)*rr,Math.sin(b)*rr);}
+    ctx.strokeStyle='rgba(32,217,255,'+(.4+lv*.4)+')';ctx.lineWidth=2;ctx.stroke();
+    ctx.font='700 '+Math.round(base*.22)+'px Segoe UI,Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='rgba(232,251,255,'+(.75+lv*.25)+')';ctx.fillText('ARGUS',0,0);
+    ctx.restore();ctx.globalCompositeOperation='source-over';
+  }
   function disegnaSfera(t,cx,cy,base){
     if(!SFERA)preparaSfera();
     var lv=level,st=stato,turb=(st==='pensa'?.34:st==='ascolto'?.17:.13)+lv*.32;
@@ -1734,6 +1805,7 @@ body.fold #argus3DLabel{left:28vw}
 
     ctx.clearRect(0,0,W,H);
     if(VOLTO==='oro'){sfondo(t,dt,cx,cy,base);disegnaSfera(t,cx,cy,base);for(i=0;i<edges.length;i++)edges[i].act*=Math.pow(.05,dt);}
+    else if(VOLTO==='reattore'||VOLTO==='onda'){sfondo(t,dt,cx,cy,base);(VOLTO==='reattore'?disegnaReattore:disegnaOnda)(t,cx,cy,base,level);for(i=0;i<edges.length;i++)edges[i].act*=Math.pow(.05,dt);}
     else{
     sfondo(t,dt,cx,cy,base);
     var halo=ctx.createRadialGradient(cx,cy,0,cx,cy,base*1.6);
